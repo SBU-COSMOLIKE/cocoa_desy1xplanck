@@ -113,69 +113,58 @@
   DES_DZ_L1:
     prior:
       dist: norm
-      loc: -0.009
-      scale: 0.007
+      loc: 0.006
+      scale: 0.004
     ref:
       dist: norm
-      loc: -0.009
-      scale: 0.007
-    proposal: 0.0035
+      loc: 0.006
+      scale: 0.004
+    proposal: 0.002
     latex: \Delta z_\mathrm{l,DES}^1
   DES_DZ_L2:
     prior:
       dist: norm
-      loc: -0.035
-      scale: 0.011
+      loc: 0.001
+      scale: 0.003
     ref:
       dist: norm
-      loc: -0.035
-      scale: 0.011
-    proposal: 0.0055
+      loc: 0.001
+      scale: 0.003
+    proposal: 0.0015
     latex: \Delta z_\mathrm{l,DES}^2
   DES_DZ_L3:
     prior:
       dist: norm
-      loc: -0.005
-      scale: 0.006
+      loc: 0.004
+      scale: 0.003
     ref:
       dist: norm
-      loc: -0.005
-      scale: 0.006
-    proposal: 0.003
+      loc: 0.004
+      scale: 0.003
+    proposal: 0.0015
     latex: \Delta z_\mathrm{l,DES}^3
   DES_DZ_L4:
     prior:
       dist: norm
-      loc: -0.007
-      scale: 0.006
+      loc: -0.002
+      scale: 0.005
     ref:
       dist: norm
-      loc: -0.007
-      scale: 0.006
-    proposal: 0.003
+      loc: -0.002
+      scale: 0.005
+    proposal: 0.0025
     latex: \Delta z_\mathrm{l,DES}^4
   DES_DZ_L5:
     prior:
       dist: norm
-      loc: 0.002
-      scale: 0.007 
+      loc: -0.007
+      scale: 0.010 
     ref:
       dist: norm
-      loc: 0.002
-      scale: 0.007
-    proposal: 0.0035
+      loc: -0.007
+      scale: 0.010
+    proposal: 0.005
     latex: \Delta z_\mathrm{l,DES}^5
-  DES_DZ_L6:
-    prior:
-      dist: norm
-      loc: 0.002
-      scale: 0.008 
-    ref:
-      dist: norm
-      loc: 0.002
-      scale: 0.008
-    proposal: 0.004
-    latex: \Delta z_\mathrm{l,DES}^6
 
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
@@ -187,7 +176,7 @@
       max: 3
     ref:
       dist: norm
-      loc: 1.5
+      loc: 1.7
       scale: 0.1
     proposal: 0.1
     latex: b_\mathrm{1-DES}^1
@@ -197,7 +186,7 @@
       max: 3
     ref:
       dist: norm
-      loc: 1.6
+      loc: 1.7
       scale: 0.1
     proposal: 0.1
     latex: b_\mathrm{1-DES}^2
@@ -217,7 +206,7 @@
       max: 3
     ref:
       dist: norm
-      loc: 1.8
+      loc: 2.0
       scale: 0.1
     proposal: 0.1
     latex: b_\mathrm{1-DES}^4
@@ -231,16 +220,6 @@
       scale: 0.1
     proposal: 0.1
     latex: b_\mathrm{1-DES}^5
-  DES_B1_6:
-    prior:
-      min: 0.8
-      max: 3
-    ref:
-      dist: norm
-      loc: 2.2
-      scale: 0.1
-    proposal: 0.1
-    latex: b_\mathrm{1-DES}^6
 
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
@@ -260,103 +239,54 @@
   DES_B2_5:
     value: 0.0
     latex: b_\mathrm{2-DES}^5
-  DES_B2_6:
-    value: 0.0
-    latex: b_\mathrm{2-DES}^6
 
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
   #
   DES_BMAG_1:
-    value: 0.43
+    value: 0.63
     latex: b_\mathrm{BMAG-DES}^1
   DES_BMAG_2:
-    value: 0.30
+    value: -3.04
     latex: b_\mathrm{BMAG-DES}^2
   DES_BMAG_3:
-    value: 1.75
+    value: -1.33
     latex: b_\mathrm{BMAG-DES}^3
   DES_BMAG_4:
-    value: 1.94
+    value: 2.50
     latex: b_\mathrm{BMAG-DES}^4
   DES_BMAG_5:
-    value: 1.56
+    value: 1.93
     latex: b_\mathrm{BMAG-DES}^5
-  DES_BMAG_6:
-    value: 2.96
-    latex: b_\mathrm{BMAG-DES}^6
 
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
   # Lens galaxy photo-z stretch parameters
   DES_STRETCH_L1:
-    prior:
-      dist: norm
-      loc: 0.975
-      scale: 0.062
-    ref:
-      dist: norm
-      loc: 0.975
-      scale: 0.062
-    proposal: 0.03
+    value: 1.0
     latex: \sigma z_\mathrm{l,DES}^1
   DES_STRETCH_L2:
-    prior:
-      dist: norm
-      loc: 1.306
-      scale: 0.093
-    ref:
-      dist: norm
-      loc: 1.306
-      scale: 0.093
-    proposal: 0.045
+    value: 1.0
     latex: \sigma z_\mathrm{l,DES}^2
   DES_STRETCH_L3:
-    prior:
-      dist: norm
-      loc: 0.87
-      scale: 0.054
-    ref:
-      dist: norm
-      loc: 0.87
-      scale: 0.054
-    proposal: 0.025
+    value: 1.0
     latex: \sigma z_\mathrm{l,DES}^3
   DES_STRETCH_L4:
-    prior:
-      dist: norm
-      loc: 0.918
-      scale: 0.051
-    ref:
-      dist: norm
-      loc: 0.918
-      scale: 0.051
-    proposal: 0.025
+    value: 1.0
     latex: \sigma z_\mathrm{l,DES}^4
   DES_STRETCH_L5:
     prior:
       dist: norm
-      loc: 1.08
-      scale: 0.067
+      loc: 1.23
+      scale: 0.054
     ref:
       dist: norm
-      loc: 1.08
-      scale: 0.067
-    proposal: 0.0335
+      loc: 1.23
+      scale: 0.054
+    proposal: 0.027
     latex: \sigma z_\mathrm{l,DES}^5
-  DES_STRETCH_L6:
-    prior:
-      dist: norm
-      loc: 0.845
-      scale: 0.073
-    ref:
-      dist: norm
-      loc: 0.845
-      scale: 0.073
-    proposal: 0.0365
-    latex: \sigma z_\mathrm{l,DES}^6
 
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
@@ -466,17 +396,6 @@
   #     scale: 10000
   #   proposal: 5000
   #   latex: PM_\mathrm{DES}^5
-  # DES_PM6:
-  #   prior:
-  #     dist: norm
-  #     loc: 0.0
-  #     scale: 10000
-  #   ref:
-  #     dist: norm
-  #     loc: 0.0
-  #     scale: 10000
-  #   proposal: 5000
-  #   latex: PM_\mathrm{DES}^6
   DES_PM1:
     value: 0.0
     latex: PM_\mathrm{DES}^1
@@ -492,9 +411,6 @@
   DES_PM5:
     value: 0.0
     latex: PM_\mathrm{DES}^5
-  DES_PM6:
-    value: 0.0
-    latex: PM_\mathrm{DES}^6
 
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
