@@ -177,7 +177,7 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     self.k_interp_2D = np.power(10.0,self.log10k_interp_2D)
     self.len_k_interp_2D = len(self.k_interp_2D)
     self.len_pkz_interp_2D = self.len_log10k_interp_2D*self.len_z_interp_2D
-    self.extrap_kmax = 2.5e2 * self.accuracyboost
+    self.extrap_kmax = 2.5e2 * self.accuracyboost # cosmosis has kmax_extrapolate=500
 
     # ------------------------------------------------------------------------
 
@@ -413,6 +413,7 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
         z = self.z_interp_2D, lnP = lnPNL)
 
       G_growth = np.sqrt(PKL.P(self.z_interp_2D,0.0005)/PKL.P(0,0.0005))
+      #G_growth = np.sqrt(PKNL.P(self.z_interp_2D,0.00007)/PKNL.P(0,0.00007))
       G_growth = G_growth*(1 + self.z_interp_2D)/G_growth[len(G_growth)-1]
 
       ci.init_growth(z = self.z_interp_2D, G = G_growth)

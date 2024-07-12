@@ -2690,12 +2690,13 @@ std::vector<double> ima::PointMass::get_pm_vector() const
 double ima::PointMass::get_pm(const int zl, const int zs,
 const double theta) const
 {
-  constexpr double G_over_c2 = 1.6e-23; // in units of c_over_H0 / Msun
+  //constexpr double G_over_c2 = 1.6e-23; // in units of c_over_H0 / Msun
+  constexpr double G_over_c2 = 1.5962429053461516e-23;
   const double a_lens = 1.0/(1.0 + zmean(zl));
   const double chi_lens = chi(a_lens);
-
-  return 4*G_over_c2*this->pm_[zl]*1.e+13*g_tomo(a_lens, zs)/(theta*theta)/
-    (chi_lens*a_lens);
+  // add another two a_lens factors in denominator, to be consistent with y3_production
+  return 4*3.1415927*G_over_c2*this->pm_[zl]*1.e+13*g_tomo(a_lens, zs)/(theta*theta)/
+    (chi_lens*a_lens*a_lens*a_lens);
 }
 
 // ----------------------------------------------------------------------------
