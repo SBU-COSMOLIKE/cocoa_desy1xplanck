@@ -295,45 +295,45 @@
   DES_M1:
     prior:
       dist: norm
-      loc: -0.006
-      scale: 0.009
+      loc: -0.0063
+      scale: 0.0091
     ref:
       dist: norm
-      loc: -0.006
-      scale: 0.009
+      loc: -0.0063
+      scale: 0.0091
     proposal: 0.0045
     latex: m_\mathrm{DES}^1
   DES_M2:
     prior:
       dist: norm
-      loc: -0.020
-      scale: 0.008
+      loc: -0.0198
+      scale: 0.0078
     ref:
       dist: norm
-      loc: -0.020
-      scale: 0.008
+      loc: -0.0198
+      scale: 0.0078
     proposal: 0.004
     latex: m_\mathrm{DES}^2
   DES_M3:
     prior:
       dist: norm
-      loc: -0.024
-      scale: 0.008
+      loc: -0.0241
+      scale: 0.0076
     ref:
       dist: norm
-      loc: -0.024
-      scale: 0.008
+      loc: -0.0241
+      scale: 0.0076
     proposal: 0.004
     latex: m_\mathrm{DES}^3
   DES_M4:
     prior:
       dist: norm
-      loc: -0.037
-      scale: 0.008
+      loc: -0.0369
+      scale: 0.0076
     ref:
       dist: norm
-      loc: -0.037
-      scale: 0.008
+      loc: -0.0369
+      scale: 0.0076
     proposal: 0.004
     latex: m_\mathrm{DES}^4 
   # ------------------------------------------------------------------------
