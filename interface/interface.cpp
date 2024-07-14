@@ -123,12 +123,13 @@ void cpp_initial_setup()
   like.adopt_limber_gammat = 1;
 
   like.high_def_integration = 1;
+  like.pm_integration_exact = 0;
 
   spdlog::debug("\x1b[90m{}\x1b[0m: Ends", "initial_setup");
 }
 
 void cpp_init_accuracy_boost(const double accuracy_boost, const double sampling_boost,
-const int integration_accuracy)
+const int integration_accuracy, const int pm_integration_exact)
 {
   Ntable.N_a = static_cast<int>(ceil(Ntable.N_a*sampling_boost));
   Ntable.N_ell_TATT = static_cast<int>(ceil(Ntable.N_ell_TATT*sampling_boost));
@@ -154,6 +155,7 @@ const int integration_accuracy)
   #endif
 
   like.high_def_integration = integration_accuracy;
+  like.pm_integration_exact = pm_integration_exact;
 }
 
 void cpp_init_probes(std::string possible_probes)
@@ -1353,10 +1355,13 @@ double cpp_compute_chi2(std::vector<double> datavector)
   return instance.get_chi2(datavector);
 }
 
-double cpp_compute_pm(const int zl, const int zs, const double theta)
+double cpp_compute_pm(const int zl, const int zs, const double theta, const int FLAG_exact)
 {
   ima::PointMass& instance = ima::PointMass::get_instance();
-  return instance.get_pm(zl,zs,theta);
+  if (FLAG_exact==0)
+    return instance.get_pm(zl,zs,theta);
+  else
+    return instance.get_pm_exact(zl,zs,theta);
 }
 
 std::vector<double> cpp_compute_data_vector_masked()
@@ -1528,12 +1533,12 @@ std::vector<double> cpp_compute_data_vector_masked()
           if(like.use_full_sky_ggl == 1)
           {
             data_vector[index] =  (w_gammat_tomo(i, zl, zs, like.adopt_limber_gammat) + 
-              cpp_compute_pm(zl, zs, theta))*(1.0+nuisance.shear_calibration_m[zs]);
+              cpp_compute_pm(zl, zs, theta, like.pm_integration_exact))*(1.0+nuisance.shear_calibration_m[zs]);
           }
           else
           {
             data_vector[index] = (w_gammat_tomo_flatsky(theta, zl, zs, like.adopt_limber_gammat) + 
-              cpp_compute_pm(zl, zs, theta))*(1.0+nuisance.shear_calibration_m[zs]);
+              cpp_compute_pm(zl, zs, theta, like.pm_integration_exact))*(1.0+nuisance.shear_calibration_m[zs]);
           }
         }
       }
@@ -2691,12 +2696,21 @@ double ima::PointMass::get_pm(const int zl, const int zs,
 const double theta) const
 {
   //constexpr double G_over_c2 = 1.6e-23; // in units of c_over_H0 / Msun
-  constexpr double G_over_c2 = 1.5962429053461516e-23;
+  constexpr double G4PI_over_c2 = 2.005897993912119e-22;
   const double a_lens = 1.0/(1.0 + zmean(zl));
   const double chi_lens = chi(a_lens);
   // add another two a_lens factors in denominator, to be consistent with y3_production
-  return 4*3.1415927*G_over_c2*this->pm_[zl]*1.e+13*g_tomo(a_lens, zs)/(theta*theta)/
+  return G4PI_over_c2*this->pm_[zl]*1.e+13*g_tomo(a_lens, zs)/(theta*theta)/
     (chi_lens*a_lens*a_lens*a_lens);
+}
+
+double ima::PointMass::get_pm_exact(const int zl, const int zs, const double theta) const
+{
+  constexpr double G4PI_over_c2 = 2.005897993912119e-22;
+  // Do the integration of point-mass correction exactly
+  // https://github.com/des-science/cosmosis-standard-library/blob/4725e576f22aec8e36e4738a1623d5bf18821ccb/shear/point_mass/add_gammat_point_mass.py#L123
+  double Sigma_crit_inv = ggl_efficiency(zl, zs) * max_g_tomo(zs); // w/o a_lens^-2
+  return G4PI_over_c2*this->pm_[zl]*1.e+13*Sigma_crit_inv/(theta*theta);
 }
 
 // ----------------------------------------------------------------------------
@@ -2968,7 +2982,8 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
     "Init Accuracy and Sampling Boost (can slow down Cosmolike a lot)",
     py::arg("accuracy_boost"),
     py::arg("sampling_boost"),
-    py::arg("integration_accuracy")
+    py::arg("integration_accuracy"),
+    py::arg("pm exact integration")
   );
 
   // --------------------------------------------------------------------
