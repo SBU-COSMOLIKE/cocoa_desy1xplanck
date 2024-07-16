@@ -40,3 +40,16 @@ class CocoaModel:
         else:
             _derived = self.model.logposterior(params_values, return_derived=True)[3]
             return np.array(data_vector), _derived[self.idx_s8]
+
+    def calculate_logpost(self, params_values):
+        likelihood   = self.model.likelihood[self.likelihood]
+        input_params = self.model.parameterization.to_input(params_values)
+        self.model.provider.set_current_input_params(input_params)
+        for (component, index), param_dep in zip(self.model._component_order.items(), 
+                                                 self.model._params_of_dependencies):
+            depend_list = [input_params[p] for p in param_dep]
+            params = {p: input_params[p] for p in component.input_params}
+            compute_success = component.check_cache_and_compute(want_derived=False,
+                                         dependency_params=depend_list, cached=False, **params)
+        lpost, lpriors, llikes = self.model.logposterior(params_values, return_derived=False)
+        return lpost, np.sum(lpriors), np.sum(llikes)

@@ -36,7 +36,6 @@ def get_local_data_vector_list(params_list, rank):
         # Here it calls cocoa to calculate data vectors at requested parameters
         data_vector = cocoa_model.calculate_data_vector(params_list[i], return_s8=False)
         data_vector_list.append(data_vector)
-        
     return data_vector_list
 
 def get_data_vectors(params_list, comm, rank):

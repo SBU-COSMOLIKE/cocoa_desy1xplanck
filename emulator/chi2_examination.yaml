@@ -13,7 +13,7 @@ stop_at_error: False
 likelihood:
   desy1xplanck.desy3xplanck_3x2pt:
     path: ./external_modules/data/desy1xplanck
-    data_file: datasets/Y3_250_real.dataset
+    data_file: datasets/Y3_250_real_maglim_TATT_PMmarg.dataset
     integration_accuracy: 0
     subtract_mean: False
     use_weights_for_scenarios: False
@@ -508,7 +508,7 @@ theory:
       halofit_version: bird
       AccuracyBoost: 1.1
       lens_potential_accuracy: 1.1
-      num_massive_neutrinos: 1
+      num_massive_neutrinos: 3
       nnu: 3.046
       dark_energy_model: ppf
       accurate_massive_neutrino_transfers: false
