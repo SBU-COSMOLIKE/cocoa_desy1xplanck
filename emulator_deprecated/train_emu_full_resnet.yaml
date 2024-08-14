@@ -92,12 +92,12 @@ params:
     #value: 0.06
     prior:
       min: 0.0558
-      max: 0.931
+      max: 0.6
     ref:
       dist: norm
       loc: 0.06
-      scale: 0.00002
-    proposal: 0.02  
+      scale: 0.001
+    proposal: 0.01  
     latex: \m_\\nu
   w:
     value: -1
@@ -161,7 +161,7 @@ params:
      max:  5
     ref:
      dist: norm
-     loc: 0.7
+     loc: -0.7
      scale: 0.00005
     proposal: 0.75
     latex: A_\mathrm{1-IA,DES}^1
@@ -254,44 +254,44 @@ params:
   DES_STRETCH_L1:
     prior:
       dist: norm
-      loc: 0.98
-      scale: 0.06
+      loc: 0.975
+      scale: 0.062
     ref:
       dist: norm
-      loc: 0.98
+      loc: 0.975
       scale: 0.00006
     proposal: 0.03
     latex: \sigma z_\mathrm{l,DES}^1
   DES_STRETCH_L2:
     prior:
       dist: norm
-      loc: 1.31
-      scale: 0.09
+      loc: 1.306
+      scale: 0.093
     ref:
       dist: norm
-      loc: 1.31
+      loc: 1.306
       scale: 0.00009
     proposal: 0.045
     latex: \sigma z_\mathrm{l,DES}^2
   DES_STRETCH_L3:
     prior:
       dist: norm
-      loc: 0.87
-      scale: 0.05
+      loc: 0.870
+      scale: 0.054
     ref:
       dist: norm
-      loc: 0.87
+      loc: 0.870
       scale: 0.00005
     proposal: 0.025
     latex: \sigma z_\mathrm{l,DES}^3
   DES_STRETCH_L4:
     prior:
       dist: norm
-      loc: 0.92
-      scale: 0.05
+      loc: 0.918
+      scale: 0.051
     ref:
       dist: norm
-      loc: 0.92
+      loc: 0.918
       scale: 0.00005
     proposal: 0.025
     latex: \sigma z_\mathrm{l,DES}^4
@@ -407,16 +407,16 @@ params:
   # ------------------------------------------------------------------------
   # shear calibration bias: multiplicative
   DES_M1:
-    value: 0.0
+    value: -0.0063
     latex: m_\mathrm{DES}^1
   DES_M2:
-    value: 0.0
+    value: -0.0198
     latex: m_\mathrm{DES}^2
   DES_M3:
-    value: 0.0
+    value: -0.0241
     latex: m_\mathrm{DES}^3
   DES_M4:
-    value: 0.0
+    value: -0.0369
     latex: m_\mathrm{DES}^4
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
@@ -436,63 +436,71 @@ params:
   # ------------------------------------------------------------------
   # DES-Y1 3x2 nuissance parameter ends
   # ------------------------------------------------------------------
+prior:
+  bbn_consistency: "lambda omegab, H0: 1.45 if 0.005<=omegab*(H0/100)**2<=0.04 else -np.inf"
 
 theory:
   camb:
     path: ./external_modules/code/CAMB
     use_renames: True
     extra_args:
-      halofit_version: bird
+      halofit_version: takahashi
       AccuracyBoost: 1.1
       lens_potential_accuracy: 1.1
-      num_massive_neutrinos: 1
+      num_massive_neutrinos: 3
       nnu: 3.046
       dark_energy_model: ppf
       accurate_massive_neutrino_transfers: false
       k_per_logint: 20
 
 emulator:
-  probe: 6x2pt
   io:
-      ###savedir: ./projects/desy1xplanck/emulator
-      savedir: /groups/timeifler/jiachuanxu/emulator_output
-      save_train_data: true
-      save_intermediate_model: true
-      ##chainname: emu_testing_chain_nn1_iter4
+    ###savedir: ./projects/desy1xplanck/emulator
+    savedir: /groups/timeifler/jiachuanxu/emulator_output
+    save_train_data: true
+    save_intermediate_model: true
+    ##chainname: emu_testing_chain_nn1_iter4
   shear_calib:
-      mask: ./projects/desy1xplanck/data/emu_data/DESY3xPLKR4_Maglim_baseline_Ntheta30_shear_calib_mask.npy
-      prior_std: 0.009,0.008,0.008,0.008
+    mask: ./projects/desy1xplanck/data/emu_data/DESY3xPLKR4_Maglim_baseline_Ntheta30_shear_calib_mask.npy
+    prior_std: 0.0091,0.0078,0.0076,0.0076
   baryons:
-      n_pcas_baryon: 2
-      prior_Q1: -6.,20.
-      prior_Q2: -4.,4.
+    n_pcas_baryon: 2
+    prior_Q1: -6.,20.
+    prior_Q2: -4.,4.
   galaxy_bias:
-      mask: ./projects/desy1xplanck/data/emu_data/DESY3xPLKR4_Maglim_baseline_Ntheta30_linear_gbias_mask.npy
-      bias_fid: 1.5,1.8,1.8,1.9,2.3,2.3
-      bias_prior: 0.8, 3.0
+    mask: ./projects/desy1xplanck/data/emu_data/DESY3xPLKR4_Maglim_baseline_Ntheta30_linear_gbias_mask.npy
+    bias_fid: 1.5,1.8,1.8,1.9,2.3,2.3
+    bias_prior: 0.8, 3.0
+  init_sample:
+    type: "lhs" # "lhs" or "gauss"
+    lhs_n: 18000 # Latin-Hyper Sample size
+    gauss_cov: "" # covariance of input parameters
+    gauss_temp: 1. # temperature applied to the param covariance
+    gauss_shift: 
+     omegam: 0.0
+     sigma8: 0.0
   training:
-      emu_type: nn
-      nn_model: 1
-      dv_fid: ./projects/desy1xplanck/data/data_vectors/xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_dmo.emufid
-      chi_sq_cut: 1e+5
-      n_train_iter: 4
-      n_lhs: 18000
-      n_resample: 18000
-      batch_size: 100
-      n_epochs: 60
+    emu_type: nn
+    nn_model: 1
+    dv_fid: ./projects/desy1xplanck/data/data_vectors/xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_dmo.emufid
+    chi_sq_cut: 1e+5
+    n_train_iter: 4
+    n_resample: 18000
+    batch_size: 100
+    n_epochs: 60
   derived:
-      sigma8_fid: 0.827706
-      sigma8_std: 0.500
+    sigma8_fid: 0.827706
+    sigma8_std: 0.500
   sampling:
-      ### This mask is different from the mask in the dataset file
-      ### Dataset mask: can short-cut model vector evaluation
-      ### This mask: can not short-cut mv calculation, applied in EmuSampler likelihood calc
-      ### BUT setting a different mask here would block the gradient back propagation, thus
-      ### the cutted scales are note learnt. 
-      scalecut_mask: ./projects/desy1xplanck/data/masks/xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_emucons.mask
-      n_mcmc: 30000
-      n_emcee_walkers: 100
-      n_burn_in: 20000
-      n_thin: 10
-      temper0: 0.02
-      temper_increment: 0.05
+    ### This mask is different from the mask in the dataset file
+    ### Dataset mask: can short-cut model vector evaluation
+    ### This mask: can not short-cut mv calculation, applied in EmuSampler likelihood calc
+    ### BUT setting a different mask here would block the gradient back propagation, thus
+    ### the cutted scales are note learnt. 
+    scalecut_mask: ./projects/desy1xplanck/data/masks/xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_emucons.mask
+    n_mcmc: 30000
+    n_emcee_walkers: 100
+    n_burn_in: 20000
+    n_thin: 10
+    temper0: 0.02
+    temper_increment: 0.05

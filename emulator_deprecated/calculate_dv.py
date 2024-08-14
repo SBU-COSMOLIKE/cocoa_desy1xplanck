@@ -3,7 +3,7 @@ from os.path import join as pjoin
 from mpi4py import MPI
 import numpy as np
 import torch
-from cocoa_emu import Config, get_lhs_params_list, get_params_list, CocoaModel
+from cocoa_emu import Config, get_lhs_samples, get_params_list, CocoaModel
 from cocoa_emu.emulator import NNEmulator, GPEmulator
 from cocoa_emu.sampling import EmuSampler
 import emcee
@@ -19,36 +19,15 @@ if label=="nn":
     label = label+f'{config.nn_model}'
 if(rank==0):
     print("Initializing configuration space data vector dimension!")
-    print("N_xip: %d"%(config.N_xi))
-    print("N_xim: %d"%(config.N_xi))
-    print("N_ggl: %d"%(config.N_ggl))
-    print("N_w: %d"%(config.N_w))
-    print("N_gk: %d"%(config.N_gk))
-    print("N_sk: %d"%(config.N_sk))
-    print("N_kk: %d"%(config.N_kk))
+    print("N_xip: %d"%(config.probe_size[0]//2))
+    print("N_xim: %d"%(config.probe_size[0]//2))
+    print("N_ggl: %d"%(config.probe_size[1]))
+    print("N_w: %d"%(config.probe_size[2]))
+    print("N_gk: %d"%(config.probe_size[3]))
+    print("N_sk: %d"%(config.probe_size[4]))
+    print("N_kk: %d"%(config.probe_size[5]))
     
-n = int(sys.argv[2])    
-# ============= LHS samples =================
-from pyDOE import lhs
-
-def get_lhs_samples(N_dim, N_lhs, lhs_minmax):
-    ''' Generate Latin Hypercube sample at parameter space
-    Input:
-    ======
-        - N_dim: 
-            Dimension of parameter space
-        - N_lhs:
-            Number of LH grid per dimension in the parameter space
-        - lhs_minmax:
-            The boundary of parameter space along each dimension
-    Output:
-    =======
-        - lhs_params:
-            LHS of parameter space
-    '''
-    unit_lhs_samples = lhs(N_dim, N_lhs)
-    lhs_params = get_lhs_params_list(unit_lhs_samples, lhs_minmax)
-    return lhs_params
+n = int(sys.argv[2])
 
 # ================== Calculate data vectors ==========================
 
@@ -128,16 +107,26 @@ def get_data_vectors(params_list, comm, rank, return_s8=False):
 if(rank==0):
     print("Iteration: %d"%(n))
 # ============== Retrieve training sample ======================
+# Note that training sample does not include fast parameters
 if(n==0):
     if(rank==0):
-        # retrieve LHS parameters
-        # the parameter space boundary is set by config.lhs_mimax, which is the
-        # prior boundaries for flat prior and +- 4 sigma for Gaussian prior
-        lhs_params = get_lhs_samples(config.n_dim, config.n_lhs, config.lhs_minmax)
+        if config.init_sample_type == "lhs":
+            # retrieve LHS parameters
+            # The parameter space boundary is set by config.lhs_mimax, which is 
+            # the prior boundaries for flat prior and 4 sigma for Gaussian prior
+            init_params = get_lhs_samples(config.n_dim, config.n_lhs, config.lhs_minmax)
+        else:
+            # retrieve Gaussian-approximation parameters
+            # The mean of the Gaussian is specified by config.running_params_fid
+            # plus shift from config.gauss_shift.
+            init_params = get_gaussian_samples(config.running_params_fid, 
+                config.running_params, config.params, config.n_mcmc, 
+                config.n_resample, config.gauss_cov, config.gauss_temp, 
+                config.gauss_shift)
     else:
-        lhs_params = None
-    lhs_params = comm.bcast(lhs_params, root=0)
-    params_list = lhs_params
+        init_params = None
+    init_params = comm.bcast(init_params, root=0)
+    params_list = init_params
 else:
     next_training_samples = np.load(pjoin(config.traindir, f'samples_{label}_{n}.npy'))
     params_list = get_params_list(next_training_samples, config.param_labels)
@@ -154,7 +143,7 @@ if(rank==0):
     def get_chi_sq_cut(train_data_vectors):
         chi_sq_list = []
         for dv in train_data_vectors:
-            delta_dv = (dv - config.dv_obs)[config.mask]
+            delta_dv = (dv - config.dv_lkl)[config.mask_lkl]
             chi_sq = delta_dv @ config.masked_inv_cov @ delta_dv
             chi_sq_list.append(chi_sq)
         chi_sq_arr = np.array(chi_sq_list)

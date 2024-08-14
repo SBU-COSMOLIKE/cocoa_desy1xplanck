@@ -4,65 +4,142 @@ import os
 from os.path import join as pjoin
 # from .sampling import get_starting_pos
 import copy
+from .utils import readDatasetFile
 
 class Config:
+    # multi-probe mask, in sequence of xipm, gammat, wtheta, wgk, wsk, ckk
+    # valid probes:
+    # xi, wtheta, gammat, 2x2pt, 3x2pt, xi_ggl, 5x2pt, 6x2pt, c3x2pt
+    probe_mask_choices = {
+        "cosmic_shear": [1, 0, 0, 0, 0, 0],
+        "wtheta":       [0, 0, 1, 0, 0, 0],
+        "gammat":       [0, 1, 0, 0, 0, 0],
+        "2x2pt":        [0, 1, 1, 0, 0, 0],
+        "3x2pt":        [1, 1, 1, 0, 0, 0],
+        "xi_ggl":       [1, 1, 0, 0, 0, 0],
+        "5x2pt":        [1, 1, 1, 1, 1, 0],
+        "c3x2pt":       [0, 0, 0, 1, 1, 1],
+        "6x2pt":        [1, 1, 1, 1, 1, 1],
+    }
+
     def __init__(self, configfile):
         with open(configfile, "r") as stream:
             config_args = yaml.safe_load(stream)
         
         self.config_args_emu = config_args['emulator'] 
-        self.params          = config_args['params'] 
+        self.params = config_args['params'] 
         config_args_lkl = config_args['likelihood']
         
-        # valid probes:
-        # xi, wtheta, gammat, 2x2pt, 3x2pt, xi_ggl, 5x2pt, 6x2pt, c3x2pt
-        self.shear_shear = 0
-        self.shear_pos = 0
-        self.pos_pos = 0
-        self.gk = 0
-        self.ks = 0
-        self.kk = 0
-        self.probe = self.config_args_emu['probe']
-        if (self.probe=='cosmic_shear'):
-            self.shear_shear = 1
-        elif (self.probe=='wtheta'):
-            self.pos_pos = 1
-        elif (self.probe=='gammat'):
-            self.shear_pos = 1
-        elif (self.probe=='2x2pt'):
-            self.shear_pos = 1
-            self.pos_pos = 1
-        elif (self.probe=='3x2pt'):
-            self.shear_shear = 1
-            self.shear_pos = 1
-            self.pos_pos = 1
-        elif (self.probe=='xi_ggl'):
-            self.shear_shear = 1
-            self.shear_pos = 1
-        elif (self.probe=='5x2pt'):
-            self.shear_shear = 1
-            self.shear_pos = 1
-            self.pos_pos = 1
-            self.gk = 1
-            self.ks = 1
-        elif (self.probe=='c3x2pt'):
-            self.gk = 1
-            self.ks = 1
-            self.kk = 1
-        elif (self.probe=='6x2pt'):
-            self.shear_shear = 1
-            self.shear_pos = 1
-            self.pos_pos = 1
-            self.gk = 1
-            self.ks = 1
-            self.kk = 1
+        self.load_params(self.params)     
+        self.load_lkl(config_args_lkl)
+        self.load_emu(self.config_args_emu)
+
+    def load_lkl(self, config_args_lkl):
+        ''' Setup likelihood related datasets
+        Input:
+        ======
+            - config_args_lkl: the `likelihood` section in the YAML file, dict
+        '''
+        self.likelihood = list(config_args_lkl.keys())[0]
+        self.probe = self.likelihood[self.likelihood.find('_')+1:]
+        self.probe_mask = self.probe_mask_choices[self.probe]
+        self.config_args_lkl = config_args_lkl[self.likelihood]
+
+        dataset = readDatasetFile(self.config_args_lkl['data_file'], 
+            root=self.config_args_lkl['path'])
+        dst = pjoin(self.config_args_lkl['path'], "datasets")
+
+        # Read data vector & tomography dimension
+        self.source_ntomo = int(dataset.get("source_ntomo", 0))
+        self.lens_ntomo = int(dataset.get("lens_ntomo", 0))
+        self.Ntheta = int(dataset.get("n_theta", 0))
+        self.Nbp = int(dataset.get("n_bp", 0))
+        self.Nell = int(dataset.get("n_ell", 0))
+        self.lensing_overlap_cut = float(dataset.get("lensing_overlap_cut", 0.))
+        assert np.abs(self.lensing_overlap_cut)<1e-5, "ERROR: The emulator only supports lensing_overlap_cut = 0.0 for now!"
+        self.probe_size = [
+            int(self.source_ntomo*(self.source_ntomo+1)/2*self.Ntheta),
+            self.source_ntomo*self.lens_ntomo*self.Ntheta,
+            self.lens_ntomo*self.Ntheta,
+            self.lens_ntomo*self.Ntheta,
+            self.source_ntomo*self.Ntheta,
+            self.Nbp]
+
+        # Read mask, data vector, and baryon feedback PCs
+        self.mask_lkl = np.loadtxt(pjoin(dst, dataset["mask_file"]))[:,1].astype(bool)
+        self.dv_lkl = np.loadtxt(pjoin(dst, dataset["data_file"]))[:,1]
+        try:
+            self.baryon_pcas = np.loadtxt(pjoin(dst,dataset["baryon_pca_file"]))
+        except:
+            self.baryon_pcas = None
+
+        # Read covariance and point-mass correction -> inv cov
+        invcov = self.get_full_cov(pjoin(dst, dataset["cov_file"]))
+        self.dv_std = np.sqrt(np.diagonal(invcov))
+        # Add Hartlap factor to CMB lensing covariance
+        self.Hartlap = 1 if "Hartlap_Nvar" not in dataset else int(dataset["Hartlap_Nvar"])
+        if self.Hartlap>1:
+            self.Hartlap = (self.Hartlap - self.Nbp -2.0)/(self.Hartlap - 1.0)
+        invcov[-self.Nbp:,-self.Nbp:] /= self.Hartlap
+        invcov = np.linalg.inv(invcov[self.mask_lkl][:,self.mask_lkl])
+        # Add PM marginalization
+        if "U_PMmarg" in dataset:
+            U_PMmarg = np.loadtxt(pjoin(dst, dataset["U_PMmarg"]))
+            U = np.zeros([self.mask_lkl.shape[0], self.lens_ntomo])
+            for line in U_PMmarg:
+                i, j = int(line[0]), int(line[1])
+                U[i,j] = float(line[2])
+            U = U[self.mask_lkl,:]
+            central_block = np.diag(np.ones(self.lens_ntomo)) + U.T@invcov@U
+            w, v = np.linalg.eig(central_block)
+            assert np.min(w)>=0, f'Central block not positive-definite!'
+            corr = invcov @ (U@np.linalg.inv(central_block)@U.T) @ invcov
+            invcov -= corr
+        self.masked_inv_cov = invcov
+        # test positive-definite; compare accu between Python v.s. C++ PMmarg
+        w, v = np.linalg.eig(self.masked_inv_cov)
+        assert np.min(w)>=0, f'Precision matrix not positive-definite after PMmarg!'
+        self.inv_cov = np.zeros([self.mask_lkl.shape[0],self.mask_lkl.shape[0]])
+        for i in range(self.inv_cov.shape[0]):
+            for j in range(self.inv_cov.shape[1]):
+                if (self.mask_lkl[i]>0) and (self.mask_lkl[j]>0):
+                    i_reduce, j_reduce = int(self.mask_lkl[:i].sum()), int(self.mask_lkl[:j].sum())
+                self.inv_cov[i,j] = self.masked_inv_cov[i_reduce,j_reduce]
+
+    def load_emu(self, config_args_emu):
+        # Read emulator related data
+        self.mask_emu = np.loadtxt(config_args_emu['sampling']['scalecut_mask'])[:,1].astype(bool)
+        self.dv_fid = np.loadtxt(config_args_emu['training']['dv_fid'])[:,1]
+        # also train an emulator for sigma_8 at z=0
+        self.derived = 1
+        self.sigma8_fid = np.array([float(config_args_emu['derived']['sigma8_fid'])])
+        self.sigma8_std = np.array([float(config_args_emu['derived']['sigma8_std'])])
+        try:
+            self.n_pcas_baryon = config_args_emu['baryons']['n_pcas_baryon']
+        except:
+            self.n_pcas_baryon = 0
+        try:
+            self.chi_sq_cut = float(config_args_emu['training']['chi_sq_cut'])
+        except:
+            self.chi_sq_cut = 1e+5
+
+        self.shear_calib_mask = np.load(config_args_emu['shear_calib']['mask'])
+        # Fast parameters sequence: linear bias, shear calib, baryon PCs
+        # Note: 1. Those fast parameters are not being sampled in the yaml file
+        #       2. Technically linear galaxy bias is not a fast parameter due to
+        #          RSD (?) and magnification bias.
+        if self.probe != 'cosmic_shear':
+            self.galaxy_bias_mask = np.load(self.config_args_emu['galaxy_bias']['mask'])
+            self.n_fast_pars = self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo
         else:
-            print(f'Probe {self.probe} is not supported!')
-            exit(-1)
-        self.savedir   = self.config_args_emu['io']['savedir']
+            self.n_fast_pars = self.n_pcas_baryon + self.source_ntomo
+        assert len(self.dv_lkl)==len(self.dv_fid),"Observed data vector is of different size compared to the fiducial data vector."
+
+        # Set I/O path
+        self.savedir = config_args_emu['io']['savedir']
         os.makedirs(self.savedir, exist_ok=True)
         try:
-            self.chaindir = self.config_args_emu['io']['chaindir']
+            self.chaindir = config_args_emu['io']['chaindir']
         except:
             self.chaindir = os.path.join(self.savedir, "validating_chains")
         os.makedirs(self.chaindir, exist_ok=True)
@@ -71,82 +148,74 @@ class Config:
         os.makedirs(self.traindir, exist_ok=True)
         os.makedirs(self.modeldir, exist_ok=True)
         try:
-            self.chainname = self.config_args_emu['io']['chainname']
+            self.chainname = config_args_emu['io']['chainname']
         except:
             self.chainname = 'emu_chain'
         try:
-            self.save_train_data = self.config_args_emu['io']['save_train_data']
+            self.save_train_data = config_args_emu['io']['save_train_data']
         except:
             self.save_train_data = False
         try:
-            self.save_intermediate_model = self.config_args_emu['io']['save_intermediate_model']
+            self.save_intermediate_model = config_args_emu['io']['save_intermediate_model']
         except:
             self.save_intermediate_model = False
-        try:
-            self.n_pcas_baryon = self.config_args_emu['baryons']['n_pcas_baryon']
-        except:
-            self.n_pcas_baryon = 0
 
-        try:
-            self.chi_sq_cut    = float(self.config_args_emu['training']['chi_sq_cut'])
-        except:
-            self.chi_sq_cut = 1e+5
-        # also train an emulator for sigma_8 at z=0
-        #try:
-        self.derived = 1
-        self.sigma8_fid = np.array([float(self.config_args_emu['derived']['sigma8_fid'])])
-        self.sigma8_std = np.array([float(self.config_args_emu['derived']['sigma8_std'])])
-        #except:
-        #    self.derived = 0
-        
-        self.dv_fid_path   = self.config_args_emu['training']['dv_fid']
-        self.n_lhs         = int(self.config_args_emu['training']['n_lhs'])
-        self.n_train_iter  = int(self.config_args_emu['training']['n_train_iter'])
-        self.n_resample    = int(self.config_args_emu['training']['n_resample'])
-        self.emu_type      = self.config_args_emu['training']['emu_type']
+        # Read emulator architecture
+        self.emu_type = config_args_emu['training']['emu_type']
         assert (self.emu_type.lower()=='nn') or (self.emu_type.lower()=='gp'),\
                         "emu_type has to be either gp or nn."
         if(self.emu_type.lower()=='nn'):
-            self.batch_size    = int(self.config_args_emu['training']['batch_size'])
-            self.n_epochs      = int(self.config_args_emu['training']['n_epochs'])
+            self.batch_size = int(config_args_emu['training']['batch_size'])
+            self.n_epochs = int(config_args_emu['training']['n_epochs'])
             try:
-                self.nn_model  = int(self.config_args_emu['training']['nn_model'])
+                self.nn_model  = int(config_args_emu['training']['nn_model'])
             except:
                 self.nn_model  = 0
         elif(self.emu_type.lower()=='gp'):
-            self.gp_resample   = int(self.config_args_emu['training']['gp_resample'])
-                        
-        self.config_data(config_args_lkl)
+            self.gp_resample   = int(config_args_emu['training']['gp_resample'])
+
+        # Read training sample settings
+        self.init_sample_type = config_args_emu['training']['init_sample_type']
+        if self.init_sample_type == "lhs":
+            self.n_lhs = int(config_args_emu['training']['n_lhs'])
+            self.lhs_minmax = self.get_lhs_minmax()
+        elif self.init_sample_type == "gaussian":
+            self.gauss_cov = config_args_emu['training']['init_parcov']
+            self.gauss_temp = float(config_args_emu['training']['init_temper'])
+            self.gauss_shift = config_args_emu['training']['init_shift'] # dict
+            self.gauss_minmax = self.get_gaussian_minmax()
+        else:
+            print(f'Can not recognize init sample type {self.init_sample_type}')
+            exit(1)
+        self.n_train_iter = int(config_args_emu['training']['n_train_iter'])
+        self.n_emcee_walkers=int(config_args_emu['sampling']['n_emcee_walkers'])
+        # n_sample down-select from n_mcmc
+        self.n_mcmc = int(config_args_emu['sampling']['n_mcmc'])
+        self.n_burn_in = int(config_args_emu['sampling']['n_burn_in'])
+        self.n_thin = int(config_args_emu['sampling']['n_thin'])
+        self.n_resample = int(config_args_emu['training']['n_resample'])
+        # self.temper0 = float(config_args_emu['sampling']['temper0'])
+        # self.temper_increment = float(config_args_emu['sampling']['temper_increment'])
         
-        self.n_emcee_walkers = int(self.config_args_emu['sampling']['n_emcee_walkers'])
-        self.n_mcmc          = int(self.config_args_emu['sampling']['n_mcmc'])
-        self.n_burn_in       = int(self.config_args_emu['sampling']['n_burn_in'])
-        self.n_thin          = int(self.config_args_emu['sampling']['n_thin'])
-        self.temper0          = float(self.config_args_emu['sampling']['temper0'])
-        self.temper_increment = float(self.config_args_emu['sampling']['temper_increment'])
-        
-        self.lhs_minmax    = self.get_lhs_minmax()
-        self.n_dim         = len(self.lhs_minmax)
-        self.n_pars_cosmo  = self.get_Npars_cosmo()
-        
-        self.param_labels = list(self.lhs_minmax.keys())
+        # Read parameter blocking settings
         try:
-            self.block_bias        = self.config_args_emu['sampling']['params_blocking']['block_bias']
-            self.block_shear_calib = self.config_args_emu['sampling']['params_blocking']['block_shear_calib']
-            self.block_dz          = self.config_args_emu['sampling']['params_blocking']['block_dz']
-            self.block_ia          = self.config_args_emu['sampling']['params_blocking']['block_ia']
+            _args_block = config_args_emu['sampling']['params_blocking']
+            self.block_bias        = _args_block.get('block_bias', False)
+            self.block_shear_calib = _args_block.get('block_shear_calib', False)
+            self.block_dz          = _args_block.get('block_dz', False)
+            self.block_ia          = _args_block.get('block_ia', False)
         except:
             self.block_bias        = False
             self.block_shear_calib = False
             self.block_dz          = False
             self.block_ia          = False
         try:
-            block_label = self.config_args_emu['sampling']['params_blocking']['block_label'].split(',')
-            block_value = self.config_args_emu['sampling']['params_blocking']['block_value'].split(',')
+            block_label = config_args_emu['sampling']['params_blocking']['block_label'].split(',')
+            block_value = config_args_emu['sampling']['params_blocking']['block_value'].split(',')
             block_value = [float(val) for val in block_value]
             block_indices = []
             for label in block_label:
-                for i, param_label in enumerate(self.param_labels):
+                for i, param_label in enumerate(self.running_params):
                     if(label==param_label):
                         block_indices.append(i)
             self.block_indices = block_indices
@@ -154,110 +223,48 @@ class Config:
         except:
             self.block_indices = []
             self.block_value   = None
+
+        # Read debug outputs
         try:
-            self.test_sample_file = self.config_args_emu['test']['test_samples']
-            self.test_output_file = self.config_args_emu['test']['test_output']
+            self.test_sample_file = config_args_emu['test']['test_samples']
+            self.test_output_file = config_args_emu['test']['test_output']
         except:
             self.test_sample_file = None
             self.test_output_file = None
-        
-    def config_data(self, config_args_lkl):
-        self.likelihood      = list(config_args_lkl.keys())[0]
-        self.config_args_lkl = config_args_lkl[self.likelihood]
-        self.likelihood_path = self.config_args_lkl['path']
-        self.datasetfile     = pjoin(self.likelihood_path, self.config_args_lkl['data_file'])
-        self.dst             = pjoin(self.likelihood_path, "datasets")
-        # Read the cocoa project dataset file
-        self.Nell = 0
-        self.Ntheta = 0
-        self.Nbp = 0
-        self.lensing_overlap_cut = 0
-        self.Hartlap = 1
-        with open(self.datasetfile, 'r') as f:
-            for line in f.readlines():
-                split_line = line.split()
-                if(len(split_line)>0):
-                    if(split_line[0]=='mask_file'):
-                        self.mask_ones_path = pjoin(self.dst, split_line[-1])
-                    if(split_line[0]=='data_file'):
-                        self.dv_obs_path = pjoin(self.dst, split_line[-1])
-                    if(split_line[0]=='cov_file'):
-                        cov_file        = pjoin(self.dst, split_line[-1])
-                    if(split_line[0]=='U_PMmarg'):
-                        U_PMmarg_fn = pjoin(self.dst, split_line[-1])
-                    if(split_line[0]=='baryon_pca_file'):
-                        baryon_pca_file = pjoin(self.dst, split_line[-1])
-                    if(split_line[0]=='source_ntomo'):
-                        self.source_ntomo = int(split_line[-1])
-                    if self.probe != 'cosmic_shear':
-                        if(split_line[0]=='lens_ntomo'):
-                            self.lens_ntomo = int(split_line[-1])
-                    if(split_line[0]=='n_theta'):
-                        self.Ntheta = int(split_line[-1])
-                    if(split_line[0]=='n_bp'):
-                        self.Nbp = int(split_line[-1])
-                    if(split_line[0]=='n_ell'):
-                        self.Nell = int(split_line[-1])
-                    if(split_line[0]=='lensing_overlap_cut'):
-                        self.lensing_overlap_cut = float(split_line[-1])
-                    if(split_line[0]=='Hartlap_Nvar'):
-                        self.Hartlap = int(split_line[-1])
-        assert np.abs(self.lensing_overlap_cut)<1e-5, "ERROR: The emulator only supports lensing_overlap_cut = 0.0 for now!"
-        if self.Hartlap>1:
-            self.Hartlap = (self.Hartlap - self.Nbp -2.0)/(self.Hartlap - 1.0)
-        # Init data vector dimension of each components
-        self.N_xi = int(self.source_ntomo*(self.source_ntomo+1)/2*self.Ntheta)
-        self.N_ggl= int(self.source_ntomo*self.lens_ntomo*self.Ntheta)
-        self.N_w  = int(self.lens_ntomo*self.Ntheta)
-        self.N_gk = int(self.lens_ntomo*self.Ntheta)
-        self.N_sk = int(self.source_ntomo*self.Ntheta)
-        self.N_kk = int(self.Nbp)
-        try:
-            self.baryon_pcas = np.loadtxt(baryon_pca_file)
-        except:
-            self.baryon_pcas = None
-        self.mask        = np.loadtxt(self.config_args_emu['sampling']['scalecut_mask'])[:,1].astype(bool)
-        self.mask_ones   = np.loadtxt(self.mask_ones_path)[:,1].astype(bool)
-        self.dv_fid      = np.loadtxt(self.dv_fid_path)[:,1]
-        self.dv_obs      = np.loadtxt(self.dv_obs_path)[:,1]
-        self.output_dims = len(self.dv_obs)
-        self.shear_calib_mask = np.load(self.config_args_emu['shear_calib']['mask'])
-        
-        # Fast parameters sequence: linear bias, shear calib, baryon PCs ?
-        if self.probe != 'cosmic_shear':
-            self.galaxy_bias_mask = np.load(self.config_args_emu['galaxy_bias']['mask'])
-            self.n_fast_pars = self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo
-        else:
-            self.n_fast_pars = self.n_pcas_baryon + self.source_ntomo
-        
-        assert len(self.dv_obs)==len(self.dv_fid),"Observed data vector is of different size compared to the fiducial data vector."
-        self.cov            = self.get_full_cov(cov_file)
-        self.dv_std         = np.sqrt(np.diagonal(self.cov))
-        # Add Hartlap factor to CMB lensing covariance
-        self.masked_inv_cov = copy.deepcopy(self.cov)
-        self.masked_inv_cov[-self.Nbp:,-self.Nbp:] /= self.Hartlap
-        self.masked_inv_cov = np.linalg.inv(self.masked_inv_cov[self.mask][:,self.mask])
-        # Add PM marginalization
-        U_PMmarg = np.loadtxt(U_PMmarg_fn)
-        U = np.zeros([self.cov.shape[0], self.lens_ntomo])
-        for line in U_PMmarg:
-            i, j = int(line[0]), int(line[1])
-            U[i,j] = float(line[2])
-        U = U[self.mask,:]
-        central_block = np.diag(np.ones(self.lens_ntomo))+U.T@self.masked_inv_cov@U
-        w, v = np.linalg.eig(central_block)
-        assert np.min(w)>=0, f'Central block not positive-definite!'
-        corr = self.masked_inv_cov@(U@np.linalg.inv(central_block)@U.T)@self.masked_inv_cov
-        self.masked_inv_cov -= corr
-        # test positive-definite; compare accu between Python v.s. C++ PMmarg
-        w, v = np.linalg.eig(self.masked_inv_cov)
-        assert np.min(w)>=0, f'Precision matrix not positive-definite after PMmarg!'
-        self.inv_cov = np.zeros(self.cov.shape)
-        for i in range(self.inv_cov.shape[0]):
-            for j in range(self.inv_cov.shape[1]):
-                if (self.mask[i]>0) and (self.mask[j]>0):
-                    i_reduce, j_reduce = int(self.mask[:i].sum()), int(self.mask[:j].sum())
-                self.inv_cov[i,j] = self.masked_inv_cov[i_reduce,j_reduce]
+
+    def load_params(self, param_args):
+        ''' Initialize likelihood model parameter settings
+        TODO:
+            - add fast parameter settings here?
+        '''
+        params_list = param_args.keys()
+
+        self.running_params       = []
+        self.running_params_latex = []
+        self.running_params_fid   = []
+        self.running_params_min   = []
+        self.running_params_max   = []
+
+        for param in params_list:
+            keys = param_args[param].keys()
+            if('value' not in keys and 'derived' not in keys and len(keys)>1):
+                _args = param_args[param]
+                self.running_params.append(param)
+                self.running_params_latex.append(_args['latex'])
+                if (_args["prior"].get("dist", "uniform")=="uniform"):
+                    self.running_params_fid.append(_args["ref"]["loc"])
+                    self.running_params_min.append(_args["prior"]["min"])
+                    self.running_params_max.append(_args["prior"]["max"])
+                else:
+                    self.running_params_fid.append(_args["prior"]["loc"])
+                    self.running_params_min.append(-np.inf)
+                    self.running_params_max.append(np.inf)
+        self.n_dim = len(self.running_params)
+        self.n_pars_cosmo = self.get_Npars_cosmo()
+
+        return
+
+
     def get_lhs_minmax(self):
         lh_minmax = {}
         for x in self.params:
@@ -273,10 +280,26 @@ class Config:
                     lh_max = prior['max']
                 lh_minmax[x] = {'min': lh_min, 'max': lh_max}
         return lh_minmax
+
+    def get_gaussian_minmax(self):
+        gauss_minmax = {}
+        for x in self.params:
+            if('prior' in self.params[x]):
+                prior = self.params[x]['prior']
+                dist = prior.get("dist", "uniform")
+                if dist=="norm":
+                    gauss_min = -np.inf
+                    gauss_max = np.inf
+                else:
+                    gauss_min = prior['min']
+                    gauss_max = prior['max']
+                gauss_minmax[x] = {'min': gauss_min, 'max': gauss_max}
+        return gauss_minmax
     
     def get_full_cov(self, cov_file):
         full_cov = np.loadtxt(cov_file)
-        cov = np.zeros((self.output_dims, self.output_dims))
+        Ndim = len(self.dv_lkl)
+        cov = np.zeros((Ndim, Ndim))
         cov_scenario = full_cov.shape[1]
         
         for line in full_cov:
