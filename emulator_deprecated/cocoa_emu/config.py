@@ -175,7 +175,7 @@ class Config:
             self.gp_resample   = int(config_args_emu['training']['gp_resample'])
 
         # Read training sample settings
-        _init_sample = config_args_emu['training']['init_sample']
+        _init_sample = config_args_emu['init_sample']
         self.init_sample_type = _init_sample["type"]
         if self.init_sample_type == "lhs":
             self.n_lhs = int(_init_sample['lhs_n'])
