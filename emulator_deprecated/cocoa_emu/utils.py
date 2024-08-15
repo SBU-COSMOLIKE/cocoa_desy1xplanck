@@ -1,5 +1,6 @@
 from pyDOE import lhs
 import emcee
+import os.path.join as pjoin
 
 def get_params_from_sample(sample, labels):
     """
