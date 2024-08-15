@@ -179,7 +179,7 @@ def readDatasetFile(filename, root=None):
             filename = pjoin(root, filename)
         with open(filename, 'r') as f:
             for line in f.readlines():
-                split_line = (line.replace(" ", "")).split('=')
+                split_line = (line.replace(' ', '').replace('\n','')).split('=')
                 if(len(split_line)==2):
                     dataset[split_line[0]] = split_line[1]
                 else:
