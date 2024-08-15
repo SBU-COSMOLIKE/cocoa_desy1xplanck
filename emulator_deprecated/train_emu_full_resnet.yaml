@@ -472,13 +472,13 @@ emulator:
     bias_fid: 1.5,1.8,1.8,1.9,2.3,2.3
     bias_prior: 0.8, 3.0
   init_sample:
-    type: "lhs" # "lhs" or "gauss"
+    type: "gaussian" # "lhs" or "gaussian"
     lhs_n: 18000 # Latin-Hyper Sample size
-    gauss_cov: "" # covariance of input parameters
+    gauss_cov: ./projects/desy1xplanck/yaml/proposal_covmats/DES_Y3_3x2pt_syn.covmat # covariance of input parameters
     gauss_temp: 1. # temperature applied to the param covariance
     gauss_shift: 
-     omegam: 0.0
-     sigma8: 0.0
+     # omegam: 0.0
+     # sigma8: 0.0
   training:
     emu_type: nn
     nn_model: 1

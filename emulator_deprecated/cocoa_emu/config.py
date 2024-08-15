@@ -175,14 +175,15 @@ class Config:
             self.gp_resample   = int(config_args_emu['training']['gp_resample'])
 
         # Read training sample settings
-        self.init_sample_type = config_args_emu['training']['init_sample_type']
+        _init_sample = config_args_emu['training']['init_sample']
+        self.init_sample_type = _init_sample["type"]
         if self.init_sample_type == "lhs":
-            self.n_lhs = int(config_args_emu['training']['n_lhs'])
+            self.n_lhs = int(_init_sample['lhs_n'])
             self.lhs_minmax = self.get_lhs_minmax()
         elif self.init_sample_type == "gaussian":
-            self.gauss_cov = config_args_emu['training']['init_parcov']
-            self.gauss_temp = float(config_args_emu['training']['init_temper'])
-            self.gauss_shift = config_args_emu['training']['init_shift'] # dict
+            self.gauss_cov = _init_sample['gauss_cov']
+            self.gauss_temp = float(_init_sample['gauss_temper'])
+            self.gauss_shift = _init_sample['gauss_shift'] # dict
             self.gauss_minmax = self.get_gaussian_minmax()
         else:
             print(f'Can not recognize init sample type {self.init_sample_type}')
