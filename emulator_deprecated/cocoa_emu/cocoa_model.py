@@ -21,7 +21,9 @@ class CocoaModel:
         self.model      = get_model(configfile)
         self.likelihood = likelihood
         self.derived = np.array(list(self.model.parameterization.derived_params()))
+        print(self.derived)
         self.idx_s8 = np.where(self.derived=='sigma8')[0][0]
+        print(self.idx_s8)
         
     def calculate_data_vector(self, params_values, baryon_scenario=None, return_s8=False):
         likelihood   = self.model.likelihood[self.likelihood]
@@ -41,7 +43,11 @@ class CocoaModel:
             return np.array(data_vector), None
         else:
             _derived = self.model.logposterior(params_values, return_derived=True)[3]
-            return np.array(data_vector), _derived[self.idx_s8]
+            if len(_derived)==len(self.derived):
+                return np.array(data_vector), _derived[self.idx_s8]
+            else:
+                print(f'Problematic derived {_derived} at {params_values}')
+                return np.array(data_vector), np.nan
 
     def calculate_logpost(self, params_values):
         likelihood   = self.model.likelihood[self.likelihood]
