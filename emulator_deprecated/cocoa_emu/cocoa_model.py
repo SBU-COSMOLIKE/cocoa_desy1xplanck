@@ -5,8 +5,10 @@ from cobaya.input import update_info
 from cobaya.model import Model
 from cobaya.conventions import kinds, _timing, _params, _prior, _packages_path
 
-def get_model(yaml_file):
-    info  = yaml_load_file(yaml_file);print(info)
+def get_model(yaml_file, verbose=False):
+    info  = yaml_load_file(yaml_file)
+    if verbose:
+        print(info)
     updated_info = update_info(info)
     model =  Model(updated_info[_params], updated_info[kinds.likelihood],
                updated_info.get(_prior), updated_info.get(kinds.theory),

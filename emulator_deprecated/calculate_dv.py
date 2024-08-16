@@ -130,7 +130,7 @@ if(n==0):
 else:
     next_training_samples = np.load(pjoin(config.traindir, f'samples_{label}_{n}.npy'))
     params_list = get_params_list(next_training_samples, config.param_labels)
-    
+np.save(pjoin(config.traindir, f'total_samples_{label}_{n}.npy'), params_list)
 current_iter_samples, current_iter_data_vectors, current_iter_sigma8 = get_data_vectors(params_list, comm, rank, return_s8=True)
     
 train_samples      = current_iter_samples
