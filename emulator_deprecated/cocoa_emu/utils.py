@@ -135,6 +135,12 @@ def get_gaussian_samples(param_fid, param_label, param_prior, N_mcmc, N_sample,
                     ans += -np.inf
             elif dist == "norm":
                 ans += -0.5*((param[i]-prior["loc"])/prior["scale"])**2
+        # BBN hard prior
+        if "omegab" in param_label and "H0" in param_label:
+            _par_dict = {k:v for k,v in zip(param_label, param)}
+            ombh2 = _par_dict["omegab"]*(_par_dict["H0"]/100)**2
+            if ombh2<0.005 or ombh2 > 0.04:
+                ans += -np.inf
         return ans
     def lnlkl(param):
         diff = param - gauss_cen
