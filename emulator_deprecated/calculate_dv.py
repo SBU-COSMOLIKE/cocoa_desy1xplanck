@@ -3,7 +3,7 @@ from os.path import join as pjoin
 from mpi4py import MPI
 import numpy as np
 import torch
-from cocoa_emu import Config, get_lhs_samples, get_params_list, CocoaModel
+from cocoa_emu import Config, get_lhs_samples, get_params_list, CocoaModel, get_gaussian_samples
 from cocoa_emu.emulator import NNEmulator, GPEmulator
 from cocoa_emu.sampling import EmuSampler
 import emcee
@@ -28,6 +28,34 @@ if(rank==0):
     print("N_kk: %d"%(config.probe_size[5]))
     
 n = int(sys.argv[2])
+
+if(rank==0):
+    print("Iteration: %d"%(n))
+# ============== Retrieve training sample ======================
+# Note that training sample does not include fast parameters
+if(n==0):
+    if(rank==0):
+        if config.init_sample_type == "lhs":
+            # retrieve LHS parameters
+            # The parameter space boundary is set by config.lhs_mimax, which is 
+            # the prior boundaries for flat prior and 4 sigma for Gaussian prior
+            init_params = get_lhs_samples(config.n_dim, config.n_lhs, config.lhs_minmax)
+        else:
+            # retrieve Gaussian-approximation parameters
+            # The mean of the Gaussian is specified by config.running_params_fid
+            # plus shift from config.gauss_shift.
+            init_params = get_gaussian_samples(config.running_params_fid, 
+                config.running_params, config.params, config.n_mcmc, 
+                config.n_resample, config.gauss_cov, config.gauss_temp, 
+                config.gauss_shift)
+    else:
+        init_params = None
+    init_params = comm.bcast(init_params, root=0)
+    params_list = init_params
+else:
+    next_training_samples = np.load(pjoin(config.traindir, f'samples_{label}_{n}.npy'))
+    params_list = get_params_list(next_training_samples, config.param_labels)
+np.save(pjoin(config.traindir, f'total_samples_{label}_{n}.npy'), params_list)
 
 # ================== Calculate data vectors ==========================
 
@@ -104,33 +132,6 @@ def get_data_vectors(params_list, comm, rank, return_s8=False):
         train_sigma8       = np.vstack(sigma8_list)
     return train_params, train_data_vectors, train_sigma8
 
-if(rank==0):
-    print("Iteration: %d"%(n))
-# ============== Retrieve training sample ======================
-# Note that training sample does not include fast parameters
-if(n==0):
-    if(rank==0):
-        if config.init_sample_type == "lhs":
-            # retrieve LHS parameters
-            # The parameter space boundary is set by config.lhs_mimax, which is 
-            # the prior boundaries for flat prior and 4 sigma for Gaussian prior
-            init_params = get_lhs_samples(config.n_dim, config.n_lhs, config.lhs_minmax)
-        else:
-            # retrieve Gaussian-approximation parameters
-            # The mean of the Gaussian is specified by config.running_params_fid
-            # plus shift from config.gauss_shift.
-            init_params = get_gaussian_samples(config.running_params_fid, 
-                config.running_params, config.params, config.n_mcmc, 
-                config.n_resample, config.gauss_cov, config.gauss_temp, 
-                config.gauss_shift)
-    else:
-        init_params = None
-    init_params = comm.bcast(init_params, root=0)
-    params_list = init_params
-else:
-    next_training_samples = np.load(pjoin(config.traindir, f'samples_{label}_{n}.npy'))
-    params_list = get_params_list(next_training_samples, config.param_labels)
-np.save(pjoin(config.traindir, f'total_samples_{label}_{n}.npy'), params_list)
 current_iter_samples, current_iter_data_vectors, current_iter_sigma8 = get_data_vectors(params_list, comm, rank, return_s8=True)
     
 train_samples      = current_iter_samples
