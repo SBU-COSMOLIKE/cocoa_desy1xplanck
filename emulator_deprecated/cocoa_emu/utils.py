@@ -1,4 +1,5 @@
 from pyDOE import lhs
+import numpy as np
 import emcee
 from os.path import join as pjoin
 
