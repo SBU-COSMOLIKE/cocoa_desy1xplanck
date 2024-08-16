@@ -108,19 +108,20 @@ def get_gaussian_samples(param_fid, param_label, param_prior, N_mcmc, N_sample,
 
     # apply shift
     _map = {k:v for v,k in enumerate(param_label)}
-    for param in shift:
-        # TODO: include sigma_8 shift
-        if param in _map:
-            i = _map[param]
-            gauss_cen[i] += shift[param]
-        elif param == "sigma8":
-            _val, _lab = As2sigma8(gauss_cen, param_label)
-            i = np.where(_lab=="sigma8")[0]
-            _val[i] += shift[param]
-            gauss_cen, _ = sigma82As(_val, _lab)
-        else:
-            print(f'Parameter {param} in shift can not be recognized!')
-            exit(1)
+    if shift is not None:
+        for param in shift:
+            # TODO: include sigma_8 shift
+            if param in _map:
+                i = _map[param]
+                gauss_cen[i] += shift[param]
+            elif param == "sigma8":
+                _val, _lab = As2sigma8(gauss_cen, param_label)
+                i = np.where(_lab=="sigma8")[0]
+                _val[i] += shift[param]
+                gauss_cen, _ = sigma82As(_val, _lab)
+            else:
+                print(f'Parameter {param} in shift can not be recognized!')
+                exit(1)
 
     # setup likelihood
     def lnprior(param):

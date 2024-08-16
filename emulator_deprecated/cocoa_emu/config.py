@@ -182,8 +182,8 @@ class Config:
             self.lhs_minmax = self.get_lhs_minmax()
         elif self.init_sample_type == "gaussian":
             self.gauss_cov = _init_sample['gauss_cov']
-            self.gauss_temp = float(_init_sample['gauss_temp'])
-            self.gauss_shift = _init_sample['gauss_shift'] # dict
+            self.gauss_temp = float(_init_sample.get('gauss_temp', 1.))
+            self.gauss_shift = _init_sample.get('gauss_shift', None) # dict
             self.gauss_minmax = self.get_gaussian_minmax()
         else:
             print(f'Can not recognize init sample type {self.init_sample_type}')
