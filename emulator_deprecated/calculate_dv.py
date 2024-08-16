@@ -82,9 +82,13 @@ def get_local_data_vector_list(params_list, rank, return_s8=False):
     for i in range(rank * N_local, (rank + 1) * N_local):
         if ((i-rank*N_local)%20==0):
             print(f'[{rank}/{size}] get_local_data_vector_list: iteration {i-rank*N_local}...')
-        params_arr  = np.array(list(params_list[i].values()))
+        if type(params_list[i]) != dict:
+            _p = {k:v for k,z in zip(config.running_params, params_list[i])}
+        else:
+            _p = params_list[i]
+        params_arr  = np.array([_p[k] for k in config.running_params])
         # Here it calls cocoa to calculate data vectors at requested parameters
-        data_vector, _s8 = cocoa_model.calculate_data_vector(params_list[i], return_s8=return_s8)
+        data_vector, _s8 = cocoa_model.calculate_data_vector(_p, return_s8=return_s8)
         train_params_list.append(params_arr)
         train_data_vector_list.append(data_vector)
         if return_s8:
