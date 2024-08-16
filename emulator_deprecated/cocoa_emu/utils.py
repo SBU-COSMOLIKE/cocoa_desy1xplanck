@@ -101,9 +101,10 @@ def get_gaussian_samples(param_fid, param_label, param_prior, N_mcmc, N_sample,
         - shift: dict
             Shift along each parameter space dimension
     '''
-    gauss_cen = param_fid.copy()
+    gauss_cen = np.array(param_fid.copy())
     Ndim, Nwalker = len(gauss_cen), 4*len(gauss_cen)
     cov = retrieveParamCov(param_cov, param_label)
+    param_std = np.diag(cov)**0.5
     invcov = np.linalg.inv(cov)
 
     # apply shift
@@ -143,6 +144,7 @@ def get_gaussian_samples(param_fid, param_label, param_prior, N_mcmc, N_sample,
 
     # start sampling
     print(f'Retrieving samples...')
+    print(len(gauss_cen), len(param_std), Nwalker, Ndim)
     p0 = gauss_cen[np.newaxis] + 0.3*param_std[np.newaxis]*np.random.normal(size=(Nwalker, Ndim))
     sampler = emcee.EnsembleSampler(Nwalker, Ndim, lnpost)
     sampler.run_mcmc(p0, N_mcmc, progress=True)
