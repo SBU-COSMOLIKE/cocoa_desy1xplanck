@@ -140,11 +140,13 @@ def get_gaussian_samples(param_fid, param_label, param_prior, N_mcmc, N_sample,
         return lnprior(param)+lnlkl(param)
 
     # start sampling
+    print(f'Retrieving samples...')
     p0 = gauss_cen[np.newaxis] + 0.3*param_std[np.newaxis]*np.random.normal(size=(Nwalker, Ndim))
     sampler = emcee.EnsembleSampler(Nwalker, Ndim, lnpost)
-    sampler.run_mcmc(p0, N_mcmc)
+    sampler.run_mcmc(p0, N_mcmc, progress=True)
     sample = sampler.get_chain(flat=True,thin=10,discard=N_mcmc//2)
     subset = np.random.choice(len(sample), size=N_sample, replace=False)
+    print(f'Retrieved {N_sample} parameters.')
     return sample[subset,:]
 
 
