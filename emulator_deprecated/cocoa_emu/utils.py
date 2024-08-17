@@ -79,7 +79,7 @@ def get_lhs_samples(N_dim, N_lhs, lhs_minmax):
     lhs_params = get_lhs_params_list(unit_lhs_samples, lhs_minmax)
     return lhs_params
 
-def get_gaussian_samples(param_fid, param_label, param_prior, N_mcmc, N_sample,
+def get_gaussian_samples(param_fid, param_label, param_prior, N_sample,
         param_cov, temp, shift):
     ''' Generate Gaussian sample at parameter space
     Input:
@@ -90,8 +90,6 @@ def get_gaussian_samples(param_fid, param_label, param_prior, N_mcmc, N_sample,
             Labels of the parameters
         - param_prior: dict
             param block of the yaml file
-        - N_mcmc: int
-            MCMC chain steps
         - N_sample: int
             Number of samples drawn
         - param_cov: string
@@ -134,7 +132,8 @@ def get_gaussian_samples(param_fid, param_label, param_prior, N_mcmc, N_sample,
                 if param[i] < prior["min"] or param[i]>prior["max"]:
                     ans += -np.inf
             elif dist == "norm":
-                ans += -0.5*((param[i]-prior["loc"])/prior["scale"])**2
+                # temp here?
+                ans += -0.5*((param[i]-prior["loc"])/prior["scale"]/temp)**2
         # BBN hard prior
         if "omegab" in param_label and "H0" in param_label:
             _par_dict = {k:v for k,v in zip(param_label, param)}
@@ -150,7 +149,7 @@ def get_gaussian_samples(param_fid, param_label, param_prior, N_mcmc, N_sample,
 
     # start sampling
     print(f'Retrieving samples...')
-    print(len(gauss_cen), len(param_std), Nwalker, Ndim)
+    N_mcmc = int(N_sample*40/Nwalker)
     p0 = gauss_cen[np.newaxis] + 0.3*param_std[np.newaxis]*np.random.normal(size=(Nwalker, Ndim))
     sampler = emcee.EnsembleSampler(Nwalker, Ndim, lnpost)
     sampler.run_mcmc(p0, N_mcmc, progress=True)

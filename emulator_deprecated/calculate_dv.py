@@ -45,9 +45,8 @@ if(n==0):
             # The mean of the Gaussian is specified by config.running_params_fid
             # plus shift from config.gauss_shift.
             init_params = get_gaussian_samples(config.running_params_fid, 
-                config.running_params, config.params, config.n_mcmc, 
-                config.n_resample, config.gauss_cov, config.gauss_temp, 
-                config.gauss_shift)
+                config.running_params, config.params, config.n_resample, 
+                config.gauss_cov, config.gauss_temp, config.gauss_shift)
     else:
         init_params = None
     init_params = comm.bcast(init_params, root=0)

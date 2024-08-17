@@ -27,6 +27,14 @@ parser.add_argument('--no_retrain', action='store_true', default=False,
     help='Do NOT retrain previous model, train a new model instead.')
 args = parser.parse_args()
 
+if torch.cuda.is_available():
+    device = 'cuda'
+else:
+    device = 'cpu'
+    torch.set_num_interop_threads(40) # Inter-op parallelism
+    torch.set_num_threads(40) # Intra-op parallelism
+print('Using device: ',device)
+
 #===============================================================================
 temper_schedule = [0.02, 0.1, 0.2, 0.5, 0.6, 0.7, 0.9, 0.9]
 
@@ -92,7 +100,7 @@ if (config.shear_shear==1):
     emu_xi_plus = NNEmulator(config.n_dim, config.N_xi, 
             config.dv_fid[_l:_r], config.dv_std[_l:_r], 
             config.inv_cov[_l:_r,_l:_r],
-            config.mask[_l:_r], config.nn_model)
+            config.mask[_l:_r], config.nn_model, device=device)
     emu_xi_plus_fn = pjoin(config.modeldir, f'xi_p_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_xi_plus_fn)):
         print(f'Loading existing xi_plus emulator from {emu_xi_plus_fn}....')
@@ -116,7 +124,7 @@ if (config.shear_shear==1):
     emu_xi_minus = NNEmulator(config.n_dim, config.N_xi, 
         config.dv_fid[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        config.mask[_l:_r], config.nn_model)
+        config.mask[_l:_r], config.nn_model, device=device)
     emu_xi_minus_fn = pjoin(config.modeldir, f'xi_m_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_xi_minus_fn)):
         print(f'Loading existing xi_minus emulator from {emu_xi_minus_fn}....')
@@ -141,7 +149,7 @@ if (config.shear_pos==1):
     emu_gammat = NNEmulator(config.n_dim, config.N_ggl, 
         config.dv_fid[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        config.mask[_l:_r], config.nn_model)
+        config.mask[_l:_r], config.nn_model, device=device)
     emu_gammat_fn = pjoin(config.modeldir, f'gammat_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_gammat_fn)):
         print(f'Loading existing gammat emulator from {emu_gammat_fn}....')
@@ -166,7 +174,7 @@ if (config.pos_pos==1):
     emu_wtheta = NNEmulator(config.n_dim, config.N_w, 
         config.dv_fid[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        config.mask[_l:_r], config.nn_model)
+        config.mask[_l:_r], config.nn_model, device=device)
     emu_wtheta_fn = pjoin(config.modeldir, f'wtheta_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_wtheta_fn)):
         print(f'Loading existing wtheta emulator from {emu_wtheta_fn}....')
@@ -191,7 +199,7 @@ if (config.gk==1):
     emu_gk = NNEmulator(config.n_dim, config.N_gk, 
         config.dv_fid[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        config.mask[_l:_r], config.nn_model)
+        config.mask[_l:_r], config.nn_model, device=device)
     emu_gk_fn = pjoin(config.modeldir, f'gk_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_gk_fn)):
         print(f'Loading existing w_gk emulator from {emu_gk_fn}....')
@@ -216,7 +224,7 @@ if (config.ks==1):
     emu_ks = NNEmulator(config.n_dim, config.N_sk, 
         config.dv_fid[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        config.mask[_l:_r], config.nn_model)
+        config.mask[_l:_r], config.nn_model, device=device)
     emu_ks_fn = pjoin(config.modeldir, f'ks_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_ks_fn)):
         print(f'Loading existing w_sk emulator from {emu_ks_fn}....')
@@ -241,7 +249,7 @@ if (config.kk==1):
     emu_kk = NNEmulator(config.n_dim, config.N_kk, 
         config.dv_fid[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        config.mask[_l:_r], config.nn_model)
+        config.mask[_l:_r], config.nn_model, device=device)
     emu_kk_fn = pjoin(config.modeldir, f'kk_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_kk_fn)):
         print(f'Loading existing CMBL band power emulator from {emu_kk_fn}....')
@@ -264,7 +272,7 @@ if (config.derived==1):
     print("=======================================")
     emu_s8 = NNEmulator(config.n_pars_cosmo, 1, 
         config.sigma8_fid, config.sigma8_std, 1.0/config.sigma8_fid**2, 
-        np.array([True,]), config.nn_model)
+        np.array([True,]), config.nn_model, device=device)
     emu_s8_fn = pjoin(config.modeldir, f'sigma8_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_s8_fn)):
         print(f'Loading existing derived parameters emulator (sigma8) from {emu_s8_fn}....')
