@@ -474,8 +474,8 @@ emulator:
   init_sample:
     type: "gaussian" # "lhs" or "gaussian"
     lhs_n: 18000 # Latin-Hyper Sample size
-    gauss_cov: ./projects/desy1xplanck/yaml/proposal_covmats/DES_Y3_3x2pt_syn.covmat # covariance of input parameters
-    gauss_temp: 1. # temperature applied to the param covariance
+    gauss_cov: ./projects/desy1xplanck/yaml/proposal_covmats/DESY3xPLKR4_6x2pt_syn.covmat
+    gauss_temp: 128. # temperature applied to the param covariance
     gauss_shift: 
      # omegam: 0.0
      # sigma8: 0.0
@@ -485,7 +485,7 @@ emulator:
     dv_fid: ./projects/desy1xplanck/data/data_vectors/xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_dmo.emufid
     chi_sq_cut: 1e+5
     n_train_iter: 4
-    n_resample: 18000
+    n_resample: 800000
     batch_size: 100
     n_epochs: 60
   derived:
