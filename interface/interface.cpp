@@ -125,6 +125,12 @@ void cpp_initial_setup()
   like.high_def_integration = 1;
   like.pm_integration_exact = 0;
 
+  // check OMP setting
+  int num_threads = 0;
+  #pragma omp parallel reduction(+:num_threads)
+  num_threads += 1;
+  spdlog::info("\x1b[90m{}\x1b[0m: OpenMP has {} threads", "initial_setup", num_threads);
+
   spdlog::debug("\x1b[90m{}\x1b[0m: Ends", "initial_setup");
 }
 

@@ -486,9 +486,12 @@ emulator:
     chi_sq_cut: 1e+5
     n_train_iter: 4
     n_resample: 800000
-    batch_size: 100
-    n_epochs: 60
+    batch_size: 256
+    n_epochs: 250
     loss_type: "clipped_mean"
+    learning_rate: 1.0e-3
+    weight_decay: 1.0e-3
+    reduce_lr: True
   derived:
     sigma8_fid: 0.827706
     sigma8_std: 0.500
