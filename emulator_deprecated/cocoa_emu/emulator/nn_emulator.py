@@ -279,8 +279,8 @@ class NNEmulator:
         # and also get rid off masked data points
         if self.deproj_PCA:
             # note that mask the dv and cov before building PCs
-            dv_fid_reduced = dv_fid[self.mask.bool()]
-            invcov_reduced = invcov[self.mask.bool()][:,self.mask.bool()]
+            dv_fid_reduced = torch.Tensor(dv_fid[self.mask.bool()])
+            invcov_reduced = torch.Tensor(invcov[self.mask.bool()][:,self.mask.bool()])
             eigenvalues, eigenvectors = np.linalg.eig(invcov_reduced)
             self.PC_reduced = torch.Tensor(eigenvectors)
             self.dv_std_reduced = torch.Tensor(np.sqrt(eigenvalues))
