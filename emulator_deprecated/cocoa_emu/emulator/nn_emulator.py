@@ -383,7 +383,7 @@ class NNEmulator:
                        )
         elif(model==5):
             print("Using Evan's model...")
-            in_dim_res = 256
+            int_dim_res = 256
             n_channels = 32
             int_dim_trf = 1024
             self.model = nn.Sequential(
