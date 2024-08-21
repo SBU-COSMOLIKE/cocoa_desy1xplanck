@@ -278,26 +278,26 @@ class NNEmulator:
         # and also get rid off masked data points
         if self.deproj_PCA:
             # note that mask the dv and cov before building PCs
-            dv_fid_reduced = dv_fid[self.mask.astype(bool)]
-            invcov_reduced = invcov[self.mask.astype(bool)][:,self.mask.astype(bool)]
+            dv_fid_reduced = dv_fid[self.mask.bool()]
+            invcov_reduced = invcov[self.mask.bool()][:,self.mask.bool()]
             eigenvalues, eigenvectors = np.linalg.eig(invcov_reduced)
             self.PC_reduced = torch.Tensor(eigenvectors)
             self.dv_std_reduced = torch.Tensor(np.sqrt(eigenvalues))
             self.dv_fid_reduced = torch.Tensor(self.PC_reduced.T@dv_fid_reduced)
             self.invcov_reduced = torch.Tensor(np.diag(eigenvalues))
             self.dv_fid = np.zeros(len(dv_fid))
-            self.dv_std[self.mask.astype(bool)] = self.dv_fid_reduced
+            self.dv_std[self.mask.bool()] = self.dv_fid_reduced
             self.dv_std = np.zeros(len(dv_std))
-            self.dv_std[self.mask.astype(bool)] = self.dv_std_reduced
+            self.dv_std[self.mask.bool()] = self.dv_std_reduced
             self.invcov = np.zeros(invcov.shape)
-            self.invcov[np.ix_(self.mask.astype(bool),self.mask.astype(bool))] = self.invcov_reduced
+            self.invcov[np.ix_(self.mask.bool(),self.mask.bool())] = self.invcov_reduced
         else:
             self.dv_fid = torch.Tensor(dv_fid)
             self.dv_std = torch.Tensor(dv_std)
             self.invcov = torch.Tensor(invcov)
-            self.dv_fid_reduced = torch.Tensor(dv_fid[self.mask.astype(bool)])
-            self.dv_std_reduced = torch.Tensor(dv_std[self.mask.astype(bool)])
-            self.invcov_reduced = torch.Tensor(invcov[self.mask.astype(bool)][:,self.mask.astype(bool)])
+            self.dv_fid_reduced = torch.Tensor(dv_fid[self.mask.bool()])
+            self.dv_std_reduced = torch.Tensor(dv_std[self.mask.bool()])
+            self.invcov_reduced = torch.Tensor(invcov[self.mask.bool()][:,self.mask.bool()])
 
         
         if (model==0):
@@ -481,8 +481,8 @@ class NNEmulator:
         print('N_epochs = ',n_epochs)
 
         # reduce & normalize y and y_validation by PC, and subtract mean
-        y_reduced = (self.PC_reduced.T@y[:,self.mask.astype(bool)].T).T - self.dv_fid_reduced
-        y_validation_reduced=(self.PC_reduced.T@y[:,self.mask.astype(bool)].T).T - self.dv_fid_reduced
+        y_reduced = (self.PC_reduced.T@y[:,self.mask.bool()].T).T - self.dv_fid_reduced
+        y_validation_reduced=(self.PC_reduced.T@y[:,self.mask.bool()].T).T - self.dv_fid_reduced
 
         # get normalization factors
         if not self.trained:
@@ -626,7 +626,7 @@ class NNEmulator:
         Y_pred_reduced = Y_pred_reduced@torch.t(self.PC_reduced)
         # TODO: what kind of X to expect? 2D?
         Y_pred = np.zeros(len(self.dv_fid))
-        Y_pred[self.mask.astype(bool)] = Y_pred_reduced.cpu().detach().numpy()
+        Y_pred[self.mask.bool()] = Y_pred_reduced.cpu().detach().numpy()
         return Y_pred
 
     def save(self, filename):
