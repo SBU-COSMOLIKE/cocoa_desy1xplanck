@@ -133,7 +133,7 @@ def get_gaussian_samples(param_fid, param_label, param_prior, N_sample,
                     ans += -np.inf
             elif dist == "norm":
                 # temp here?
-                ans += -0.5*((param[i]-prior["loc"])/prior["scale"]/temp)**2
+                ans += -(0.5)*((param[i]-prior["loc"])/prior["scale"])**2
         # BBN hard prior
         if "omegab" in param_label and "H0" in param_label:
             _par_dict = {k:v for k,v in zip(param_label, param)}
