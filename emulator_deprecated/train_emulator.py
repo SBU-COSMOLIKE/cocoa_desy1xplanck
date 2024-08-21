@@ -28,9 +28,9 @@ parser.add_argument('--no_retrain', action='store_true', default=False,
 args = parser.parse_args()
 
 if torch.cuda.is_available():
-    device = 'cuda'
+    device = torch.device('cuda')
 else:
-    device = 'cpu'
+    device = torch.device('cpu')
     torch.set_num_interop_threads(40) # Inter-op parallelism
     torch.set_num_threads(40) # Intra-op parallelism
 print('Using device: ',device)

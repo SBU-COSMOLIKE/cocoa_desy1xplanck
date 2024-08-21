@@ -258,8 +258,8 @@ class True_Transformer(nn.Module):
         return out+x
     
 class NNEmulator:
-    def __init__(self, N_DIM, OUTPUT_DIM, dv_fid, dv_std, invcov, mask=None, model=None, deproj_PCA=False, optim=None, device='cpu', lr=1e-3, 
-        reduce_lr=True, scheduler=None, weight_decay=1e-3, dtype='float'):
+    def __init__(self, N_DIM, OUTPUT_DIM, dv_fid, dv_std, invcov, mask=None, model=None, deproj_PCA=False, optim=None, device=torch.device('cpu'), 
+        lr=1e-3, reduce_lr=True, scheduler=None, weight_decay=1e-3, dtype='float'):
         self.N_DIM = N_DIM
         self.model = model
         self.optim = optim
