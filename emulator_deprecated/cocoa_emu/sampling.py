@@ -28,28 +28,18 @@ class EmuSampler:
         self.emu_list          = emu_list
         self.params            = config.params
         self.probe             = config.probe
-        self.ss                = config.shear_shear
-        self.sg                = config.shear_pos
-        self.gg                = config.pos_pos
-        self.gk                = config.gk
-        self.sk                = config.ks
-        self.kk                = config.kk 
-        self.N_ss              = config.N_xi
-        self.N_sg              = config.N_ggl
-        self.N_gg              = config.N_w
-        self.N_gk              = config.N_gk
-        self.N_sk              = config.N_sk
-        self.N_kk              = config.N_kk
+        self.probe_mask        = config.probe_mask
+        self.probe_size        = config.probe_size
         
         self.n_walkers         = config.n_emcee_walkers
         self.n_pcas_baryon     = config.n_pcas_baryon
         self.baryon_pcas       = config.baryon_pcas
         
         self.emu_type          = config.emu_type
-        self.mask              = config.mask
+        self.mask              = config.mask_lkl
         self.cov               = config.cov
         self.masked_inv_cov    = config.masked_inv_cov
-        self.dv_obs            = config.dv_obs
+        self.dv_lkl            = config.dv_lkl
         self.shear_calib_mask  = config.shear_calib_mask
         
         self.source_ntomo      = config.source_ntomo
@@ -58,6 +48,7 @@ class EmuSampler:
         
         self.n_fast_pars       = config.n_fast_pars
         
+        self.m_shear_fid = np.array([config.params["DES_M%d"%(i+1)]["value"] for i in range(self.source_ntomo)])
         self.m_shear_prior_std = split_with_comma(config.config_args_emu['shear_calib']['prior_std'])
         self.config_args_baryons = config.config_args_emu['baryons']
         
@@ -119,7 +110,7 @@ class EmuSampler:
                 self.galaxy_bias_std  = split_with_comma(self.config_args_bias['bias_std'])
                 self.galaxy_bias_mean = split_with_comma(self.config_args_bias['bias_mean'])
                 self.galaxy_bias_prior_parameters = np.array([self.galaxy_bias_mean, self.galaxy_bias_std]).T
-        self.m_shear_prior_parameters = np.array([np.zeros(self.source_ntomo), self.m_shear_prior_std]).T
+        self.m_shear_prior_parameters = np.array([self.m_shear_fid, self.m_shear_prior_std]).T
         
         if(self.n_pcas_baryon > 0):
             baryon_priors = []
@@ -144,14 +135,17 @@ class EmuSampler:
             elif self.bias_prior_type == 'gauss':
                 bias_pars_std = self.galaxy_bias_std            
             fast_pars_std = np.hstack([bias_pars_std, self.m_shear_prior_std])
+            fast_pars_mean = np.hstack([self.bias_fid, self.m_shear_fid])
         else:
             fast_pars_std = self.m_shear_prior_std
+            fast_pars_mean = self.m_shear_fid
         if(self.n_pcas_baryon > 0):
             baryon_std = np.hstack([0.1 * np.ones(self.n_pcas_baryon)])
             fast_pars_std = np.hstack([fast_pars_std, baryon_std])
-        p0_fast = fast_pars_std * np.random.normal(size=(self.n_walkers, self.n_fast_pars))
-        if self.probe!='cosmic_shear':
-            p0_fast[:,:self.lens_ntomo] = p0_fast[:,:self.lens_ntomo] + self.bias_fid
+            fast_pars_mean = np.hstack([fast_pars_mean, np.zeros(self.n_pcas_baryon)])
+        p0_fast = fast_pars_std[np.newaxis] * np.random.normal(size=(self.n_walkers, self.n_fast_pars)) + fast_pars_mean[np.newaxis]
+        # if self.probe!='cosmic_shear':
+        #     p0_fast[:,:self.lens_ntomo] = p0_fast[:,:self.lens_ntomo] + self.bias_fid
         p0 = np.hstack([p0, p0_fast])
         return p0
             
@@ -162,32 +156,32 @@ class EmuSampler:
         elif(self.emu_type=='gp'):
             theta = theta[np.newaxis]
         # evaluate data vector using list of emulators
-        if self.ss==1:
+        if self.probe_mask[0]==1:
             dv_ssp = self.emu_list[0].predict(theta)[0]
             dv_ssm = self.emu_list[1].predict(theta)[0]
         else:
-            dv_ssp = np.zeros(self.N_ss)
-            dv_ssm = np.zeros(self.N_ss)
-        if self.sg==1:
+            dv_ssp = np.zeros(self.probe_size[0]//2)
+            dv_ssm = np.zeros(self.probe_size[0]//2)
+        if self.probe_mask[1]==1:
             dv_sg = self.emu_list[2].predict(theta)[0]
         else:
-            dv_sg = self.zeros(self.N_sg)
-        if self.gg==1:
+            dv_sg = self.zeros(self.probe_size[1])
+        if self.probe_mask[2]==1:
             dv_gg = self.emu_list[3].predict(theta)[0]
         else:
-            dv_gg = self.zeros(self.N_gg)
-        if self.gk==1:
+            dv_gg = self.zeros(self.probe_size[2])
+        if self.probe_mask[3]==1:
             dv_gk = self.emu_list[4].predict(theta)[0]
         else:
-            dv_gk = np.zeros(self.N_gk)
-        if self.sk==1:
+            dv_gk = np.zeros(self.probe_size[3])
+        if self.probe_mask[4]==1:
             dv_sk = self.emu_list[5].predict(theta)[0]
         else:
-            dv_sk = np.zeros(self.N_sk)
-        if self.kk==1:
+            dv_sk = np.zeros(self.probe_size[4])
+        if self.probe_mask[5]==1:
             dv_kk = self.emu_list[6].predict(theta)[0]
         else:
-            dv_kk = np.zeros(self.N_kk)
+            dv_kk = np.zeros(self.probe_size[5])
         datavector = np.hstack([dv_ssp,dv_ssm,dv_sg,dv_gg,dv_gk,dv_sk,dv_kk])
         return datavector
     
@@ -204,7 +198,7 @@ class EmuSampler:
 
     def add_shear_calib(self, m, datavector):
         for i in range(self.source_ntomo):
-            factor = (1 + m[i])**self.shear_calib_mask[i]
+            factor = ((1+m[i])/(1+self.m_shear_fid[i]))**self.shear_calib_mask[i]
             datavector = factor * datavector
         return datavector
 
@@ -270,10 +264,10 @@ class EmuSampler:
     
     def ln_lkl(self, theta):
         model_datavector = self.get_data_vector_emu(theta)
-        delta_dv = (model_datavector - self.dv_obs)[self.mask]
+        delta_dv = (model_datavector - self.dv_lkl)[self.mask]
         return -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv        
 
     def ln_prob(self, theta, temper=1.):
         if self.block_value is not None:
             theta[self.block_indices] = self.block_value
-        return self.ln_prior(theta) + temper * self.ln_lkl(theta)
+        return self.ln_prior(theta) + (1/temper) * self.ln_lkl(theta)

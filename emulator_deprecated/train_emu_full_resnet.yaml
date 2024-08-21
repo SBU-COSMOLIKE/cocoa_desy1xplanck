@@ -488,6 +488,7 @@ emulator:
     n_resample: 800000
     batch_size: 100
     n_epochs: 60
+    loss_type: "clipped_mean"
   derived:
     sigma8_fid: 0.827706
     sigma8_std: 0.500

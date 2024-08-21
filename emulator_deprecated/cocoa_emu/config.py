@@ -58,7 +58,7 @@ class Config:
         self.lensing_overlap_cut = float(dataset.get("lensing_overlap_cut", 0.))
         assert np.abs(self.lensing_overlap_cut)<1e-5, "ERROR: The emulator only supports lensing_overlap_cut = 0.0 for now!"
         self.probe_size = [
-            int(self.source_ntomo*(self.source_ntomo+1)/2*self.Ntheta),
+            int(self.source_ntomo*(self.source_ntomo+1)*self.Ntheta),
             self.source_ntomo*self.lens_ntomo*self.Ntheta,
             self.lens_ntomo*self.Ntheta,
             self.lens_ntomo*self.Ntheta,
@@ -162,6 +162,10 @@ class Config:
 
         # Read emulator architecture
         self.emu_type = config_args_emu['training']['emu_type']
+        self.loss_type = config_args_emu['training']['loss_type']
+        self.learning_rate = config_args_emu['training']['learning_rate']
+        self.weight_decay = config_args_emu['training']['weight_decay']
+        self.reduce_lr = config_args_emu['training']['reduce_lr']
         assert (self.emu_type.lower()=='nn') or (self.emu_type.lower()=='gp'),\
                         "emu_type has to be either gp or nn."
         if(self.emu_type.lower()=='nn'):

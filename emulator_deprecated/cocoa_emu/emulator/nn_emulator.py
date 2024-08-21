@@ -258,20 +258,47 @@ class True_Transformer(nn.Module):
         return out+x
     
 class NNEmulator:
-    def __init__(self, N_DIM, OUTPUT_DIM, dv_fid, dv_std, invcov, mask=None, model=None, optim=None, device='cpu'):
+    def __init__(self, N_DIM, OUTPUT_DIM, dv_fid, dv_std, invcov, mask=None, model=None, deproj_PCA=False, optim=None, device='cpu', lr=1e-3, 
+        reduce_lr=True, scheduler=None, weight_decay=1e-3, dtype='float'):
         self.N_DIM = N_DIM
         self.model = model
         self.optim = optim
         self.device = device
+        self.reduce_lr    = reduce_lr
+        self.weight_decay = weight_decay
         self.trained = False
-        self.dv_fid = torch.Tensor(dv_fid)
-        self.dv_std = torch.Tensor(dv_std)
-        self.invcov = torch.Tensor(invcov)
+        # init data vector mask
         if mask is not None:
             self.mask = mask.astype(float)
         else:
-            self.mask = np.ones(OUTPUT_DIM)        
+            self.mask = np.ones(OUTPUT_DIM)
+        OUTPUT_DIM_REDUCED = (self.mask>0).sum()
         self.mask = torch.Tensor(self.mask)
+        # init data vector, dv covariance, and dv std (and deproject to PCs)
+        # and also get rid off masked data points
+        if self.deproj_PCA:
+            # note that mask the dv and cov before building PCs
+            dv_fid_reduced = dv_fid[self.mask.astype(bool)]
+            invcov_reduced = invcov[self.mask.astype(bool)][:,self.mask.astype(bool)]
+            eigenvalues, eigenvectors = np.linalg.eig(invcov_reduced)
+            self.PC_reduced = torch.Tensor(eigenvectors)
+            self.dv_std_reduced = torch.Tensor(np.sqrt(eigenvalues))
+            self.dv_fid_reduced = torch.Tensor(self.PC_reduced.T@dv_fid_reduced)
+            self.invcov_reduced = torch.Tensor(np.diag(eigenvalues))
+            self.dv_fid = np.zeros(len(dv_fid))
+            self.dv_std[self.mask.astype(bool)] = self.dv_fid_reduced
+            self.dv_std = np.zeros(len(dv_std))
+            self.dv_std[self.mask.astype(bool)] = self.dv_std_reduced
+            self.invcov = np.zeros(invcov.shape)
+            self.invcov[np.ix_(self.mask.astype(bool),self.mask.astype(bool))] = self.invcov_reduced
+        else:
+            self.dv_fid = torch.Tensor(dv_fid)
+            self.dv_std = torch.Tensor(dv_std)
+            self.invcov = torch.Tensor(invcov)
+            self.dv_fid_reduced = torch.Tensor(dv_fid[self.mask.astype(bool)])
+            self.dv_std_reduced = torch.Tensor(dv_std[self.mask.astype(bool)])
+            self.invcov_reduced = torch.Tensor(invcov[self.mask.astype(bool)][:,self.mask.astype(bool)])
+
         
         if (model==0):
             print("Using simply connected NN...")
@@ -287,7 +314,7 @@ class NNEmulator:
                                 nn.Linear(1024, 1024),
                                 nn.Dropout(0.1),
                                 nn.ReLU(),
-                                nn.Linear(1024, OUTPUT_DIM),
+                                nn.Linear(1024, OUTPUT_DIM_REDUCED),
                                 Affine()
                                 )
         elif(model==1):
@@ -307,7 +334,7 @@ class NNEmulator:
                            ResBlock(1024, 1024),
                            Affine(),
                            nn.PReLU(),
-                           nn.Linear(1024, OUTPUT_DIM),
+                           nn.Linear(1024, OUTPUT_DIM_REDUCED),
                            Affine()
                        )        
         elif(model==2):
@@ -320,7 +347,7 @@ class NNEmulator:
                                 nn.ReLU(),
                                 nn.Linear(2048, 2048),
                                 nn.ReLU(),
-                                nn.Linear(2048, OUTPUT_DIM),
+                                nn.Linear(2048, OUTPUT_DIM_REDUCED),
                                 Affine()
                                 )
         elif(model==3):
@@ -337,7 +364,7 @@ class NNEmulator:
                                 nn.Linear(3072, 3072),
                                 nn.Dropout(0.1),
                                 nn.ReLU(),
-                                nn.Linear(3072, OUTPUT_DIM),
+                                nn.Linear(3072, OUTPUT_DIM_REDUCED),
                                 Affine()
                                 )
         elif(model==4):
@@ -350,7 +377,7 @@ class NNEmulator:
                            ResBlock(256, 128),
                            nn.Linear(128, 512),
                            nn.ReLU(),
-                           nn.Linear(512, OUTPUT_DIM),
+                           nn.Linear(512, OUTPUT_DIM_REDUCED),
                            nn.ReLU(),
                            Affine()
                        )
@@ -371,14 +398,28 @@ class NNEmulator:
                             Better_Transformer(int_dim_trf, n_channels),
                             Better_Attention(int_dim_trf, n_channels),
                             Better_Transformer(int_dim_trf, n_channels),
-                            nn.Linear(int_dim_trf,OUTPUT_DIM),
+                            nn.Linear(int_dim_trf,OUTPUT_DIM_REDUCED),
                             Affine()
                         )
-
+        summary(self.model)
         self.model.to(device)
 
         if self.optim is None:
-            self.optim = torch.optim.Adam(self.model.parameters(), weight_decay=1e-4)
+            print('Learning rate = {}'.format(lr))
+            print('Weight decay = {}'.format(weight_decay))
+            # weight_decay used to be 1e-4 from Supranta
+            self.optim = torch.optim.Adam(self.model.parameters(), lr=lr,
+                weight_decay=self.weight_decay)
+        # some commits from Evan's emulator
+        if self.reduce_lr:
+            print('Reduce LR on plateau: ', self.reduce_lr)
+            self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optim, 'min', patience=10)
+        if dtype=='double':
+            torch.set_default_dtype(torch.double)
+            print('default data type = double')
+        if device!=torch.device('cpu'):
+            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+        self.generator=torch.Generator(device=self.device)
 
     def do_pca(self, data_vector, N_PCA):
         self.N_PCA = N_PCA
@@ -392,6 +433,7 @@ class NNEmulator:
         return self.pca.inverse_transform(pca_coeff)
     
     def train(self, X, y, test_split=None, batch_size=32, n_epochs=100):
+        assert self.deproj_PCA==False, f'Please use train_PCA()!'
         if not self.trained:
             self.X_mean = torch.Tensor(X.mean(axis=0, keepdims=True))
             self.X_std  = torch.Tensor(X.std(axis=0, keepdims=True))
@@ -427,8 +469,140 @@ class NNEmulator:
 
         self.trained = True
 
+    def train_PCA(self, X, y, X_validation, y_validation, test_split=None,
+        batch_size=1000, n_epochs=150, loss_type="mean"):
+        ''' Train the network with data vectors normalized by covariance PCs
+        y: training/validation data
+        Y: model prediction
+        X: input parameters
+        '''
+        assert self.deproj_PCA==True, f'Please use train()!'
+        print('Batch size = ',batch_size)
+        print('N_epochs = ',n_epochs)
+
+        # reduce & normalize y and y_validation by PC, and subtract mean
+        y_reduced = (self.PC_reduced.T@y[:,self.mask.astype(bool)].T).T - self.dv_fid_reduced
+        y_validation_reduced=(self.PC_reduced.T@y[:,self.mask.astype(bool)].T).T - self.dv_fid_reduced
+
+        # get normalization factors
+        if not self.trained:
+            self.X_mean = torch.Tensor(X.mean(axis=0, keepdims=True))
+            self.X_std  = torch.Tensor(X.std(axis=0, keepdims=True))
+            self.y_mean = self.dv_fid_reduced
+            self.y_std  = self.dv_std_reduced
+        # initialize arrays
+        losses_train = []
+        losses_vali = []
+        loss = 100.
+
+        # send everything to device
+        self.model.to(self.device)
+        tmp_y_std        = self.y_std.to(self.device)
+        tmp_cov_inv      = self.cov_inv.to(self.device)
+        tmp_X_mean       = self.X_mean.to(self.device)
+        tmp_X_std        = self.X_std.to(self.device)
+        tmp_X_validation = (X_validation.to(self.device) - tmp_X_mean)/tmp_X_std
+        tmp_y_validation = y_validation_reduced.to(self.device)
+
+        # Here is the input normalization
+        X_train     = ((X - self.X_mean)/self.X_std)
+        y_train     = y_reduced
+        trainset    = torch.utils.data.TensorDataset(X_train, y_train)
+        validset    = torch.utils.data.TensorDataset(tmp_X_validation,tmp_y_validation)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, drop_last=True, num_workers=0, generator=self.generator)
+        validloader = torch.utils.data.DataLoader(validset, batch_size=batch_size, shuffle=False, drop_last=True, num_workers=0, generator=self.generator)
+
+        print('Datasets loaded!')
+        print('Begin training...')
+        train_start_time = datetime.now()
+        for e in range(n_epochs):
+            start_time = datetime.now()
+
+            # training loss
+            self.model.train()
+            losses = []
+            for i, data in enumerate(trainloader):
+                # normalized X and y
+                X       = data[0].to(self.device)
+                y_batch = data[1].to(self.device)
+                Y_pred  = self.model(X) * tmp_y_std
+
+                diff = y_batch - Y_pred
+                loss_arr = torch.diag((diff@tmp_cov_inv)@torch.t(diff))
+                
+                # there are several choices for the loss function
+                if loss_type=="mean":
+                    loss = torch.mean(loss_arr)
+                elif loss_type=="clipped_mean":
+                    loss = torch.mean(torch.sort(loss_arr)[0][:-5])
+                elif loss_type=="log_chi2":
+                    loss = torch.mean(torch.log(loss_arr))
+                elif loss_type=="log_hyperbola":
+                    loss = torch.mean(torch.log(1+loss_arr))
+                elif loss_type=="hyperbola":
+                    loss = torch.mean((1+2*loss_arr)**(1/2))-1
+                elif loss_type=="hyperbola-1/3":
+                    loss = torch.mean((1+3*loss_arr)**(1/3))-1
+                else:
+                    print(f'Can not find loss function type {loss_type}!')
+                    print(f'Available choices: [mean, clipped_mean, log_chi2, log_hyperbola, hyperbola, hyperbola-1/3')
+                    exit(1)
+
+                losses.append(loss.cpu().detach().numpy())
+                self.optim.zero_grad()
+                loss.backward()
+                self.optim.step()
+            losses_train.append(np.mean(losses))
+
+            # validation loss
+            with torch.no_grad():
+                self.model.eval()
+                losses = []
+                for i, data in enumerate(validloader):  
+                    X_v       = data[0].to(self.device)
+                    y_v_batch = data[1].to(self.device)
+                    Y_v_pred = self.model(X_v) * tmp_y_std
+
+                    v_diff = y_v_batch - Y_v_pred 
+                    loss_arr_v =torch.diag((v_diff@tmp_cov_inv)@torch.t(v_diff))
+
+                    # there are several choices for the loss function
+                    if loss_type=="mean":
+                        loss_v = torch.mean(loss_arr_v)
+                    elif loss_type=="clipped_mean":
+                        loss_v = torch.mean(torch.sort(loss_arr_v)[0][:-5])
+                    elif loss_type=="log_chi2":
+                        loss_v = torch.mean(torch.log(loss_arr_v))
+                    elif loss_type=="log_hyperbola":
+                        loss_v = torch.mean(torch.log(1+loss_arr_v))
+                    elif loss_type=="hyperbola":
+                        loss_v = torch.mean((1+2*loss_arr_v)**(1/2))-1
+                    elif loss_type=="hyperbola-1/3":
+                        loss_v = torch.mean((1+3*loss_arr_v)**(1/3))-1
+                    else:
+                        print(f'Can not find loss function type {loss_type}!')
+                        print(f'Available choices: [mean, clipped_mean, log_chi2, log_hyperbola, hyperbola, hyperbola-1/3')
+                        exit(1)
+
+                    losses.append(loss_v.cpu().detach().numpy())
+                losses_vali.append(np.mean(losses))
+                if self.reduce_lr:
+                    self.scheduler.step(losses_vali[e])
+
+                self.optim.zero_grad()
+            # count per epoch time consumed 
+            end_time = datetime.now()
+            print('epoch {}, loss={:.5f}, validation loss={:.5f}, lr={:.2E} (epoch time: {:.1f})'.format(e, 
+                losses_train[-1], losses_vali[-1],
+                self.optim.param_groups[0]['lr'],
+                (end_time-start_time).total_seconds()))
+        # Finish all the epochs
+        np.savetxt("losses.txt", np.array([losses_train,losses_vali],dtype=np.float64))
+        self.trained = True
+
     def predict(self, X):
         assert self.trained, "The emulator needs to be trained first before predicting"
+        assert self.deproj_PCA==False, f'Please use predict_PCA()!'
 
         with torch.no_grad():
             X_mean = self.X_mean.clone().detach()
@@ -442,9 +616,23 @@ class NNEmulator:
 
         return y_pred.numpy()
 
+    def predict_PCA(self, X):
+        assert self.trained, "The emulator needs to be trained first before predicting"
+        assert self.deproj_PCA==True, f'Please use predict()!'
+
+        with torch.no_grad():
+            _X = (X-self.X_mean)/self.X_std
+            Y_pred_reduced=(self.model(_X)*self.y_std)+self.dv_fid_reduced
+        Y_pred_reduced = Y_pred_reduced@torch.t(self.PC_reduced)
+        # TODO: what kind of X to expect? 2D?
+        Y_pred = np.zeros(len(self.dv_fid))
+        Y_pred[self.mask.astype(bool)] = Y_pred_reduced.cpu().detach().numpy()
+        return Y_pred
+
     def save(self, filename):
         torch.save(self.model, filename)
         with h5.File(filename + '.h5', 'w') as f:
+            # TODO: what data to save?
             f['X_mean'] = self.X_mean
             f['X_std']  = self.X_std
             f['Y_mean'] = self.y_mean
@@ -452,9 +640,18 @@ class NNEmulator:
             f['dv_fid'] = self.dv_fid
             f['dv_std'] = self.dv_std
         
-    def load(self, filename):
+    def load(self, filename, device=torch.device('cpu'),state_dict=False):
         self.trained = True
-        self.model = torch.load(filename)
+        if device!=torch.device('cpu'):
+            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+        else:
+            torch.set_default_tensor_type('torch.FloatTensor')
+        if state_dict==False:
+            self.model = torch.load(filename,map_location=device)
+        else:
+            print('Loading with "torch.load_state_dict(torch.load(file))"...')
+            self.model.load_state_dict(torch.load(filename,map_location=device))
+        self.model.eval()
         with h5.File(filename + '.h5', 'r') as f:
             self.X_mean = torch.Tensor(f['X_mean'][:])
             self.X_std  = torch.Tensor(f['X_std'][:])
