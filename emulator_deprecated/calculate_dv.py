@@ -14,9 +14,11 @@ rank = comm.Get_rank()
 
 configfile = sys.argv[1]
 config = Config(configfile)
-label = config.emu_type.lower()
-if hasattr(config, "gauss_temp"):
-    label = label+f'_t{config.gauss_temp}'
+if config.init_sample_type == "lhs":
+    label = f'{config.init_sample_type}_{config.n_lhs}'
+else:
+    label =f'{config.init_sample_type}_t{config.gauss_temp}_{config.n_resample}'
+
 if(rank==0):
     print("Initializing configuration space data vector dimension!")
     print("N_xip: %d"%(config.probe_size[0]//2))
