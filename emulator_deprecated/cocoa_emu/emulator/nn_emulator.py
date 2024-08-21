@@ -263,6 +263,7 @@ class NNEmulator:
         self.N_DIM = N_DIM
         self.model = model
         self.optim = optim
+        self.deproj_PCA = deproj_PCA
         self.device = device
         self.reduce_lr    = reduce_lr
         self.weight_decay = weight_decay
