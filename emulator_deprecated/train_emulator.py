@@ -48,7 +48,9 @@ print(f'\n>>> Start Emulator Training [Iteration {args.iter}] [1/Temperature {te
 label = config.emu_type.lower()
 if label=="nn":
     label = label+f'{config.nn_model}'
-label = "nn1"
+
+label = "nn1" # quick hack
+>>>>>>> e1f1337dc94e99548293148543fe8c3ce19dd4a3
 #================== Loading Training & Validating Data =========================
 if args.only_new_sample:
     print(f'Loading training data: ONLY LOADING DATA FROM ITERATION {n}!')
