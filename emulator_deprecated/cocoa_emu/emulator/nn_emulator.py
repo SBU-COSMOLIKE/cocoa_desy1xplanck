@@ -287,7 +287,7 @@ class NNEmulator:
             self.dv_fid_reduced = torch.Tensor(self.PC_reduced.T@dv_fid_reduced)
             self.invcov_reduced = torch.Tensor(np.diag(eigenvalues))
             self.dv_fid = np.zeros(len(dv_fid))
-            self.dv_std[self.mask.bool()] = self.dv_fid_reduced
+            self.dv_fid[self.mask.bool()] = self.dv_fid_reduced
             self.dv_std = np.zeros(len(dv_std))
             self.dv_std[self.mask.bool()] = self.dv_std_reduced
             self.invcov = np.zeros(invcov.shape)
