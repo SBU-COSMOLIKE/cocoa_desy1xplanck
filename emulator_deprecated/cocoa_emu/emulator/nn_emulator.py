@@ -275,6 +275,7 @@ class NNEmulator:
             self.mask = np.ones(OUTPUT_DIM)
         OUTPUT_DIM_REDUCED = (self.mask>0).sum()
         self.mask = torch.Tensor(self.mask)
+        print(f'Default tensor device = {self.mask.device}')
         # init data vector, dv covariance, and dv std (and deproject to PCs)
         # and also get rid off masked data points
         if self.deproj_PCA:
@@ -421,6 +422,7 @@ class NNEmulator:
         if device!=torch.device('cpu'):
             torch.set_default_tensor_type('torch.cuda.FloatTensor')
         self.generator=torch.Generator(device=self.device)
+        print(f'Now the tensor device is {self.mask.device}')
 
     def do_pca(self, data_vector, N_PCA):
         self.N_PCA = N_PCA
