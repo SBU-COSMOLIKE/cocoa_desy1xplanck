@@ -402,6 +402,22 @@ class NNEmulator:
                             nn.Linear(int_dim_trf,OUTPUT_DIM_REDUCED),
                             Affine()
                         )
+        elif(model==6):
+            print("Using Evan's simplified model...")
+            int_dim_res = 256
+            n_channels = 32
+            int_dim_trf = 1024
+            self.model = nn.Sequential(
+                            nn.Linear(N_DIM, int_dim_res),
+                            Better_ResBlock(int_dim_res, int_dim_res),
+                            Better_ResBlock(int_dim_res, int_dim_res),
+                            Better_ResBlock(int_dim_res, int_dim_res),
+                            nn.Linear(int_dim_res, OUTPUT_DIM_REDUCED),
+                            Affine()
+                        )
+        else:
+            print(f'Can not support model {model}!')
+            exit(1)
         summary(self.model)
         self.model.to(device)
 
