@@ -29,10 +29,12 @@ args = parser.parse_args()
 
 if torch.cuda.is_available():
     device = torch.device('cuda')
+    torch.set_default_tensor_type('torch.cuda.FloatTensor')
 else:
     device = torch.device('cpu')
     torch.set_num_interop_threads(40) # Inter-op parallelism
     torch.set_num_threads(40) # Intra-op parallelism
+torch.set_default_device(device)
 print('Using device: ',device)
 
 #===============================================================================

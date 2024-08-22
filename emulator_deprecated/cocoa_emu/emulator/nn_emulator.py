@@ -418,8 +418,6 @@ class NNEmulator:
         if dtype=='double':
             torch.set_default_dtype(torch.double)
             print('default data type = double')
-        if device!=torch.device('cpu'):
-            torch.set_default_tensor_type('torch.cuda.FloatTensor')
         self.generator=torch.Generator(device=self.device)
 
     def do_pca(self, data_vector, N_PCA):
