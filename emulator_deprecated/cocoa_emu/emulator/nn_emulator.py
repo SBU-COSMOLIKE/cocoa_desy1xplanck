@@ -275,7 +275,6 @@ class NNEmulator:
             self.mask = np.ones(OUTPUT_DIM)
         OUTPUT_DIM_REDUCED = (self.mask>0).sum()
         self.mask = torch.Tensor(self.mask)
-        print(f'Default tensor device = {self.mask.device}')
         # init data vector, dv covariance, and dv std (and deproject to PCs)
         # and also get rid off masked data points
         if self.deproj_PCA:
@@ -291,7 +290,7 @@ class NNEmulator:
             self.dv_fid[self.mask.bool()] = self.dv_fid_reduced
             self.dv_std = np.zeros(len(dv_std))
             self.dv_std[self.mask.bool()] = self.dv_std_reduced
-            self.invcov = np.zeros(invcov.shape)
+            self.invcov = torch.Tensor(np.zeros(invcov.shape))
             self.invcov[np.ix_(self.mask.bool(),self.mask.bool())] = self.invcov_reduced
         else:
             self.dv_fid = torch.Tensor(dv_fid)
@@ -419,8 +418,8 @@ class NNEmulator:
         if dtype=='double':
             torch.set_default_dtype(torch.double)
             print('default data type = double')
-        self.generator=torch.Generator(device=self.device)
-        print(f'Now the tensor device is {self.mask.device}')
+        #self.generator=torch.Generator(device=self.device)
+        self.generator=torch.Generator("cpu")
 
     def do_pca(self, data_vector, N_PCA):
         self.N_PCA = N_PCA
@@ -499,15 +498,15 @@ class NNEmulator:
         # send everything to device
         self.model.to(self.device)
         tmp_y_std        = self.y_std.to(self.device)
-        tmp_cov_inv      = self.cov_inv.to(self.device)
+        tmp_cov_inv      = self.invcov_reduced.to(self.device)
         tmp_X_mean       = self.X_mean.to(self.device)
         tmp_X_std        = self.X_std.to(self.device)
         tmp_X_validation = (X_validation.to(self.device) - tmp_X_mean)/tmp_X_std
         tmp_y_validation = y_validation_reduced.to(self.device)
 
         # Here is the input normalization
-        X_train     = ((X - self.X_mean)/self.X_std)
-        y_train     = y_reduced
+        X_train     = ((X - self.X_mean)/self.X_std).to(self.device)
+        y_train     = y_reduced.to(self.device)
         trainset    = torch.utils.data.TensorDataset(X_train, y_train)
         validset    = torch.utils.data.TensorDataset(tmp_X_validation,tmp_y_validation)
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, drop_last=True, num_workers=0, generator=self.generator)
