@@ -188,7 +188,7 @@ if (config.probe_mask[1]==1):
     emu_gammat = NNEmulator(config.n_dim, config.probe_size[1], 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_gammat_fn = pjoin(config.modeldir, f'gammat_{n}_nn{config.nn_model}')
@@ -219,7 +219,7 @@ if (config.probe_mask[2]==1):
     emu_wtheta = NNEmulator(config.n_dim, config.probe_size[2], 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_wtheta_fn = pjoin(config.modeldir, f'wtheta_{n}_nn{config.nn_model}')
@@ -249,7 +249,7 @@ if (config.probe_mask[3]==1):
     emu_gk = NNEmulator(config.n_dim, config.probe_size[3], 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_gk_fn = pjoin(config.modeldir, f'gk_{n}_nn{config.nn_model}')
@@ -279,7 +279,7 @@ if (config.probe_mask[4]==1):
     emu_ks = NNEmulator(config.n_dim, config.probe_size[4], 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_ks_fn = pjoin(config.modeldir, f'ks_{n}_nn{config.nn_model}')
@@ -309,7 +309,7 @@ if (config.probe_mask[5]==1):
     emu_kk = NNEmulator(config.n_dim, config.probe_size[5], 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_kk_fn = pjoin(config.modeldir, f'kk_{n}_nn{config.nn_model}')
