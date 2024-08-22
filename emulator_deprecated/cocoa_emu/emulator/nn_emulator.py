@@ -419,8 +419,6 @@ class NNEmulator:
         if dtype=='double':
             torch.set_default_dtype(torch.double)
             print('default data type = double')
-        if device!=torch.device('cpu'):
-            torch.set_default_tensor_type('torch.cuda.FloatTensor')
         self.generator=torch.Generator(device=self.device)
         print(f'Now the tensor device is {self.mask.device}')
 
