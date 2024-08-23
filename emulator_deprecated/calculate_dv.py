@@ -82,7 +82,7 @@ def get_local_data_vector_list(params_list, rank, return_s8=False):
     N_local   = N_samples // size    
     for i in range(rank * N_local, (rank + 1) * N_local):
         if ((i-rank*N_local)%20==0):
-            print(f'[{rank}/{size}] get_local_data_vector_list: iteration {i-rank*N_local}...')
+            print(f'[{rank}/{size}] get_local_data_vector_list: iteration {i-rank*N_local}/{N_local}...')
         if type(params_list[i]) != dict:
             _p = {k:v for k,v in zip(config.running_params, params_list[i])}
         else:
