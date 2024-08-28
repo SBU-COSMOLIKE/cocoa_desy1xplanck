@@ -75,6 +75,9 @@ def get_local_data_vector_list(params_list, rank, return_s8=False):
         - train_params: model parameters of the training sample
         - train_data_vectors: data vectors of the training sample
     '''
+    # print results real time 
+    dump_file = pjoin(config.traindir, f'dump/{label}_{n}_{rank}-{size}.txt')
+    fp = open(dump_file, "w")
     train_params_list      = []
     train_data_vector_list = []
     train_sigma8_list      = []
@@ -94,6 +97,13 @@ def get_local_data_vector_list(params_list, rank, return_s8=False):
         train_data_vector_list.append(data_vector)
         if return_s8:
             train_sigma8_list.append(_s8)
+            context = ' '.join([f'{num:e}' for num in np.hstack([params_arr, _s8, data_vector])])
+            fp.write(context+"\n")
+        else:
+            context = ' '.join([f'{num:e}' for num in np.hstack([params_arr, data_vector])])
+            fp.write(context+"\n")
+        fp.flush()
+    fp.close()
     if return_s8:
         return train_params_list, train_data_vector_list, train_sigma8_list
     else:
@@ -118,6 +128,7 @@ def get_data_vectors(params_list, comm, rank, return_s8=False):
             data vectors of the training sample
     '''
     local_params_list, local_data_vector_list, local_sigma8_list = get_local_data_vector_list(params_list, rank, return_s8=return_s8)
+    comm.Barrier() # Synchronize before collecting results
     if rank!=0:
         comm.send([local_params_list, local_data_vector_list, local_sigma8_list], dest=0)
         train_params       = None
