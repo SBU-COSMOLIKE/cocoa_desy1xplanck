@@ -437,6 +437,13 @@ class NNEmulator:
         #self.generator=torch.Generator(device=self.device)
         self.generator=torch.Generator("cpu")
 
+        ### Initialize model weights
+        for m in self.model.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+
     def do_pca(self, data_vector, N_PCA):
         self.N_PCA = N_PCA
         pca = PCA(self.N_PCA)
@@ -583,10 +590,12 @@ class NNEmulator:
                         else:
                             NaN_norm_counts += 1
                 total_norm = total_norm ** 0.5
-                print(f'Epoch {e}: total gradient norm = {total_norm} ',
-                      f'min norm = {min_norm} max norm = {max_norm}')
+                print(f'Epoch {e}: total gradient norm = {total_norm:.2e} ',
+                      f'min norm = {min_norm:.2e} max norm = {max_norm:.2e}')
                 if NaN_norm_counts > 0:
-                    print(f'Find {NaN_norm_counts} NaN gradients!')
+                    print(f'Find {NaN_norm_counts} NaN gradients! Clipping...')
+                # clipping exploding gradient
+                torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1e13)
 
                 self.optim.step()
             losses_train.append(np.mean(losses))
