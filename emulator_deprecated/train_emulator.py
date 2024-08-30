@@ -47,48 +47,68 @@ if(args.temper):
 else:
     temper_val = 1.
 print(f'\n>>> Start Emulator Training [Iteration {args.iter}] [1/Temperature {temper_val:2.3f}]\n')
-label = config.emu_type.lower()
-if label=="nn":
-    label = label+f'{config.nn_model}'
-
-label = "nn1" # quick hack
+#label = config.emu_type.lower()
+#if label=="nn":
+#    label = label+f'{config.nn_model}'
+#if config.init_sample_type == "lhs":
+#    label = f'{config.init_sample_type}_{config.n_lhs}'
+#else:
+#    label =f'{config.init_sample_type}_t{config.gauss_temp}_{config.n_resample}'
+label_train = "gaussian_t128.0"
+label_valid = "gaussian_t64.0"
+N_sample_train = 1000000
+N_sample_valid = 100000
+#label = "nn1" # quick hack
 #================== Loading Training & Validating Data =========================
 if args.only_new_sample:
     print(f'Loading training data: ONLY LOADING DATA FROM ITERATION {n}!')
-    train_samples = np.load(pjoin(config.traindir, f'samples_{label}_{n}.npy'))
+    train_samples = np.load(pjoin(config.traindir, 
+        f'samples_{label_train}_{N_sample_train}_{n}.npy'))
     train_data_vectors = np.load(pjoin(config.traindir, 
-        f'data_vectors_{label}_{n}.npy'))
-    train_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label}_{n}.npy'))
+        f'data_vectors_{label_train}_{N_sample_train}_{n}.npy'))
+    train_sigma8 = np.load(pjoin(config.traindir, 
+        f'sigma8_{label_train}_{N_sample_train}_{n}.npy'))
+    print(f'Dataset dimension: s{train_samples.shape}/d{train_data_vectors.shape}/8{train_sigma8.shape}')
     print(f'Loading validating data: ONLY LOADING DATA FROM ITERATION {n}!')
-    valid_samples = np.load(pjoin(config.traindir, f'samples_{label}_{n}.npy'))
+    valid_samples = np.load(pjoin(config.traindir, 
+        f'samples_{label_valid}_{N_sample_valid}_{n}.npy'))
     valid_data_vectors = np.load(pjoin(config.traindir, 
-        f'data_vectors_{label}_{n}.npy'))
-    valid_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label}_{n}.npy'))
+        f'data_vectors_{label_valid}_{N_sample_valid}_{n}.npy'))
+    valid_sigma8 = np.load(pjoin(config.traindir, 
+        f'sigma8_{label_valid}_{N_sample_valid}_{n}.npy'))
+    print(f'Dataset dimension: s{valid_samples.shape}/d{valid_data_vectors.shape}/8{valid_sigma8.shape}')
 else:
     print(f'Loading training data: LOADING ALL DATA UNTIL ITERATION {n}!')
-    train_samples = np.load(pjoin(config.traindir, f'samples_{label}_{0}.npy'))
+    train_samples = np.load(pjoin(config.traindir, 
+        f'samples_{label_train}_{N_sample_train}_{0}.npy'))
     train_data_vectors = np.load(pjoin(config.traindir, 
-        f'data_vectors_{label}_{0}.npy'))
-    train_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label}_{0}.npy'))
+        f'data_vectors_{label_train}_{N_sample_train}_{0}.npy'))
+    train_sigma8 = np.load(pjoin(config.traindir, 
+        f'sigma8_{label_train}_{N_sample_train}_{0}.npy'))
     for i in range(1, n+1):
-        train_samples = np.vstack([train_samples, 
-            np.load(pjoin(config.traindir, f'samples_{label}_{i}.npy'))])
-        train_data_vectors = np.vstack([train_data_vectors,
-            np.load(pjoin(config.traindir, f'data_vectors_{label}_{i}.npy'))])
-        train_sigma8 = np.vstack([train_sigma8,
-            np.load(pjoin(config.traindir, f'sigma8_{label}_{i}.npy'))])
+        train_samples = np.vstack([train_samples, np.load(pjoin(config.traindir, 
+            f'samples_{label_train}_{N_sample_train}_{i}.npy'))])
+        train_data_vectors = np.vstack([train_data_vectors, np.load(pjoin(config.traindir, 
+            f'data_vectors_{label_train}_{N_sample_train}_{i}.npy'))])
+        train_sigma8 = np.vstack([train_sigma8, np.load(pjoin(config.traindir, 
+            f'sigma8_{label_train}_{N_sample_train}_{i}.npy'))])
+    print(f'Dataset dimension: s{train_samples.shape}/d{train_data_vectors.shape}/8{train_sigma8.shape}')
     print(f'Loading training data: LOADING ALL DATA UNTIL ITERATION {n}!')
-    valid_samples = np.load(pjoin(config.traindir, f'samples_{label}_{0}.npy'))
+    valid_samples = np.load(pjoin(config.traindir, 
+        f'samples_{label_valid}_{N_sample_valid}_{0}.npy'))
     valid_data_vectors = np.load(pjoin(config.traindir, 
-        f'data_vectors_{label}_{0}.npy'))
-    valid_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label}_{0}.npy'))
+        f'data_vectors_{label_valid}_{N_sample_valid}_{0}.npy'))
+    valid_sigma8 = np.load(pjoin(config.traindir, 
+        f'sigma8_{label_valid}_{N_sample_valid}_{0}.npy'))
     for i in range(1, n+1):
-        valid_samples = np.vstack([valid_samples, 
-            np.load(pjoin(config.traindir, f'samples_{label}_{i}.npy'))])
-        valid_data_vectors = np.vstack([valid_data_vectors,
-            np.load(pjoin(config.traindir, f'data_vectors_{label}_{i}.npy'))])
-        valid_sigma8 = np.vstack([valid_sigma8,
-            np.load(pjoin(config.traindir, f'sigma8_{label}_{i}.npy'))])
+        valid_samples = np.vstack([valid_samples, np.load(pjoin(config.traindir,
+            f'samples_{label_valid}_{N_sample_valid}_{i}.npy'))])
+        valid_data_vectors = np.vstack([valid_data_vectors, np.load(pjoin(config.traindir,
+            f'data_vectors_{label_valid}_{N_sample_valid}_{i}.npy'))])
+        valid_sigma8 = np.vstack([valid_sigma8, np.load(pjoin(config.traindir,
+            f'sigma8_{label_valid}_{N_sample_valid}_{i}.npy'))])
+    print(f'Dataset dimension: s{valid_samples.shape}/d{valid_data_vectors.shape}/8{valid_sigma8.shape}')
+
 #================= Clean data by chi2 cut ======================================
 
 def get_chi_sq_cut(train_data_vectors):

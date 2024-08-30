@@ -498,7 +498,7 @@ class NNEmulator:
 
         # reduce & normalize y and y_validation by PC, and subtract mean
         y_reduced = (self.PC_reduced.T@y[:,self.mask.bool()].T).T - self.dv_fid_reduced
-        y_validation_reduced=(self.PC_reduced.T@y[:,self.mask.bool()].T).T - self.dv_fid_reduced
+        y_validation_reduced=(self.PC_reduced.T@y_validation[:,self.mask.bool()].T).T - self.dv_fid_reduced
 
         # get normalization factors
         if not self.trained:
@@ -563,6 +563,7 @@ class NNEmulator:
                     print(f'Can not find loss function type {loss_type}!')
                     print(f'Available choices: [mean, clipped_mean, log_chi2, log_hyperbola, hyperbola, hyperbola-1/3')
                     exit(1)
+                assert torch.isfinite(loss), f'Invalid loss: {loss_arr.detach().cpu()}'
 
                 losses.append(loss.cpu().detach().numpy())
                 self.optim.zero_grad()
@@ -599,6 +600,7 @@ class NNEmulator:
                         print(f'Can not find loss function type {loss_type}!')
                         print(f'Available choices: [mean, clipped_mean, log_chi2, log_hyperbola, hyperbola, hyperbola-1/3')
                         exit(1)
+                    assert torch.isfinite(loss_v), f'Invalid loss: {loss_arr_v.detach().cpu()}'
 
                     losses.append(loss_v.cpu().detach().numpy())
                 losses_vali.append(np.mean(losses))
