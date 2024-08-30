@@ -82,7 +82,7 @@ class Better_ResBlock(nn.Module):
         xskip = self.skip(x)
 
         o1 = self.act1(self.norm1(self.layer1(x)))
-        o2 = self.layer2(o1) + xskip             #(self.norm2(self.layer2(o1))) + xskip
+        o2 = self.layer2(o1) + xskip #(self.norm2(self.layer2(o1))) + xskip
         o3 = self.act3(self.norm3(o2))
 
         return o3
@@ -568,6 +568,26 @@ class NNEmulator:
                 losses.append(loss.cpu().detach().numpy())
                 self.optim.zero_grad()
                 loss.backward()
+
+                # monitor parameters grad norm
+                total_norm = 0
+                min_norm, max_norm = np.inf, -np.inf
+                NaN_norm_counts = 0
+                for param in self.model.parameters():
+                    if param.grad is not None:
+                        param_norm = param.grad.data.norm(2)
+                        if torch.isfinite(param_norm):
+                            total_norm += param_norm.item() ** 2
+                            min_norm = min_norm if total_norm>min_norm else total_norm
+                            max_norm = max_norm if total_norm<max_norm else total_norm
+                        else:
+                            NaN_norm_counts += 1
+                total_norm = total_norm ** 0.5
+                print(f'Epoch {e}: total gradient norm = {total_norm} ',
+                      f'min norm = {min_norm} max norm = {max_norm}')
+                if NaN_norm_counts > 0:
+                    print(f'Find {NaN_norm_counts} NaN gradients!')
+
                 self.optim.step()
             losses_train.append(np.mean(losses))
 
