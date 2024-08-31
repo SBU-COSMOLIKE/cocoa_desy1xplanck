@@ -544,6 +544,7 @@ class NNEmulator:
             # training loss
             self.model.train()
             losses = []
+            NaN_norm_counts = 0
             for i, data in enumerate(trainloader):
                 # normalized X and y
                 X       = data[0].to(self.device)
@@ -577,27 +578,27 @@ class NNEmulator:
                 loss.backward()
 
                 # monitor parameters grad norm
-                total_norm = 0
+                total_norm, total_norm_ct = 0, 0
                 min_norm, max_norm = np.inf, -np.inf
-                NaN_norm_counts = 0
                 for param in self.model.parameters():
                     if param.grad is not None:
                         param_norm = param.grad.data.norm(2)
                         if torch.isfinite(param_norm):
                             total_norm += param_norm.item() ** 2
+                            total_norm_ct += 1
                             min_norm = min_norm if total_norm>min_norm else total_norm
                             max_norm = max_norm if total_norm<max_norm else total_norm
                         else:
                             NaN_norm_counts += 1
-                total_norm = total_norm ** 0.5
-                print(f'Epoch {e}: total gradient norm = {total_norm:.2e} ',
-                      f'min norm = {min_norm:.2e} max norm = {max_norm:.2e}')
-                if NaN_norm_counts > 0:
-                    print(f'Find {NaN_norm_counts} NaN gradients! Clipping...')
+                total_norm = (total_norm/total_norm_ct) ** 0.5
+                print(f'\rEpoch {e:3d}: total gradient norm = {total_norm:.2e} min norm = {min_norm:.2e} max norm = {max_norm:.2e}', end='', flush=True)
                 # clipping exploding gradient
                 torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1e13)
 
                 self.optim.step()
+            print("\n")
+            if NaN_norm_counts > 0:
+                print(f'Find {NaN_norm_counts} NaN gradients! Clipping...')
             losses_train.append(np.mean(losses))
 
             # validation loss
@@ -639,7 +640,7 @@ class NNEmulator:
                 self.optim.zero_grad()
             # count per epoch time consumed 
             end_time = datetime.now()
-            print('epoch {}, loss={:.5f}, validation loss={:.5f}, lr={:.2E} (epoch time: {:.1f})'.format(e, 
+            print('epoch {}, loss={:.5e}, validation loss={:.5e}, lr={:.2E} (epoch time: {:.1f})'.format(e, 
                 losses_train[-1], losses_vali[-1],
                 self.optim.param_groups[0]['lr'],
                 (end_time-start_time).total_seconds()))
