@@ -593,7 +593,7 @@ class NNEmulator:
                 total_norm = (total_norm/total_norm_ct) ** 0.5
                 print(f'\rEpoch {e:3d}: total gradient norm = {total_norm:.2e} min norm = {min_norm:.2e} max norm = {max_norm:.2e}', end='', flush=True)
                 # clipping exploding gradient
-                torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1e13)
+                torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1e30)
 
                 self.optim.step()
             print("\n")
