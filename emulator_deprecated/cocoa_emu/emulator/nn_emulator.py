@@ -591,14 +591,12 @@ class NNEmulator:
                         else:
                             NaN_norm_counts += 1
                 total_norm = (total_norm/total_norm_ct) ** 0.5
-                print(f'\rEpoch {e:3d}: total gradient norm = {total_norm:.2e} min norm = {min_norm:.2e} max norm = {max_norm:.2e}', end='', flush=True)
+                print(f'\rEpoch {e:3d}: total grad norm = {total_norm:.1e} min = {min_norm:.1e} max = {max_norm:.1e} NaN counts {NaN_norm_counts:d}', end='', flush=True)
                 # clipping exploding gradient
                 torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1e30)
 
                 self.optim.step()
-            print("\n")
-            if NaN_norm_counts > 0:
-                print(f'Find {NaN_norm_counts} NaN gradients! Clipping...')
+            print("")
             losses_train.append(np.mean(losses))
 
             # validation loss
@@ -640,7 +638,7 @@ class NNEmulator:
                 self.optim.zero_grad()
             # count per epoch time consumed 
             end_time = datetime.now()
-            print('epoch {}, loss={:.5e}, validation loss={:.5e}, lr={:.2E} (epoch time: {:.1f})'.format(e, 
+            print('Epoch {:3d}: >>> loss={:.2e}, validation loss={:.2e}, lr={:.2E} (epoch time: {:.1f})'.format(e, 
                 losses_train[-1], losses_vali[-1],
                 self.optim.param_groups[0]['lr'],
                 (end_time-start_time).total_seconds()))
