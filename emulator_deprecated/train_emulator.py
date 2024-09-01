@@ -112,33 +112,30 @@ else:
 #================= Clean data by chi2 cut ======================================
 
 def get_chi_sq_cut(train_data_vectors):
-    delta_dv = [train_data_vectors - config.dv_lkl[np.newaxis,:]][:,config.mask_lkl]
-    chi_sq = np.diag((delta_dv@config.masked_inv_cov@delta_dv.T))
-    return chi_sq < config.chi_sq_cut
-    # chi_sq_list = []
-    # for dv in train_data_vectors:
-    #     delta_dv = (dv - config.dv_lkl)[config.mask_lkl]
-    #     chi_sq = delta_dv @ config.masked_inv_cov @ delta_dv
-    #     chi_sq_list.append(chi_sq)
-    # chi_sq_arr = np.array(chi_sq_list)
-    # select_chi_sq = (chi_sq_arr < config.chi_sq_cut)
-    # return select_chi_sq
+    chi_sq_list = []
+    for dv in train_data_vectors:
+        delta_dv = (dv - config.dv_lkl)[config.mask_lkl]
+        chi_sq = delta_dv @ config.masked_inv_cov @ delta_dv
+        chi_sq_list.append(chi_sq)
+    chi_sq_arr = np.array(chi_sq_list)
+    select_chi_sq = (chi_sq_arr < config.chi_sq_cut)
+    return select_chi_sq
 
-select_chi_sq_train = get_chi_sq_cut(train_data_vectors)
-selected_obj_train = np.sum(select_chi_sq_train)
-total_obj_train    = len(train_data_vectors)
-print("Total number of objects: %d"%(selected_obj_train))
-train_data_vectors = train_data_vectors[select_chi_sq_train]
-train_samples      = train_samples[select_chi_sq_train]
-train_sigma8       = train_sigma8[select_chi_sq_train]
+#select_chi_sq_train = get_chi_sq_cut(train_data_vectors)
+#selected_obj_train = np.sum(select_chi_sq_train)
+#total_obj_train    = len(train_data_vectors)
+#print("Total number of objects: %d"%(selected_obj_train))
+#train_data_vectors = train_data_vectors[select_chi_sq_train]
+#train_samples      = train_samples[select_chi_sq_train]
+#train_sigma8       = train_sigma8[select_chi_sq_train]
 
-select_chi_sq_valid = get_chi_sq_cut(valid_data_vectors)
-selected_obj_valid = np.sum(select_chi_sq_valid)
-total_obj_valid    = len(valid_data_vectors)
-print("Total number of objects: %d"%(selected_obj_valid))
-valid_data_vectors = valid_data_vectors[select_chi_sq_valid]
-valid_samples      = valid_samples[select_chi_sq_valid]
-valid_sigma8       = valid_sigma8[select_chi_sq_valid]
+#select_chi_sq_valid = get_chi_sq_cut(valid_data_vectors)
+#selected_obj_valid = np.sum(select_chi_sq_valid)
+#total_obj_valid    = len(valid_data_vectors)
+#print("Total number of objects: %d"%(selected_obj_valid))
+#valid_data_vectors = valid_data_vectors[select_chi_sq_valid]
+#valid_samples      = valid_samples[select_chi_sq_valid]
+#valid_sigma8       = valid_sigma8[select_chi_sq_valid]
 
 #================= Init emulator ===============================================
 # NN only hard-coded?
