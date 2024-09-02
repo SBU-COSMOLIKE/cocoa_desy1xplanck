@@ -638,10 +638,10 @@ class NNEmulator:
                 self.optim.zero_grad()
             # count per epoch time consumed 
             end_time = datetime.now()
-            print(f'Epoch {e:03d}: {(end_time-start_time).total_seconds():d} s')
+            print(f'Epoch {e:03d}: {(end_time-start_time).total_seconds():.2f} s')
             print(f'>>> Learning rate = {self.optim.param_groups[0]["lr"]:.2e}')
             print(f'>>> Training loss = {losses_train[-1]:.2e}')
-            print(f'>>> Validation loss = {losses_valid[-1]:.2e}')
+            print(f'>>> Validation loss = {losses_vali[-1]:.2e}')
         # Finish all the epochs
         np.savetxt("losses.txt", np.array([losses_train,losses_vali],dtype=np.float64))
         self.trained = True
