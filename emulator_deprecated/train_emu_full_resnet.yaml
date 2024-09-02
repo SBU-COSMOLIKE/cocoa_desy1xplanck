@@ -489,6 +489,8 @@ emulator:
     batch_size: 256
     n_epochs: 250
     loss_type: "hyperbola"
+    #loss_type: "clipped_mean"
+    #loss_type: "mean"
     learning_rate: 1.0e-3
     weight_decay: 1.0e-3
     reduce_lr: True

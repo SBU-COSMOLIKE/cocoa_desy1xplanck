@@ -590,10 +590,10 @@ class NNEmulator:
                             max_norm = max_norm if total_norm<max_norm else total_norm
                         else:
                             NaN_norm_counts += 1
-                total_norm = (total_norm/total_norm_ct) ** 0.5
+                total_norm = total_norm ** 0.5
                 print(f'\rEpoch {e:3d}: total grad norm = {total_norm:.1e} min = {min_norm:.1e} max = {max_norm:.1e} NaN counts {NaN_norm_counts:d}', end='', flush=True)
                 # clipping exploding gradient
-                torch.nn.utils.clip_grad_value_(self.model.parameters(), clip_value=1e30)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1e25)
 
                 self.optim.step()
             print("")
