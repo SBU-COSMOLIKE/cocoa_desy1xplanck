@@ -279,12 +279,12 @@ class NNEmulator:
         # and also get rid off masked data points
         if self.deproj_PCA:
             # note that mask the dv and cov before building PCs
-            dv_fid_reduced = torch.Tensor(dv_fid[self.mask.bool()])
-            invcov_reduced = torch.Tensor(invcov[self.mask.bool()][:,self.mask.bool()])
-            eigenvalues, eigenvectors = np.linalg.eig(invcov_reduced)
-            self.PC_reduced = torch.Tensor(eigenvectors)
-            self.dv_std_reduced = torch.Tensor(np.sqrt(eigenvalues))
-            self.dv_fid_reduced = torch.Tensor(self.PC_reduced.T@dv_fid_reduced)
+            dv_fid_masked = torch.Tensor(dv_fid[self.mask.bool()])
+            invcov_masked = torch.Tensor(invcov[self.mask.bool()][:,self.mask.bool()])
+            eigenvalues, eigenvectors = np.linalg.eig(invcov_masked)
+            self.PC_masked = torch.Tensor(eigenvectors)
+            self.dv_std_reduced = torch.Tensor(1./np.sqrt(eigenvalues))
+            self.dv_fid_reduced = torch.Tensor(dv_fid_masked@self.PC_masked)
             self.invcov_reduced = torch.Tensor(np.diag(eigenvalues))
             self.dv_fid = np.zeros(len(dv_fid))
             self.dv_fid[self.mask.bool()] = self.dv_fid_reduced
@@ -299,6 +299,7 @@ class NNEmulator:
             self.dv_fid_reduced = torch.Tensor(dv_fid[self.mask.bool()])
             self.dv_std_reduced = torch.Tensor(dv_std[self.mask.bool()])
             self.invcov_reduced = torch.Tensor(invcov[self.mask.bool()][:,self.mask.bool()])
+            self.PC_masked = None
 
         
         if (model==0):
@@ -444,16 +445,13 @@ class NNEmulator:
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
 
-    def do_pca(self, data_vector, N_PCA):
-        self.N_PCA = N_PCA
-        pca = PCA(self.N_PCA)
-        pca.fit(data_vector)
-        self.pca = pca
-        pca_coeff = pca.transform(data_vector)
-        return pca_coeff
+    def do_pca(self, data_vector):
+        assert self.deproj_PCA==True
+        return data_vector[:,self.mask.bool()]@self.PC_masked
     
-    def do_inverse_pca(self, pca_coeff):
-        return self.pca.inverse_transform(pca_coeff)
+    def do_inverse_pca(self, PC_coeff):
+        assert self.deproj_PCA==True
+        return PC_coeff@(self.PC_masked.T)
     
     def train(self, X, y, test_split=None, batch_size=32, n_epochs=100):
         assert self.deproj_PCA==False, f'Please use train_PCA()!'
@@ -504,8 +502,10 @@ class NNEmulator:
         print('N_epochs = ',n_epochs)
 
         # reduce & normalize y and y_validation by PC, and subtract mean
-        y_reduced = (self.PC_reduced.T@y[:,self.mask.bool()].T).T - self.dv_fid_reduced
-        y_validation_reduced=(self.PC_reduced.T@y_validation[:,self.mask.bool()].T).T - self.dv_fid_reduced
+        # y_reduced = (self.PC_masked.T@y[:,self.mask.bool()].T).T - self.dv_fid_reduced
+        # y_validation_reduced=(self.PC_masked.T@y_validation[:,self.mask.bool()].T).T - self.dv_fid_reduced
+        y_reduced = self.do_pca(y[:,self.mask.bool()])
+        y_validation_reduced = self.do_pca(y_validation[:,self.mask.bool()])
 
         # get normalization factors
         if not self.trained:
@@ -528,8 +528,8 @@ class NNEmulator:
         tmp_y_validation = y_validation_reduced.to(self.device)
 
         # Here is the input normalization
-        X_train     = ((X - self.X_mean)/self.X_std).to(self.device)
-        y_train     = y_reduced.to(self.device)
+        X_train     = ((X - self.X_mean)/self.X_std)#.to(self.device)
+        y_train     = y_reduced#.to(self.device)
         trainset    = torch.utils.data.TensorDataset(X_train, y_train)
         validset    = torch.utils.data.TensorDataset(tmp_X_validation,tmp_y_validation)
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, drop_last=True, num_workers=0, generator=self.generator)
@@ -638,10 +638,10 @@ class NNEmulator:
                 self.optim.zero_grad()
             # count per epoch time consumed 
             end_time = datetime.now()
-            print('Epoch {:3d}: >>> loss={:.2e}, validation loss={:.2e}, lr={:.2E} (epoch time: {:.1f})'.format(e, 
-                losses_train[-1], losses_vali[-1],
-                self.optim.param_groups[0]['lr'],
-                (end_time-start_time).total_seconds()))
+            print(f'Epoch {e:03d}: {(end_time-start_time).total_seconds():d} s')
+            print(f'>>> Learning rate = {self.optim.param_groups[0]["lr"]:.2e}')
+            print(f'>>> Training loss = {losses_train[-1]:.2e}')
+            print(f'>>> Validation loss = {losses_valid[-1]:.2e}')
         # Finish all the epochs
         np.savetxt("losses.txt", np.array([losses_train,losses_vali],dtype=np.float64))
         self.trained = True
@@ -667,13 +667,17 @@ class NNEmulator:
         assert self.deproj_PCA==True, f'Please use predict()!'
 
         with torch.no_grad():
-            _X = (X-self.X_mean)/self.X_std
-            Y_pred_reduced=(self.model(_X)*self.y_std)+self.dv_fid_reduced
-        Y_pred_reduced = Y_pred_reduced@torch.t(self.PC_reduced)
+            X_mean = self.X_mean.clone().detach()
+            X_std  = self.X_std.clone().detach()
+
+            X_norm = (X - X_mean) / X_std
+            y_pred = self.model.eval()(X_norm).cpu()*self.dv_std_reduced + self.dv_fid_reduced
+
+        data_vector_masked = self.do_inverse_pca(y_pred).numpy()
         # TODO: what kind of X to expect? 2D?
-        Y_pred = np.zeros(len(self.dv_fid))
-        Y_pred[self.mask.bool()] = Y_pred_reduced.cpu().detach().numpy()
-        return Y_pred
+        data_vector = np.zeros(len(self.dv_fid))
+        data_vector[self.mask.bool()] = data_vector_masked
+        return data_vector
 
     def save(self, filename):
         torch.save(self.model, filename)
@@ -685,6 +689,10 @@ class NNEmulator:
             f['Y_std']  = self.y_std
             f['dv_fid'] = self.dv_fid
             f['dv_std'] = self.dv_std
+            f['dv_fid_reduced'] = self.dv_fid_reduced
+            f['dv_std_reduced'] = self.dv_std_reduced
+            f['PC_masked'] = self.PC_masked
+            f['mask'] = self.mask
         
     def load(self, filename, device=torch.device('cpu'),state_dict=False):
         self.trained = True
@@ -705,3 +713,12 @@ class NNEmulator:
             self.y_std  = torch.Tensor(f['Y_std'][:])
             self.dv_fid = torch.Tensor(f['dv_fid'][:])
             self.dv_std = torch.Tensor(f['dv_std'][:])
+            self.dv_fid_reduced = torch.Tensor(f['dv_fid_reduced'][:])
+            self.dv_std_reduced = torch.Tensor(f['dv_std_reduced'][:])
+            self.mask = torch.Tensor(f['mask'][:])
+            try:
+                self.PC_masked = torch.Tensor(f['PC_masked'][:])
+                self.invcov_reduced = torch.diag(1./self.dv_std_reduced**2)
+            except:
+                print(f'Can not read PCs, go without PC!')
+                self.PC_masked = None
