@@ -245,6 +245,7 @@ class Config:
         params_list = param_args.keys()
 
         self.running_params       = []
+        self.running_params_type  = [] # 1:cosmo 2:src nui 3:lens nui
         self.running_params_latex = []
         self.running_params_fid   = []
         self.running_params_min   = []
@@ -264,8 +265,31 @@ class Config:
                     self.running_params_fid.append(_args["prior"]["loc"])
                     self.running_params_min.append(-np.inf)
                     self.running_params_max.append(np.inf)
-        self.n_dim = len(self.running_params)
+                if param.startswith("DES")==False:
+                    self.running_params_type.append(1) # cosmology parameters
+                elif param.startswith("DES_A"):
+                    self.running_params_type.append(2) # IA parameters
+                elif param.startswith("DES_DZ_S"):
+                    self.running_params_type.append(2) # Source photo-z
+                elif param.startswith("DES_DZ_L"):
+                    self.running_params_type.append(3) # Lens photo-z
+                elif param.startswith("DES_STRETCH_L"):
+                    self.running_params_type.append(3) # Lens photo-z stretch
+                else:
+                    print(f'Can not support param {param} now!')
+                    exit(1)
+        self.n_dim = len(self.running_params) # total param counts w/o fast ones
         self.n_pars_cosmo = self.get_Npars_cosmo()
+        # params mask for each probe in [xipm, gammat, wtheta, wgk, wsk, Ckk]
+        self.running_params_type = np.array(self.running_params_type)
+        self.probe_params_mask = [
+            (self.running_params_type==1)|(self.running_params_type==2), # xipm
+            (self.running_params_type==1)|(self.running_params_type==2)|(self.running_params_type==3), # gammat
+            (self.running_params_type==1)|(self.running_params_type==3), # wtheta
+            (self.running_params_type==1)|(self.running_params_type==3), # wgk
+            (self.running_params_type==1)|(self.running_params_type==2), # wsk
+            (self.running_params_type==1), # Ckk
+        ]
 
         return
 
