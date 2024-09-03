@@ -139,7 +139,7 @@ def get_chi_sq_cut(train_data_vectors):
 
 #================= Init emulator ===============================================
 # NN only hard-coded?
-full_emu = NNEmulator(config.n_dim, sum(config.probe_size), config.dv_lkl, config.dv_std, config.inv_cov, config.mask_lkl, config.nn_model)
+#full_emu = NNEmulator(config.n_dim, sum(config.probe_size), config.dv_lkl, config.dv_std, config.inv_cov, config.mask_lkl, config.nn_model)
 #================= Training emulator ===========================================
 # switch according to probes
 if (config.probe_mask[0]==1):
@@ -152,7 +152,8 @@ if (config.probe_mask[0]==1):
         mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[0], 
         model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
-        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
+        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
+        dtype="double")
     emu_xi_plus_fn = pjoin(config.modeldir, f'xi_p_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_xi_plus_fn)):
         print(f'Loading existing xi_plus emulator from {emu_xi_plus_fn}....')
@@ -182,7 +183,8 @@ if (config.probe_mask[0]==1):
         mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[0], 
         model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
-        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
+        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
+        dtype="double")
     emu_xi_minus_fn = pjoin(config.modeldir, f'xi_m_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_xi_minus_fn)):
         print(f'Loading existing xi_minus emulator from {emu_xi_minus_fn}....')
@@ -213,7 +215,8 @@ if (config.probe_mask[1]==1):
         mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[1], 
         model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
-        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
+        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
+        dtype="double")
     emu_gammat_fn = pjoin(config.modeldir, f'gammat_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_gammat_fn)):
         print(f'Loading existing gammat emulator from {emu_gammat_fn}....')
@@ -245,7 +248,8 @@ if (config.probe_mask[2]==1):
         mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[2], 
         model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
-        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
+        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
+        dtype="double")
     emu_wtheta_fn = pjoin(config.modeldir, f'wtheta_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_wtheta_fn)):
         print(f'Loading existing wtheta emulator from {emu_wtheta_fn}....')
@@ -276,7 +280,8 @@ if (config.probe_mask[3]==1):
         mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[3], 
         model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
-        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
+        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
+        dtype="double")
     emu_gk_fn = pjoin(config.modeldir, f'gk_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_gk_fn)):
         print(f'Loading existing w_gk emulator from {emu_gk_fn}....')
@@ -307,7 +312,8 @@ if (config.probe_mask[4]==1):
         mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[4], 
         model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
-        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
+        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
+        dtype="double")
     emu_ks_fn = pjoin(config.modeldir, f'ks_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_ks_fn)):
         print(f'Loading existing w_sk emulator from {emu_ks_fn}....')
@@ -338,7 +344,8 @@ if (config.probe_mask[5]==1):
         mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[5],
         model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
-        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
+        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
+        dtype="double")
     emu_kk_fn = pjoin(config.modeldir, f'kk_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_kk_fn)):
         print(f'Loading existing CMBL band power emulator from {emu_kk_fn}....')
@@ -366,7 +373,8 @@ if (config.derived==1):
         config.sigma8_fid, config.sigma8_std, 1.0/config.sigma8_std**2, 
         model=config.nn_model, device=device,
         deproj_PCA=False, lr=config.learning_rate, 
-        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
+        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
+        dtype="double")
     emu_s8_fn = pjoin(config.modeldir, f'sigma8_{n}_nn{config.nn_model}')
     if (args.load_train_if_exist and os.path.exists(emu_s8_fn)):
         print(f'Loading existing derived parameters emulator (sigma8) from {emu_s8_fn}....')
