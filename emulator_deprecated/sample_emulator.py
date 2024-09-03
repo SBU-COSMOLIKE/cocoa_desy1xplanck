@@ -12,6 +12,16 @@ import emcee
 #from multiprocessing import Pool
 from schwimmbad import MPIPool
 
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+    #torch.set_default_tensor_type('torch.cuda.FloatTensor')
+else:
+    device = torch.device('cpu')
+    torch.set_num_interop_threads(40) # Inter-op parallelism
+    torch.set_num_threads(40) # Intra-op parallelism
+#torch.set_default_device(device)
+print('Using device: ',device)
+
 ### This file use pre-trained emulator to run MCMC chains based on input YAML
 ### Usage: ${PYTHON3} sample_emulator.py ${CONFIG}
 
@@ -20,37 +30,45 @@ if __name__ == '__main__':
 	config = Config(configfile)
 	# read emulators
 	probe_fmts = ['xi_p', 'xi_m', 'gammat', 'wtheta', 'gk', 'ks', 'kk']
-	probe_N = [config.N_xi, config.N_xi, config.N_ggl, config.N_w, config.N_gk, config.N_sk, config.N_kk]
-	Niter = config.n_train_iter
+	probe_size = [config.probe_size[0]//2, config.probe_size[0]//2, config.probe_size[1], config.probe_size[2], config.[3], config.probe_size[4], config.probe_size[5]]
+	probe_params_mask = [config.probe_params_mask[0], config.probe_params_mask[0], config.probe_params_mask[1], config.probe_params_mask[2], config.probe_params_mask[3], config.probe_params_mask[4], config.probe_params_mask[5]]
+	#Niter = config.n_train_iter
+	Niter=1
 	emu_list = []
 	N_count = 0
 	if (config.emu_type.lower()=='nn'):
 		for i,p in enumerate(probe_fmts):
-			_l, _r = N_count, N_count + probe_N[i]
+			_l, _r = N_count, N_count + probe_size[i]
 			fn = pjoin(config.modeldir, f'{p}_{Niter-1}_nn{config.nn_model}')
 			if os.path.exists(fn+".h5"):
 				print(f'Reading {p} NN emulator from {fn}.h5 ...')
-				emu = NNEmulator(config.n_dim, probe_N[i], config.dv_fid[_l:_r],
-					config.dv_std[_l:_r], config.mask[_l:_r], config.nn_model)
+				emu = NNEmulator(config.n_dim, probe_size[i], 
+					config.dv_lkl[_l:_r], config.dv_std[_l:_r],
+					config.inv_cov[_l:_r,_l:_r],
+					mask=config.mask_lkl[_l:_r],param_mask=probe_params_mask[i],
+					model=config.nn_model, device=device,
+					deproj_PCA=True, lr=config.learning_rate, 
+        			reduce_lr=config.reduce_lr, 
+        			weight_decay=config.weight_decay)
 				emu.load(fn)
 			else:
 				print(f'Can not find {p} emulator {fn}! Ignore probe {p}!')
 				emu = None
-			N_count += probe_N[i]
+			N_count += probe_size[i]
 			emu_list.append(emu)
 	elif (config.emu_type.lower()=='gp'):
 		for i,p in enumerate(probe_fmts):
-			_l, _r = N_count, N_count + probe_N[i]
+			_l, _r = N_count, N_count + probe_size[i]
 			fn = pjoin(config.modeldir, f'{p}_{Niter-1}_gp')
 			if os.path.exists(fn+".h5"):
 				print(f'Reading {p} GP emulator from {fn}.h5 ...')
-				emu = GPEmulator(config.n_dim, probe_N[i], config.dv_fid[_l:_r],
+				emu = GPEmulator(config.n_dim, probe_size[i], config.dv_fid[_l:_r],
 					config.dv_std[_l:_r])
 				emu.load(fn)
 			else:
 				print(f'Can not find {p} emulator {fn}! Ignore probe {p}!')
 				emu = None
-			N_count += probe_N[i]
+			N_count += probe_size[i]
 			emu_list.append(emu)
 	else:
 		print(f'emulator {config.emu_type} is not implemented!')
@@ -61,8 +79,12 @@ if __name__ == '__main__':
 		fn = pjoin(config.modeldir, f'sigma8_{Niter-1}_nn{config.nn_model}')
 		if os.path.exists(fn+".h5"):
 			print(f'Reading sigma8 NN emulator from {fn}.h5 ...')
-			emu_s8 = NNEmulator(config.n_pars_cosmo, 1, config.sigma8_fid,
-					config.sigma8_std, np.array([True,]), config.nn_model)
+			emu_s8 = NNEmulator(config.n_pars_cosmo, 1, config.sigma8_fid, 
+					config.sigma8_std, 1.0/config.sigma8_std**2, 
+        			model=config.nn_model, device=device,
+        			deproj_PCA=False, lr=config.learning_rate, 
+        			reduce_lr=config.reduce_lr, 
+        			weight_decay=config.weight_decay)
 			emu_s8.load(fn)
 		else:
 			print(f'Can not find sigma8 emulator {fn}!')
