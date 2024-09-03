@@ -30,6 +30,8 @@ class EmuSampler:
         self.probe             = config.probe
         self.probe_mask        = config.probe_mask
         self.probe_size        = config.probe_size
+        self.probe_params_mask = config.self.probe_params_mask
+        self.running_params    = config.running_params
         
         self.n_walkers         = config.n_emcee_walkers
         self.n_pcas_baryon     = config.n_pcas_baryon
@@ -37,7 +39,7 @@ class EmuSampler:
         
         self.emu_type          = config.emu_type
         self.mask              = config.mask_lkl
-        self.cov               = config.cov
+        self.inv_cov           = config.inv_cov
         self.masked_inv_cov    = config.masked_inv_cov
         self.dv_lkl            = config.dv_lkl
         self.shear_calib_mask  = config.shear_calib_mask
@@ -259,13 +261,27 @@ class EmuSampler:
             prior_baryons = hard_prior(baryon_q, self.baryon_priors)
         else:
             prior_baryons = 0.
+        # BBN consistency prior
+        _param_dict = {k:v for k,v in zip(self.running_params, theta[:-self.n_fast_pars])}
+        if ("omegab" in _param_dict) and ("H0" in _param_dict):
+            ombh2 = _param_dict["omegab"]*(_param_dict["H0"]/100)**2
+        elif ("omegab" in _param_dict) and ("h" in _param_dict):
+            ombh2 = _param_dict["omegab"]*_param_dict["h"]**2
+        elif "omegabh2" in _param_dict:
+            ombh2 = _param_dict["omegabh2"]
+        else:
+            ombh2 = 0.3
+        if ombh2<0.005 or ombh2>0.04:
+            prior_bbn_consistency = -np.inf
+        else:
+            prior_bbn_consistency = 0.
                 
-        return prior_flat + prior_gauss + prior_galaxy_bias + prior_m_shear + prior_baryons
+        return prior_flat + prior_gauss + prior_galaxy_bias + prior_m_shear + prior_baryons + prior_bbn_consistency
     
     def ln_lkl(self, theta):
         model_datavector = self.get_data_vector_emu(theta)
         delta_dv = (model_datavector - self.dv_lkl)[self.mask]
-        return -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv        
+        return -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv
 
     def ln_prob(self, theta, temper=1.):
         if self.block_value is not None:
