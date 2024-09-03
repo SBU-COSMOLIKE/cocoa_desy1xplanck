@@ -258,54 +258,66 @@ class True_Transformer(nn.Module):
         return out+x
     
 class NNEmulator:
-    def __init__(self, N_DIM, OUTPUT_DIM, dv_fid, dv_std, invcov, mask=None, model=None, deproj_PCA=False, optim=None, device=torch.device('cpu'), 
-        lr=1e-3, reduce_lr=True, scheduler=None, weight_decay=1e-3, dtype='float'):
+    def __init__(self, N_DIM, OUTPUT_DIM, dv_fid, dv_std, invcov, mask=None, 
+        param_mask=None, model=None, deproj_PCA=False, optim=None, 
+        device=torch.device('cpu'), lr=1e-3, reduce_lr=True, scheduler=None, 
+        weight_decay=1e-3, dtype='float'):
+        ### Set the input parameter space dimension
         self.N_DIM = N_DIM
+        if param_mask is not None:
+            assert len(param_mask)==N_DIM, f'Param mask size != N_DIM!'
+            self.param_mask = np.array(param_mask).astype(bool)
+            self.N_DIM_REDUCED = np.sum(param_mask)
+            print(f'Only {self.N_DIM_REDUCED}/{N_DIM} params are trained on.')
+        else:
+            self.param_mask = np.ones(N_DIM, dtype=bool)
+            self.N_DIM_REDUCED = N_DIM
         self.model = model
         self.optim = optim
         self.deproj_PCA = deproj_PCA
         self.device = device
-        self.reduce_lr    = reduce_lr
+        self.reduce_lr = reduce_lr
         self.weight_decay = weight_decay
         self.trained = False
+
         # init data vector mask
         if mask is not None:
-            self.mask = mask.astype(float)
+            self.mask = mask.astype(bool)
         else:
-            self.mask = np.ones(OUTPUT_DIM)
-        OUTPUT_DIM_REDUCED = (self.mask>0).sum()
+            self.mask = np.ones(OUTPUT_DIM, dtype=bool)
+        OUTPUT_DIM_REDUCED = self.mask.sum()
         self.mask = torch.Tensor(self.mask)
         # init data vector, dv covariance, and dv std (and deproject to PCs)
         # and also get rid off masked data points
         if self.deproj_PCA:
             # note that mask the dv and cov before building PCs
-            dv_fid_masked = torch.Tensor(dv_fid[self.mask.bool()])
-            invcov_masked = torch.Tensor(invcov[self.mask.bool()][:,self.mask.bool()])
+            dv_fid_masked = torch.Tensor(dv_fid[self.mask])
+            invcov_masked = torch.Tensor(invcov[self.mask][:,self.mask])
             eigenvalues, eigenvectors = np.linalg.eig(invcov_masked)
             self.PC_masked = torch.Tensor(eigenvectors)
             self.dv_std_reduced = torch.Tensor(1./np.sqrt(eigenvalues))
             self.dv_fid_reduced = torch.Tensor(dv_fid_masked@self.PC_masked)
             self.invcov_reduced = torch.Tensor(np.diag(eigenvalues))
             self.dv_fid = np.zeros(len(dv_fid))
-            self.dv_fid[self.mask.bool()] = self.dv_fid_reduced
+            self.dv_fid[self.mask] = self.dv_fid_reduced
             self.dv_std = np.zeros(len(dv_std))
-            self.dv_std[self.mask.bool()] = self.dv_std_reduced
+            self.dv_std[self.mask] = self.dv_std_reduced
             self.invcov = torch.Tensor(np.zeros(invcov.shape))
-            self.invcov[np.ix_(self.mask.bool(),self.mask.bool())] = self.invcov_reduced
+            self.invcov[np.ix_(self.mask,self.mask)] = self.invcov_reduced
         else:
             self.dv_fid = torch.Tensor(dv_fid)
             self.dv_std = torch.Tensor(dv_std)
             self.invcov = torch.Tensor(invcov)
-            self.dv_fid_reduced = torch.Tensor(dv_fid[self.mask.bool()])
-            self.dv_std_reduced = torch.Tensor(dv_std[self.mask.bool()])
-            self.invcov_reduced = torch.Tensor(invcov[self.mask.bool()][:,self.mask.bool()])
+            self.dv_fid_reduced = torch.Tensor(dv_fid[self.mask])
+            self.dv_std_reduced = torch.Tensor(dv_std[self.mask])
+            self.invcov_reduced = torch.Tensor(invcov[self.mask][:,self.mask])
             self.PC_masked = None
 
         
         if (model==0):
             print("Using simply connected NN...")
             self.model = nn.Sequential(
-                                nn.Linear(N_DIM, 1024),
+                                nn.Linear(self.N_DIM_REDUCED, 1024),
                                 nn.ReLU(),
                                 nn.Linear(1024, 1024),
                                 nn.Dropout(0.1),
@@ -322,7 +334,7 @@ class NNEmulator:
         elif(model==1):
             print("Using resnet model...")
             self.model = nn.Sequential(
-                           nn.Linear(N_DIM, 128),
+                           nn.Linear(self.N_DIM_REDUCED, 128),
                            ResBlock(128, 256),
                            ResBlock(256, 256),
                            ResBlock(256, 256),
@@ -341,7 +353,7 @@ class NNEmulator:
                        )        
         elif(model==2):
             self.model = nn.Sequential(
-                                nn.Linear(N_DIM, 2048),
+                                nn.Linear(self.N_DIM_REDUCED, 2048),
                                 nn.ReLU(),
                                 nn.Linear(2048, 2048),
                                 nn.ReLU(),
@@ -354,7 +366,7 @@ class NNEmulator:
                                 )
         elif(model==3):
             self.model = nn.Sequential(
-                                nn.Linear(N_DIM, 3072),
+                                nn.Linear(self.N_DIM_REDUCED, 3072),
                                 nn.Dropout(0.1),
                                 nn.ReLU(),
                                 nn.Linear(3072, 3072),
@@ -372,7 +384,7 @@ class NNEmulator:
         elif(model==4):
             print("Using resnet model...")
             self.model = nn.Sequential(
-                           nn.Linear(N_DIM, 1024),
+                           nn.Linear(self.N_DIM_REDUCED, 1024),
                            nn.ReLU(),
                            ResBlock(1024, 512),
                            ResBlock(512, 256),
@@ -384,12 +396,12 @@ class NNEmulator:
                            Affine()
                        )
         elif(model==5):
-            print("Using Evan's model...")
+            print("Using Evan's ResTRF model...")
             int_dim_res = 256
             n_channels = 32
             int_dim_trf = 1024
             self.model = nn.Sequential(
-                            nn.Linear(N_DIM, int_dim_res),
+                            nn.Linear(self.N_DIM_REDUCED, int_dim_res),
                             Better_ResBlock(int_dim_res, int_dim_res),
                             Better_ResBlock(int_dim_res, int_dim_res),
                             Better_ResBlock(int_dim_res, int_dim_res),
@@ -404,12 +416,10 @@ class NNEmulator:
                             Affine()
                         )
         elif(model==6):
-            print("Using Evan's simplified model...")
+            print("Using Evan's simplified Res model...")
             int_dim_res = 256
-            n_channels = 32
-            int_dim_trf = 1024
             self.model = nn.Sequential(
-                            nn.Linear(N_DIM, int_dim_res),
+                            nn.Linear(self.N_DIM_REDUCED, int_dim_res),
                             Better_ResBlock(int_dim_res, int_dim_res),
                             Better_ResBlock(int_dim_res, int_dim_res),
                             Better_ResBlock(int_dim_res, int_dim_res),
@@ -428,7 +438,7 @@ class NNEmulator:
             # weight_decay used to be 1e-4 from Supranta
             self.optim = torch.optim.Adam(self.model.parameters(), lr=lr,
                 weight_decay=self.weight_decay)
-        # some commits from Evan's emulator
+        # LR scheduler from Evan's emulator
         if self.reduce_lr:
             print('Reduce LR on plateau: ', self.reduce_lr)
             self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optim, 'min', patience=10)
@@ -438,7 +448,7 @@ class NNEmulator:
         #self.generator=torch.Generator(device=self.device)
         self.generator=torch.Generator("cpu")
 
-        ### Initialize model weights
+        ### JX: Initialize model weights
         for m in self.model.modules():
             if isinstance(m, nn.Linear):
                 nn.init.xavier_uniform_(m.weight)
@@ -447,70 +457,83 @@ class NNEmulator:
 
     def do_pca(self, data_vector):
         assert self.deproj_PCA==True
-        return data_vector[:,self.mask.bool()]@self.PC_masked
+        return data_vector[:,self.mask]@self.PC_masked
     
     def do_inverse_pca(self, PC_coeff):
         assert self.deproj_PCA==True
         return PC_coeff@(self.PC_masked.T)
-    
-    def train(self, X, y, test_split=None, batch_size=32, n_epochs=100):
-        assert self.deproj_PCA==False, f'Please use train_PCA()!'
-        if not self.trained:
-            self.X_mean = torch.Tensor(X.mean(axis=0, keepdims=True))
-            self.X_std  = torch.Tensor(X.std(axis=0, keepdims=True))
-            self.y_mean = self.dv_fid
-            self.y_std  = self.dv_std
 
-        X_train = (X - self.X_mean) / self.X_std
-#         y_train = y / self.dv_fid
-        y_train = (y - self.y_mean) / self.y_std
+    def chi2_to_loss(loss_arr, loss_type="mean"):
+        ''' map dchi2 to loss functions
+        '''
+        if loss_type=="mean":
+            loss = torch.mean(loss_arr)
+        elif loss_type=="clipped_mean":
+            loss = torch.mean(torch.sort(loss_arr)[0][:-5])
+        elif loss_type=="log_chi2":
+            loss = torch.mean(torch.log(loss_arr))
+        elif loss_type=="log_hyperbola":
+            loss = torch.mean(torch.log(1+loss_arr))
+        elif loss_type=="hyperbola":
+            loss = torch.mean((1+2*loss_arr)**(1/2))-1
+        elif loss_type=="hyperbola-1/3":
+            loss = torch.mean((1+3*loss_arr)**(1/3))-1
+        else:
+            print(f'Can not find loss function type {loss_type}!')
+            print(f'Available choices: [mean, clipped_mean, log_chi2, log_hyperbola, hyperbola, hyperbola-1/3]')
+            exit(1)
+        assert torch.isfinite(loss), f'Invalid loss: {loss_arr.detach().cpu()}'
+        return loss
 
-        trainset = torch.utils.data.TensorDataset(X_train, y_train)
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=1)
-        epoch_range = tqdm(range(n_epochs))
-        
-        losses = []
-        loss = 100.
-        for _ in epoch_range:
-            for i, data in enumerate(trainloader):
-                X_batch = data[0]
-                y_batch = data[1]
+    def monitor_grad(self, epoch, max_grad_norm=1e25):
+        ''' Monitor the model parameters gradient for debugging purpose
+        '''
+        total_norm, total_norm_ct = 0, 0
+        min_norm, max_norm = np.inf, -np.inf
+        for param in self.model.parameters():
+            if param.grad is not None:
+                param_norm = param.grad.data.norm(2)
+                if torch.isfinite(param_norm):
+                    total_norm += param_norm.item() ** 2
+                    total_norm_ct += 1
+                    min_norm = min_norm if total_norm>min_norm else total_norm
+                    max_norm = max_norm if total_norm<max_norm else total_norm
+                else:
+                    NaN_norm_counts += 1
+        total_norm = total_norm ** 0.5
+        print(f'\rEpoch {e:3d}: total grad norm = {total_norm:.1e} min = {min_norm:.1e} max = {max_norm:.1e} NaN counts {NaN_norm_counts:d}', end='', flush=True)
+        # clipping exploding gradient
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
 
-                y_pred = self.model(X_batch)
-                _d = (y_batch-y_pred)*self.mask*self.y_std
-                _chi2 = (_d*torch.matmul(_d, self.invcov)).sum(-1)
-                loss = torch.mean(_chi2)
-                #loss = torch.mean(torch.abs(y_batch - y_pred) * self.mask)
-                losses.append(loss)
-                self.optim.zero_grad()
-                loss.backward()
-                self.optim.step()
-                
-            epoch_range.set_description('Loss: {0}'.format(loss))
-
-        self.trained = True
-
-    def train_PCA(self, X, y, X_validation, y_validation, test_split=None,
-        batch_size=1000, n_epochs=150, loss_type="mean"):
+    def train(self, X, y, X_validation, y_validation, batch_size=1000, 
+        n_epochs=150, loss_type="mean", debug_grad=False):
         ''' Train the network with data vectors normalized by covariance PCs
         y: training/validation data
         Y: model prediction
         X: input parameters
         '''
-        assert self.deproj_PCA==True, f'Please use train()!'
+        print('Start emulator training...')
         print('Batch size = ',batch_size)
         print('N_epochs = ',n_epochs)
-
-        # reduce & normalize y and y_validation by PC, and subtract mean
-        # y_reduced = (self.PC_masked.T@y[:,self.mask.bool()].T).T - self.dv_fid_reduced
-        # y_validation_reduced=(self.PC_masked.T@y_validation[:,self.mask.bool()].T).T - self.dv_fid_reduced
-        y_reduced = self.do_pca(y[:,self.mask.bool()])
-        y_validation_reduced = self.do_pca(y_validation[:,self.mask.bool()])
+        print(f'PC projection = {self.deproj_PCA}')
+        print(f'Parameters after masking = {self.N_DIM_REDUCED}')
+        print(f'Data vector points after masking = {self.self.mask.sum()}')
+        # pre-process training & validation data sets
+        if self.deproj_PCA:
+            # reduce & normalize y and y_validation by PC, and subtract mean
+            y_reduced = self.do_pca(y[:,self.mask])
+            y_validation_reduced = self.do_pca(y_validation[:,self.mask])
+        else:
+            # only get rid off masked elements
+            y_reduced = y[:,self.mask]
+            y_validation_reduced = y_validation[:,self.mask]
+        X_reduced = X[:,self.param_mask]
+        X_validation_reduced = X_validation[:,self.param_mask]
 
         # get normalization factors
         if not self.trained:
-            self.X_mean = torch.Tensor(X.mean(axis=0, keepdims=True))
-            self.X_std  = torch.Tensor(X.std(axis=0, keepdims=True))
+            self.X_mean = torch.Tensor(X_reduced.mean(axis=0, keepdims=True))
+            self.X_std  = torch.Tensor(X_reduced.std(axis=0, keepdims=True))
             self.y_mean = self.dv_fid_reduced
             self.y_std  = self.dv_std_reduced
         # initialize arrays
@@ -524,12 +547,12 @@ class NNEmulator:
         tmp_cov_inv      = self.invcov_reduced.to(self.device)
         tmp_X_mean       = self.X_mean.to(self.device)
         tmp_X_std        = self.X_std.to(self.device)
-        tmp_X_validation = (X_validation.to(self.device) - tmp_X_mean)/tmp_X_std
+        tmp_X_validation = (X_validation_reduced.to(self.device) - tmp_X_mean)/tmp_X_std
         tmp_y_validation = y_validation_reduced.to(self.device)
 
         # Here is the input normalization
-        X_train     = ((X - self.X_mean)/self.X_std)#.to(self.device)
-        y_train     = y_reduced#.to(self.device)
+        X_train     = ((X_reduced - self.X_mean)/self.X_std)
+        y_train     = y_reduced
         trainset    = torch.utils.data.TensorDataset(X_train, y_train)
         validset    = torch.utils.data.TensorDataset(tmp_X_validation,tmp_y_validation)
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, drop_last=True, num_workers=0, generator=self.generator)
@@ -550,53 +573,15 @@ class NNEmulator:
                 X       = data[0].to(self.device)
                 y_batch = data[1].to(self.device)
                 Y_pred  = self.model(X) * tmp_y_std
-
                 diff = y_batch - Y_pred
-                loss_arr = torch.diag((diff@tmp_cov_inv)@torch.t(diff))
-                
-                # there are several choices for the loss function
-                if loss_type=="mean":
-                    loss = torch.mean(loss_arr)
-                elif loss_type=="clipped_mean":
-                    loss = torch.mean(torch.sort(loss_arr)[0][:-5])
-                elif loss_type=="log_chi2":
-                    loss = torch.mean(torch.log(loss_arr))
-                elif loss_type=="log_hyperbola":
-                    loss = torch.mean(torch.log(1+loss_arr))
-                elif loss_type=="hyperbola":
-                    loss = torch.mean((1+2*loss_arr)**(1/2))-1
-                elif loss_type=="hyperbola-1/3":
-                    loss = torch.mean((1+3*loss_arr)**(1/3))-1
-                else:
-                    print(f'Can not find loss function type {loss_type}!')
-                    print(f'Available choices: [mean, clipped_mean, log_chi2, log_hyperbola, hyperbola, hyperbola-1/3')
-                    exit(1)
-                assert torch.isfinite(loss), f'Invalid loss: {loss_arr.detach().cpu()}'
-
+                chi2_arr = torch.diag((diff@tmp_cov_inv)@torch.t(diff))
+                loss = self.chi2_to_loss(chi2_arr, loss_type)
                 losses.append(loss.cpu().detach().numpy())
                 self.optim.zero_grad()
                 loss.backward()
-
-                # monitor parameters grad norm
-                total_norm, total_norm_ct = 0, 0
-                min_norm, max_norm = np.inf, -np.inf
-                for param in self.model.parameters():
-                    if param.grad is not None:
-                        param_norm = param.grad.data.norm(2)
-                        if torch.isfinite(param_norm):
-                            total_norm += param_norm.item() ** 2
-                            total_norm_ct += 1
-                            min_norm = min_norm if total_norm>min_norm else total_norm
-                            max_norm = max_norm if total_norm<max_norm else total_norm
-                        else:
-                            NaN_norm_counts += 1
-                total_norm = total_norm ** 0.5
-                print(f'\rEpoch {e:3d}: total grad norm = {total_norm:.1e} min = {min_norm:.1e} max = {max_norm:.1e} NaN counts {NaN_norm_counts:d}', end='', flush=True)
-                # clipping exploding gradient
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1e25)
-
+                if debug_grad:
+                    self.monitor_grad(e)
                 self.optim.step()
-            print("")
             losses_train.append(np.mean(losses))
 
             # validation loss
@@ -609,76 +594,55 @@ class NNEmulator:
                     Y_v_pred = self.model(X_v) * tmp_y_std
 
                     v_diff = y_v_batch - Y_v_pred 
-                    loss_arr_v =torch.diag((v_diff@tmp_cov_inv)@torch.t(v_diff))
-
-                    # there are several choices for the loss function
-                    if loss_type=="mean":
-                        loss_v = torch.mean(loss_arr_v)
-                    elif loss_type=="clipped_mean":
-                        loss_v = torch.mean(torch.sort(loss_arr_v)[0][:-5])
-                    elif loss_type=="log_chi2":
-                        loss_v = torch.mean(torch.log(loss_arr_v))
-                    elif loss_type=="log_hyperbola":
-                        loss_v = torch.mean(torch.log(1+loss_arr_v))
-                    elif loss_type=="hyperbola":
-                        loss_v = torch.mean((1+2*loss_arr_v)**(1/2))-1
-                    elif loss_type=="hyperbola-1/3":
-                        loss_v = torch.mean((1+3*loss_arr_v)**(1/3))-1
-                    else:
-                        print(f'Can not find loss function type {loss_type}!')
-                        print(f'Available choices: [mean, clipped_mean, log_chi2, log_hyperbola, hyperbola, hyperbola-1/3')
-                        exit(1)
-                    assert torch.isfinite(loss_v), f'Invalid loss: {loss_arr_v.detach().cpu()}'
-
+                    chi2_arr_v =torch.diag((v_diff@tmp_cov_inv)@torch.t(v_diff))
+                    loss_v = self.chi2_to_loss(chi2_arr_v, loss_type)
                     losses.append(loss_v.cpu().detach().numpy())
                 losses_vali.append(np.mean(losses))
                 if self.reduce_lr:
                     self.scheduler.step(losses_vali[e])
-
                 self.optim.zero_grad()
             # count per epoch time consumed 
             end_time = datetime.now()
-            print(f'Epoch {e:03d}: {(end_time-start_time).total_seconds():.2f} s')
-            print(f'>>> Learning rate = {self.optim.param_groups[0]["lr"]:.2e}')
-            print(f'>>> Training loss = {losses_train[-1]:.2e}')
-            print(f'>>> Validation loss = {losses_vali[-1]:.2e}')
+            epoch_cost = (end_time-start_time).total_seconds()
+            print(f'Epoch {e:3d}: {epoch_cost:.2f} s; lr = {self.optim.param_groups[0]["lr"]:.2e}')
+            print(f'--- Training loss = <{losses_train[-1]:.2e}>')
+            print(f'--- Validation loss = <<{losses_vali[-1]:.2e}>>')
         # Finish all the epochs
+        train_end_time = datetime.now()
+        train_cost = (train_end_time-train_start_time).total_seconds()/3600.
+        print(f'Training cost: {train_cost:.2} hours')
         np.savetxt("losses.txt", np.array([losses_train,losses_vali],dtype=np.float64))
         self.trained = True
 
     def predict(self, X):
+        ''' Predict unmasked data vector based on input parameters (tensor)
+        '''
         assert self.trained, "The emulator needs to be trained first before predicting"
-        assert self.deproj_PCA==False, f'Please use predict_PCA()!'
+        # wrap the input X if it's 1D
+        _INPUT_1D_ = False
+        if X.dim()==1:
+            X = torch.atleast_2d(X)
+            _INPUT_1D_ = True
+        elif X.dim()>2:
+            print(f'Error: Can not support {X.dim()}-dimension input X!')
+            exit(1)
 
+        # do prediction from 2D X
         with torch.no_grad():
             X_mean = self.X_mean.clone().detach()
             X_std  = self.X_std.clone().detach()
 
-            X_norm = (X - X_mean) / X_std
-            y_pred = self.model.eval()(X_norm).cpu()
-        
-#         y_pred = y_pred * self.dv_fid
-        y_pred = y_pred * self.y_std + self.y_mean
-
-        return y_pred.numpy()
-
-    def predict_PCA(self, X):
-        assert self.trained, "The emulator needs to be trained first before predicting"
-        assert self.deproj_PCA==True, f'Please use predict()!'
-
-        with torch.no_grad():
-            X_mean = self.X_mean.clone().detach()
-            X_std  = self.X_std.clone().detach()
-
-            X_norm = (X - X_mean) / X_std
+            X_norm = (X[:,self.param_mask] - X_mean) / X_std
             y_pred = self.model.eval()(X_norm).cpu()*self.dv_std_reduced + self.dv_fid_reduced
-
-        data_vector_masked = self.do_inverse_pca(y_pred).numpy()
-        # TODO: what kind of X to expect? 2D?
-        data_vector = np.zeros(len(self.dv_fid))
-        data_vector[self.mask.bool()] = data_vector_masked
+        if self.deproj_PCA:
+            data_vector_masked = self.do_inverse_pca(y_pred).numpy()
+        else:
+            data_vector_masked = y_pred.numpy()
+        data_vector = np.zeros([X.size(0), self.mask.size(0)])
+        data_vector[:,self.mask] = data_vector_masked
+        #return data_vector[0] if _INPUT_1D_ else data_vector
         return data_vector
-
+        
     def save(self, filename):
         torch.save(self.model, filename)
         with h5.File(filename + '.h5', 'w') as f:
@@ -693,6 +657,7 @@ class NNEmulator:
             f['dv_std_reduced'] = self.dv_std_reduced
             f['PC_masked'] = self.PC_masked
             f['mask'] = self.mask
+            f['param_mask'] = self.param_mask
         
     def load(self, filename, device=torch.device('cpu'),state_dict=False):
         self.trained = True
@@ -716,9 +681,63 @@ class NNEmulator:
             self.dv_fid_reduced = torch.Tensor(f['dv_fid_reduced'][:])
             self.dv_std_reduced = torch.Tensor(f['dv_std_reduced'][:])
             self.mask = torch.Tensor(f['mask'][:])
+            self.param_mask = torch.Tensor(f['param_mask'][:])
             try:
                 self.PC_masked = torch.Tensor(f['PC_masked'][:])
                 self.invcov_reduced = torch.diag(1./self.dv_std_reduced**2)
             except:
                 print(f'Can not read PCs, go without PC!')
                 self.PC_masked = None
+
+#     def train(self, X, y, test_split=None, batch_size=32, n_epochs=100):
+#         assert self.deproj_PCA==False, f'Please use train_PCA()!'
+#         if not self.trained:
+#             self.X_mean = torch.Tensor(X.mean(axis=0, keepdims=True))
+#             self.X_std  = torch.Tensor(X.std(axis=0, keepdims=True))
+#             self.y_mean = self.dv_fid
+#             self.y_std  = self.dv_std
+
+#         X_train = (X - self.X_mean) / self.X_std
+# #         y_train = y / self.dv_fid
+#         y_train = (y - self.y_mean) / self.y_std
+
+#         trainset = torch.utils.data.TensorDataset(X_train, y_train)
+#         trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=1)
+#         epoch_range = tqdm(range(n_epochs))
+        
+#         losses = []
+#         loss = 100.
+#         for _ in epoch_range:
+#             for i, data in enumerate(trainloader):
+#                 X_batch = data[0]
+#                 y_batch = data[1]
+
+#                 y_pred = self.model(X_batch)
+#                 _d = (y_batch-y_pred)*self.mask*self.y_std
+#                 _chi2 = (_d*torch.matmul(_d, self.invcov)).sum(-1)
+#                 loss = torch.mean(_chi2)
+#                 #loss = torch.mean(torch.abs(y_batch - y_pred) * self.mask)
+#                 losses.append(loss)
+#                 self.optim.zero_grad()
+#                 loss.backward()
+#                 self.optim.step()
+                
+#             epoch_range.set_description('Loss: {0}'.format(loss))
+
+#         self.trained = True
+
+#     def predict(self, X):
+#         assert self.trained, "The emulator needs to be trained first before predicting"
+#         assert self.deproj_PCA==False, f'Please use predict_PCA()!'
+
+#         with torch.no_grad():
+#             X_mean = self.X_mean.clone().detach()
+#             X_std  = self.X_std.clone().detach()
+
+#             X_norm = (X - X_mean) / X_std
+#             y_pred = self.model.eval()(X_norm).cpu()
+        
+# #         y_pred = y_pred * self.dv_fid
+#         y_pred = y_pred * self.y_std + self.y_mean
+
+#         return y_pred.numpy()
