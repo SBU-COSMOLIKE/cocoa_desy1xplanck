@@ -370,7 +370,8 @@ if (config.probe_mask[5]==1):
 if (config.derived==1):
     print("=======================================")
     emu_s8 = NNEmulator(config.n_pars_cosmo, 1, 
-        config.sigma8_fid, config.sigma8_std, 1.0/config.sigma8_std**2, 
+        config.sigma8_fid, config.sigma8_std, 
+        np.atleast_2d(1.0/config.sigma8_std**2), 
         model=config.nn_model, device=device,
         deproj_PCA=False, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
