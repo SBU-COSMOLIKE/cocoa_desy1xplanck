@@ -262,10 +262,16 @@ class NNEmulator:
         param_mask=None, model=None, deproj_PCA=False, optim=None, 
         device=torch.device('cpu'), lr=1e-3, reduce_lr=True, scheduler=None, 
         weight_decay=1e-3, dtype='float'):
+        if dtype=='double':
+            torch.set_default_dtype(torch.double)
+            print('default data type = double')
+        #self.generator=torch.Generator(device=self.device)
+        self.generator=torch.Generator("cpu")
+
         ### Set the input parameter space dimension
         self.N_DIM = N_DIM
         if param_mask is not None:
-            assert len(param_mask)==N_DIM, f'Param mask size != N_DIM!'
+            assert len(param_mask)==N_DIM, f'Param mask size != N_DIM! {param_mask}'
             self.param_mask = np.array(param_mask).astype(bool)
             self.N_DIM_REDUCED = np.sum(param_mask)
             print(f'Only {self.N_DIM_REDUCED}/{N_DIM} params are trained on.')
@@ -282,18 +288,19 @@ class NNEmulator:
 
         # init data vector mask
         if mask is not None:
-            self.mask = mask.astype(bool)
+            self.mask = mask
         else:
-            self.mask = np.ones(OUTPUT_DIM, dtype=bool)
+            self.mask = np.ones(OUTPUT_DIM)
         OUTPUT_DIM_REDUCED = self.mask.sum()
-        self.mask = torch.Tensor(self.mask)
+        self.mask = torch.Tensor(self.mask).bool()
         # init data vector, dv covariance, and dv std (and deproject to PCs)
         # and also get rid off masked data points
         if self.deproj_PCA:
             # note that mask the dv and cov before building PCs
             dv_fid_masked = torch.Tensor(dv_fid[self.mask])
             invcov_masked = torch.Tensor(invcov[self.mask][:,self.mask])
-            eigenvalues, eigenvectors = np.linalg.eig(invcov_masked)
+            eigenvalues, eigenvectors = np.linalg.eigh(invcov_masked)
+            assert np.all(eigenvalues>0), 'Non-positive-def invcov!'
             self.PC_masked = torch.Tensor(eigenvectors)
             self.dv_std_reduced = torch.Tensor(1./np.sqrt(eigenvalues))
             self.dv_fid_reduced = torch.Tensor(dv_fid_masked@self.PC_masked)
@@ -442,11 +449,6 @@ class NNEmulator:
         if self.reduce_lr:
             print('Reduce LR on plateau: ', self.reduce_lr)
             self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optim, 'min', patience=10)
-        if dtype=='double':
-            torch.set_default_dtype(torch.double)
-            print('default data type = double')
-        #self.generator=torch.Generator(device=self.device)
-        self.generator=torch.Generator("cpu")
 
         ### JX: Initialize model weights
         for m in self.model.modules():
@@ -457,13 +459,13 @@ class NNEmulator:
 
     def do_pca(self, data_vector):
         assert self.deproj_PCA==True
-        return data_vector[:,self.mask]@self.PC_masked
+        return data_vector@self.PC_masked
     
     def do_inverse_pca(self, PC_coeff):
         assert self.deproj_PCA==True
         return PC_coeff@(self.PC_masked.T)
 
-    def chi2_to_loss(loss_arr, loss_type="mean"):
+    def chi2_to_loss(self, loss_arr, loss_type="mean"):
         ''' map dchi2 to loss functions
         '''
         if loss_type=="mean":
@@ -517,7 +519,7 @@ class NNEmulator:
         print('N_epochs = ',n_epochs)
         print(f'PC projection = {self.deproj_PCA}')
         print(f'Parameters after masking = {self.N_DIM_REDUCED}')
-        print(f'Data vector points after masking = {self.self.mask.sum()}')
+        print(f'Data vector points after masking = {self.mask.sum()}')
         # pre-process training & validation data sets
         if self.deproj_PCA:
             # reduce & normalize y and y_validation by PC, and subtract mean
