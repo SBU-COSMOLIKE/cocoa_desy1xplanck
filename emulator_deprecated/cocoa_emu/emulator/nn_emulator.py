@@ -288,11 +288,10 @@ class NNEmulator:
 
         # init data vector mask
         if mask is not None:
-            self.mask = mask
+            self.mask = mask.astype(bool)
         else:
-            self.mask = np.ones(OUTPUT_DIM)
+            self.mask = np.ones(OUTPUT_DIM, dtype=bool)
         OUTPUT_DIM_REDUCED = self.mask.sum()
-        self.mask = torch.Tensor(self.mask).bool()
         # init data vector, dv covariance, and dv std (and deproject to PCs)
         # and also get rid off masked data points
         if self.deproj_PCA:
@@ -640,7 +639,7 @@ class NNEmulator:
             data_vector_masked = self.do_inverse_pca(y_pred).numpy()
         else:
             data_vector_masked = y_pred.numpy()
-        data_vector = np.zeros([X.size(0), self.mask.size(0)])
+        data_vector = np.zeros([X.size(0), self.mask.shape[0]])
         data_vector[:,self.mask] = data_vector_masked
         #return data_vector[0] if _INPUT_1D_ else data_vector
         return data_vector
@@ -682,7 +681,7 @@ class NNEmulator:
             self.dv_std = torch.Tensor(f['dv_std'][:])
             self.dv_fid_reduced = torch.Tensor(f['dv_fid_reduced'][:])
             self.dv_std_reduced = torch.Tensor(f['dv_std_reduced'][:])
-            self.mask = torch.Tensor(f['mask'][:])
+            self.mask = np.array(f['mask'][:])
             self.param_mask = torch.Tensor(f['param_mask'][:])
             try:
                 self.PC_masked = torch.Tensor(f['PC_masked'][:])
