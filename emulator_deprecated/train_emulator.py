@@ -149,7 +149,8 @@ if (config.probe_mask[0]==1):
     emu_xi_plus = NNEmulator(config.n_dim, config.probe_size[0]//2, 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[0], 
+        model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_xi_plus_fn = pjoin(config.modeldir, f'xi_p_{n}_nn{config.nn_model}')
@@ -164,7 +165,7 @@ if (config.probe_mask[0]==1):
             emu_xi_plus.load(previous_fn, device=device)
         else:
             print("Training NEW xi_plus emulator....")
-        emu_xi_plus.train_PCA(torch.Tensor(train_samples), 
+        emu_xi_plus.train(torch.Tensor(train_samples), 
             torch.Tensor(train_data_vectors[:,_l:_r]),
             torch.Tensor(valid_samples),
             torch.Tensor(valid_data_vectors[:,_l:_r]),
@@ -178,7 +179,8 @@ if (config.probe_mask[0]==1):
     emu_xi_minus = NNEmulator(config.n_dim, config.probe_size[0]//2, 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[0], 
+        model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_xi_minus_fn = pjoin(config.modeldir, f'xi_m_{n}_nn{config.nn_model}')
@@ -193,7 +195,7 @@ if (config.probe_mask[0]==1):
             emu_xi_minus.load(previous_fn, device=device)
         else:
             print("Training NEW xi_minus emulator....")
-        emu_xi_minus.train_PCA(torch.Tensor(train_samples), 
+        emu_xi_minus.train(torch.Tensor(train_samples), 
             torch.Tensor(train_data_vectors[:,_l:_r]),
             torch.Tensor(valid_samples), 
             torch.Tensor(valid_data_vectors[:,_l:_r]),
@@ -208,7 +210,8 @@ if (config.probe_mask[1]==1):
     emu_gammat = NNEmulator(config.n_dim, config.probe_size[1], 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[1], 
+        model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_gammat_fn = pjoin(config.modeldir, f'gammat_{n}_nn{config.nn_model}')
@@ -223,7 +226,7 @@ if (config.probe_mask[1]==1):
             emu_gammat.load(previous_fn, device=device)
         else:
             print("Training NEW gammat emulator....")
-        emu_gammat.train_PCA(torch.Tensor(train_samples), 
+        emu_gammat.train(torch.Tensor(train_samples), 
             torch.Tensor(train_data_vectors[:,_l:_r]),
             torch.Tensor(valid_samples), 
             torch.Tensor(valid_data_vectors[:,_l:_r]),
@@ -239,7 +242,8 @@ if (config.probe_mask[2]==1):
     emu_wtheta = NNEmulator(config.n_dim, config.probe_size[2], 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[2], 
+        model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_wtheta_fn = pjoin(config.modeldir, f'wtheta_{n}_nn{config.nn_model}')
@@ -254,7 +258,7 @@ if (config.probe_mask[2]==1):
             emu_wtheta.load(previous_fn, device=device)
         else:
             print("Training NEW wtheta emulator....")
-        emu_wtheta.train_PCA(torch.Tensor(train_samples), 
+        emu_wtheta.train(torch.Tensor(train_samples), 
             torch.Tensor(train_data_vectors[:,_l:_r]),
             torch.Tensor(valid_samples), 
             torch.Tensor(valid_data_vectors[:,_l:_r]),
@@ -269,7 +273,8 @@ if (config.probe_mask[3]==1):
     emu_gk = NNEmulator(config.n_dim, config.probe_size[3], 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[3], 
+        model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_gk_fn = pjoin(config.modeldir, f'gk_{n}_nn{config.nn_model}')
@@ -284,7 +289,7 @@ if (config.probe_mask[3]==1):
             emu_gk.load(previous_fn, device=device)
         else:
             print("Training NEW w_gk emulator....")
-        emu_gk.train_PCA(torch.Tensor(train_samples), 
+        emu_gk.train(torch.Tensor(train_samples), 
             torch.Tensor(train_data_vectors[:,_l:_r]),
             torch.Tensor(valid_samples), 
             torch.Tensor(valid_data_vectors[:,_l:_r]),
@@ -299,7 +304,8 @@ if (config.probe_mask[4]==1):
     emu_ks = NNEmulator(config.n_dim, config.probe_size[4], 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[4], 
+        model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_ks_fn = pjoin(config.modeldir, f'ks_{n}_nn{config.nn_model}')
@@ -314,7 +320,7 @@ if (config.probe_mask[4]==1):
             emu_ks.load(previous_fn, device=device)
         else:
             print("Training NEW w_sk emulator....")
-        emu_ks.train_PCA(torch.Tensor(train_samples), 
+        emu_ks.train(torch.Tensor(train_samples), 
             torch.Tensor(train_data_vectors[:,_l:_r]),
             torch.Tensor(valid_samples), 
             torch.Tensor(valid_data_vectors[:,_l:_r]),
@@ -329,7 +335,8 @@ if (config.probe_mask[5]==1):
     emu_kk = NNEmulator(config.n_dim, config.probe_size[5], 
         config.dv_lkl[_l:_r], config.dv_std[_l:_r], 
         config.inv_cov[_l:_r,_l:_r],
-        mask=config.mask_lkl[_l:_r], model=config.nn_model, device=device,
+        mask=config.mask_lkl[_l:_r], param_mask=config.probe_params_mask[5],
+        model=config.nn_model, device=device,
         deproj_PCA=True, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_kk_fn = pjoin(config.modeldir, f'kk_{n}_nn{config.nn_model}')
@@ -344,7 +351,7 @@ if (config.probe_mask[5]==1):
             emu_kk.load(previous_fn, device=device)
         else:
             print("Training NEW CMBL band power emulator....")
-        emu_kk.train_PCA(torch.Tensor(train_samples), 
+        emu_kk.train(torch.Tensor(train_samples), 
             torch.Tensor(train_data_vectors[:,_l:_r]),
             torch.Tensor(valid_samples), 
             torch.Tensor(valid_data_vectors[:,_l:_r]),
@@ -356,8 +363,8 @@ if (config.probe_mask[5]==1):
 if (config.derived==1):
     print("=======================================")
     emu_s8 = NNEmulator(config.n_pars_cosmo, 1, 
-        config.sigma8_fid, config.sigma8_std, 1.0/config.sigma8_fid**2, 
-        mask=np.array([True,]), model=config.nn_model, device=device,
+        config.sigma8_fid, config.sigma8_std, 1.0/config.sigma8_std**2, 
+        model=config.nn_model, device=device,
         deproj_PCA=False, lr=config.learning_rate, 
         reduce_lr=config.reduce_lr, weight_decay=config.weight_decay)
     emu_s8_fn = pjoin(config.modeldir, f'sigma8_{n}_nn{config.nn_model}')
@@ -372,7 +379,7 @@ if (config.derived==1):
             emu_s8.load(previous_fn, device=device)
         else:
             print("Training NEW derived parameters emulator....")
-        emu_s8.train_PCA(torch.Tensor(train_samples[:,:config.n_pars_cosmo]), 
+        emu_s8.train(torch.Tensor(train_samples[:,:config.n_pars_cosmo]), 
             torch.Tensor(train_sigma8),
             torch.Tensor(valid_samples[:,:config.n_pars_cosmo]), 
             torch.Tensor(valid_sigma8),
@@ -381,6 +388,8 @@ if (config.derived==1):
         if(args.save_emu):
             emu_s8.save(emu_s8_fn)
     print("=======================================")
+
+'''  
 #==============================================
 os.environ["OMP_NUM_THREADS"] = "1"
 
@@ -477,3 +486,4 @@ else:
     np.save(pjoin(config.chaindir, config.chainname+f'_{label}_{n}.npy'), 
         np.hstack([samples, derived_sigma8, logprobs[:,np.newaxis]]))
 print("train_emulator.py: iteration %d Done!"%n)
+'''
