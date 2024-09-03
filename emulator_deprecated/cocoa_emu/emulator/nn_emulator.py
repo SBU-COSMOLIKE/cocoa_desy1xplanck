@@ -656,9 +656,11 @@ class NNEmulator:
             f['dv_std'] = self.dv_std
             f['dv_fid_reduced'] = self.dv_fid_reduced
             f['dv_std_reduced'] = self.dv_std_reduced
-            f['PC_masked'] = self.PC_masked
             f['mask'] = self.mask
             f['param_mask'] = self.param_mask
+            f['deproj_PCA'] = self.deproj_PCA
+            if self.deproj_PCA:
+                f['PC_masked'] = self.PC_masked
         
     def load(self, filename, device=torch.device('cpu'),state_dict=False):
         self.trained = True
@@ -683,11 +685,11 @@ class NNEmulator:
             self.dv_std_reduced = torch.Tensor(f['dv_std_reduced'][:])
             self.mask = np.array(f['mask'][:])
             self.param_mask = torch.Tensor(f['param_mask'][:])
-            try:
+            self.deproj_PCA = f['deproj_PCA']
+            if self.deproj_PCA:
                 self.PC_masked = torch.Tensor(f['PC_masked'][:])
                 self.invcov_reduced = torch.diag(1./self.dv_std_reduced**2)
-            except:
-                print(f'Can not read PCs, go without PC!')
+            else:
                 self.PC_masked = None
 
 #     def train(self, X, y, test_split=None, batch_size=32, n_epochs=100):
