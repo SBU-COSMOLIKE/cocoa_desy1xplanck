@@ -1,13 +1,13 @@
 import sys, os
 from os.path import join as pjoin
-from mpi4py import MPI
+#from mpi4py import MPI
 import numpy as np
 from cocoa_emu import Config, get_params_list, CocoaModel
 os.environ["OMP_NUM_THREADS"] = "1"
 
-comm = MPI.COMM_WORLD
-size = comm.Get_size()
-rank = comm.Get_rank()
+#comm = MPI.COMM_WORLD
+#size = comm.Get_size()
+#rank = comm.Get_rank()
 
 configfile = sys.argv[1]
 #eval_samples_fn = sys.argv[2]
