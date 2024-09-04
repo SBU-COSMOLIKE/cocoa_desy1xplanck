@@ -84,7 +84,7 @@ fn = pjoin(config.modeldir, f'sigma8_{n}_nn{config.nn_model}')
 if os.path.exists(fn+".h5"):
     print(f'Reading sigma8 NN emulator from {fn}.h5 ...')
     emu_s8 = NNEmulator(config.n_pars_cosmo, 1, config.sigma8_fid, 
-            config.sigma8_std, 1.0/config.sigma8_std**2, 
+            config.sigma8_std, np.atleast_2d(1.0/config.sigma8_std**2), 
             model=config.nn_model, device=device,
             deproj_PCA=False, lr=config.learning_rate, 
             reduce_lr=config.reduce_lr, 
