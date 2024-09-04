@@ -19,7 +19,6 @@ else:
    device = torch.device('cpu')
    torch.set_num_interop_threads(40) # Inter-op parallelism
    torch.set_num_threads(40) # Intra-op parallelism
-torch.set_default_device(device)
 
 configfile = sys.argv[1]
 #eval_samples_fn = sys.argv[2]
