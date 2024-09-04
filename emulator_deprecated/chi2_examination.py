@@ -1,4 +1,5 @@
 import sys, os
+from tqdm import tqdm
 from os.path import join as pjoin
 #from mpi4py import MPI
 import numpy as np
@@ -100,7 +101,7 @@ dchi2_list = []
 dsigma8_list = []
 assert valid_samples.shape[1]==config.n_dim, f'Inconsistent param dimension'+\
 f'{valid_samples.shape[1]} v.s. {config.n_dim}'
-for theta, dv, sigma8 in zip(valid_samples, valid_data_vectors, valid_sigma8):
+for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma8)):
     # pad zeros for n_fast
     theta_padded = np.hstack([theta, np.zeros(config.n_fast_pars)])
     mv = emu_sampler.get_data_vector_emu(theta_padded)
