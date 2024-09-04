@@ -12,15 +12,16 @@ import emcee
 #from multiprocessing import Pool
 from schwimmbad import MPIPool
 
-if torch.cuda.is_available():
-    device = torch.device('cuda')
-    #torch.set_default_tensor_type('torch.cuda.FloatTensor')
-else:
-    device = torch.device('cpu')
-    torch.set_num_interop_threads(40) # Inter-op parallelism
-    torch.set_num_threads(40) # Intra-op parallelism
+#if torch.cuda.is_available():
+#    device = torch.device('cuda')
+#    #torch.set_default_tensor_type('torch.cuda.FloatTensor')
+#else:
+#    device = torch.device('cpu')
+#    torch.set_num_interop_threads(40) # Inter-op parallelism
+#    torch.set_num_threads(40) # Intra-op parallelism
 #torch.set_default_device(device)
-print('Using device: ',device)
+device=torch.device("cpu")
+print('Using device: ', device)
 
 ### This file use pre-trained emulator to run MCMC chains based on input YAML
 ### Usage: ${PYTHON3} sample_emulator.py ${CONFIG}
@@ -61,7 +62,7 @@ if __name__ == '__main__':
 					model=config.nn_model, device=device,
 					deproj_PCA=True, lr=config.learning_rate, 
         			reduce_lr=config.reduce_lr, 
-        			weight_decay=config.weight_decay)
+        			weight_decay=config.weight_decay, dtype="double")
 				emu.load(fn)
 			else:
 				print(f'Can not find {p} emulator {fn}! Ignore probe {p}!')
@@ -92,11 +93,11 @@ if __name__ == '__main__':
 		if os.path.exists(fn+".h5"):
 			print(f'Reading sigma8 NN emulator from {fn}.h5 ...')
 			emu_s8 = NNEmulator(config.n_pars_cosmo, 1, config.sigma8_fid, 
-					config.sigma8_std, 1.0/config.sigma8_std**2, 
+					config.sigma8_std, np.atleast_2d(1.0/config.sigma8_std**2), 
         			model=config.nn_model, device=device,
         			deproj_PCA=False, lr=config.learning_rate, 
         			reduce_lr=config.reduce_lr, 
-        			weight_decay=config.weight_decay)
+        			weight_decay=config.weight_decay, dtype="double")
 			emu_s8.load(fn)
 		else:
 			print(f'Can not find sigma8 emulator {fn}!')

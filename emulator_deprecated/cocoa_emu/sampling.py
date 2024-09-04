@@ -30,7 +30,7 @@ class EmuSampler:
         self.probe             = config.probe
         self.probe_mask        = config.probe_mask
         self.probe_size        = config.probe_size
-        self.probe_params_mask = config.self.probe_params_mask
+        self.probe_params_mask = config.probe_params_mask
         self.running_params    = config.running_params
         
         self.n_walkers         = config.n_emcee_walkers
