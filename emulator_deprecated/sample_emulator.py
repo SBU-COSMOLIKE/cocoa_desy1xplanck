@@ -61,7 +61,7 @@ if __name__ == '__main__':
 					model=config.nn_model, device=device,
 					deproj_PCA=True, lr=config.learning_rate, 
         			reduce_lr=config.reduce_lr, 
-        			weight_decay=config.weight_decay)
+        			weight_decay=config.weight_decay, dtype="double")
 				emu.load(fn)
 			else:
 				print(f'Can not find {p} emulator {fn}! Ignore probe {p}!')
@@ -96,7 +96,7 @@ if __name__ == '__main__':
         			model=config.nn_model, device=device,
         			deproj_PCA=False, lr=config.learning_rate, 
         			reduce_lr=config.reduce_lr, 
-        			weight_decay=config.weight_decay)
+        			weight_decay=config.weight_decay, dtype="double")
 			emu_s8.load(fn)
 		else:
 			print(f'Can not find sigma8 emulator {fn}!')

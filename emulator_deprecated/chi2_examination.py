@@ -1,75 +1,104 @@
-import sys
+import sys, os
 from os.path import join as pjoin
 from mpi4py import MPI
 import numpy as np
 from cocoa_emu import Config, get_params_list, CocoaModel
+os.environ["OMP_NUM_THREADS"] = "1"
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
 configfile = sys.argv[1]
-eval_samples_fn = sys.argv[2]
-##data_vector_fn = sys.argv[3]
+#eval_samples_fn = sys.argv[2]
+#data_vector_fn = sys.argv[3]
+label_valid = "gaussian_t64.0"
+N_sample_valid = 100000
+n = 0
 
+config = Config(configfile)
+### Load validation dataset
+print(f'Loading validating data')
+valid_samples = np.load(pjoin(config.traindir, 
+    f'samples_{label_valid}_{N_sample_valid}_{n}.npy'))
+valid_data_vectors = np.load(pjoin(config.traindir, 
+    f'data_vectors_{label_valid}_{N_sample_valid}_{n}.npy'))
+valid_sigma8 = np.load(pjoin(config.traindir, 
+    f'sigma8_{label_valid}_{N_sample_valid}_{n}.npy'))
 
-#config = Config(configfile)
-cocoa_model = CocoaModel(configfile, "desy1xplanck.desy3xplanck_3x2pt")
-
-def get_local_data_vector_list(params_list, rank):
-    ''' Evaluate data vectors dispatched to the local process
-    Input:
-    ======
-        - params_list: 
-            full parameters to be evaluated. Parameters dispatched is a subset of the full parameters
-        - rank: 
-            the rank of the local process
-    Outputs:
-    ========
-        - train_params: model parameters of the training sample
-        - train_data_vectors: data vectors of the training sample
-    '''
-    data_vector_list = []
-    N_samples = len(params_list)
-    N_local   = N_samples // size    
-    for i in range(rank * N_local, (rank + 1) * N_local):
-        # Here it calls cocoa to calculate data vectors at requested parameters
-        data_vector = cocoa_model.calculate_data_vector(params_list[i], return_s8=False)
-        data_vector_list.append(data_vector)
-    return data_vector_list
-
-def get_data_vectors(params_list, comm, rank):
-    ''' Evaluate data vectors
-    This function will further calls `get_local_data_vector_list` to dispatch jobs to and collect training data set from  other processes.
-    Input:
-    ======
-        - params_list:
-            Model parameters to be evaluated the model at
-        - comm:
-            MPI comm
-        - rank:
-            MPI rank
-    Output:
-    =======
-        - train_params:
-            model parameters of the training sample
-        - train_data_vectors:
-            data vectors of the training sample
-    '''
-    local_data_vector_list = get_local_data_vector_list(params_list, rank)
-    if rank!=0:
-        comm.send(local_data_vector_list, dest=0)
-        data_vectors = None
+### Load emulators
+probe_fmts = ['xi_p', 'xi_m', 'gammat', 'wtheta', 'gk', 'ks', 'kk']
+probe_size = [config.probe_size[0]//2, 
+              config.probe_size[0]//2, 
+              config.probe_size[1], 
+              config.probe_size[2], 
+              config.probe_size[3], 
+              config.probe_size[4], 
+              config.probe_size[5]]
+probe_params_mask = [config.probe_params_mask[0], 
+                     config.probe_params_mask[0], 
+                     config.probe_params_mask[1], 
+                     config.probe_params_mask[2], 
+                     config.probe_params_mask[3], 
+                     config.probe_params_mask[4], 
+                     config.probe_params_mask[5]]
+emu_list = []
+N_count = 0
+for i,p in enumerate(probe_fmts):
+    _l, _r = N_count, N_count + probe_size[i]
+    fn = pjoin(config.modeldir, f'{p}_{n}_nn{config.nn_model}')
+    if os.path.exists(fn+".h5"):
+        print(f'Reading {p} NN emulator from {fn}.h5 ...')
+        emu = NNEmulator(config.n_dim, probe_size[i], 
+            config.dv_lkl[_l:_r], config.dv_std[_l:_r],
+            config.inv_cov[_l:_r,_l:_r],
+            mask=config.mask_lkl[_l:_r],param_mask=probe_params_mask[i],
+            model=config.nn_model, device=device,
+            deproj_PCA=True, lr=config.learning_rate, 
+            reduce_lr=config.reduce_lr, 
+            weight_decay=config.weight_decay, dtype="double")
+        emu.load(fn)
     else:
-        data_vector_list = local_data_vector_list
-        for source in range(1,size):
-            new_data_vector_list = comm.recv(source=source)
-            data_vector_list = data_vector_list + new_data_vector_list
-        data_vectors = np.vstack(data_vector_list)
-    return data_vectors
+        print(f'Can not find {p} emulator {fn}! Ignore probe {p}!')
+        emu = None
+    N_count += probe_size[i]
+    emu_list.append(emu)
+emu_sampler = EmuSampler(emu_list, config)
 
-eval_samples = np.load(eval_samples_fn)
-eval_data_vectors = get_data_vectors(eval_samples, comm, rank)
+### Load sigma_8 emulator
+fn = pjoin(config.modeldir, f'sigma8_{n}_nn{config.nn_model}')
+if os.path.exists(fn+".h5"):
+    print(f'Reading sigma8 NN emulator from {fn}.h5 ...')
+    emu_s8 = NNEmulator(config.n_pars_cosmo, 1, config.sigma8_fid, 
+            config.sigma8_std, 1.0/config.sigma8_std**2, 
+            model=config.nn_model, device=device,
+            deproj_PCA=False, lr=config.learning_rate, 
+            reduce_lr=config.reduce_lr, 
+            weight_decay=config.weight_decay, dtype="double")
+    emu_s8.load(fn)
+else:
+    print(f'Can not find sigma8 emulator {fn}!')
+    emu_s8 = None
 
-np.save("/groups/timeifler/jiachuanxu/cocoa_chains/ccc/test_model_vectors.npy",
-	eval_data_vectors)
+### Compute dchi2
+dchi2_list = []
+dsigma8_list = []
+assert valid_samples.shape[1]==config.n_dim, f'Inconsistent param dimension'+\
+f'{valid_samples.shape[1]} v.s. {config.n_dim}'
+for theta, dv, sigma8 in zip(valid_samples, valid_data_vectors, valid_sigma8):
+    mv = emu_sampler.get_data_vector_emu(theta)
+    diff = (dv-mv)[config.mask_lkl]
+    dchi2 = diff@config.masked_inv_cov@diff
+    dchi2_list.append(dchi2)
+    sigma8_predict = emu_s8.predict(torch.Tensor(theta[:config.n_pars_cosmo]))[0]
+    dsigma8_list.append(sigma8 - sigma8_predict)
+dchi2_list = np.array(dchi2_list)
+dsigma8_list = np.array(dsigma8_list)
+
+frac_dchi2_1 = np.sum(dchi2_list>1.)/dchi2_list.shape[0]
+frac_dchi2_2 = np.sum(dchi2_list>0.2)/dchi2_list.shape[0]
+print(f'{frac_dchi2_1} chance of getting dchi2 > 1.0 from validation sample')
+print(f'{frac_dchi2_2} chance of getting dchi2 > 0.2 from validation sample')
+
+np.save(pjoin(config.traindir, "../dchi2_dsigma8_validation"),
+	np.hstack([dchi2_list, dsigma8_list]))
