@@ -487,7 +487,7 @@ emulator:
     n_train_iter: 1
     n_resample: 1000000
     batch_size: 256
-    n_epochs: 1
+    n_epochs: 100
     loss_type: "hyperbola"
     #loss_type: "clipped_mean"
     #loss_type: "mean"
