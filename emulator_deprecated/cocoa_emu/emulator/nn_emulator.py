@@ -619,6 +619,8 @@ class NNEmulator:
         ''' Predict unmasked data vector based on input parameters (tensor)
         '''
         assert self.trained, "The emulator needs to be trained first before predicting"
+        assert X.dtype==torch.get_default_dtype()
+        self.model.eval()
         # wrap the input X if it's 1D
         _INPUT_1D_ = False
         if X.dim()==1:
@@ -634,7 +636,7 @@ class NNEmulator:
             X_std  = self.X_std.clone().detach()
 
             X_norm = (X[:,self.param_mask] - X_mean) / X_std
-            y_pred = self.model.eval()(X_norm).cpu()*self.dv_std_reduced + self.dv_fid_reduced
+            y_pred = self.model(X_norm).cpu()*self.dv_std_reduced + self.dv_fid_reduced
         if self.deproj_PCA:
             data_vector_masked = self.do_inverse_pca(y_pred).numpy()
         else:
@@ -664,10 +666,10 @@ class NNEmulator:
         
     def load(self, filename, device=torch.device('cpu'),state_dict=False):
         self.trained = True
-        if device!=torch.device('cpu'):
-            torch.set_default_tensor_type('torch.cuda.FloatTensor')
-        else:
-            torch.set_default_tensor_type('torch.FloatTensor')
+        #if device!=torch.device('cpu'):
+        #    torch.set_default_tensor_type('torch.cuda.FloatTensor')
+        #else:
+        #    torch.set_default_tensor_type('torch.FloatTensor')
         if state_dict==False:
             self.model = torch.load(filename,map_location=device)
         else:
@@ -683,9 +685,9 @@ class NNEmulator:
             self.dv_std = torch.Tensor(f['dv_std'][:])
             self.dv_fid_reduced = torch.Tensor(f['dv_fid_reduced'][:])
             self.dv_std_reduced = torch.Tensor(f['dv_std_reduced'][:])
-            self.mask = np.array(f['mask'][:])
-            self.param_mask = torch.Tensor(f['param_mask'][:])
-            self.deproj_PCA = f['deproj_PCA']
+            self.mask = f['mask'][:].astype(bool)
+            self.param_mask = f['param_mask'][:].astype(bool)
+            self.deproj_PCA = f['deproj_PCA'][()].astype(bool)
             if self.deproj_PCA:
                 self.PC_masked = torch.Tensor(f['PC_masked'][:])
                 self.invcov_reduced = torch.diag(1./self.dv_std_reduced**2)
