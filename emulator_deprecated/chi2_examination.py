@@ -1,13 +1,25 @@
 import sys, os
 from os.path import join as pjoin
-from mpi4py import MPI
+#from mpi4py import MPI
 import numpy as np
-from cocoa_emu import Config, get_params_list, CocoaModel
+import torch
+from cocoa_emu import Config
+from cocoa_emu.emulator import NNEmulator
+from cocoa_emu.sampling import EmuSampler
 os.environ["OMP_NUM_THREADS"] = "1"
 
-comm = MPI.COMM_WORLD
-size = comm.Get_size()
-rank = comm.Get_rank()
+#comm = MPI.COMM_WORLD
+#size = comm.Get_size()
+#rank = comm.Get_rank()
+
+if torch.cuda.is_available():
+   device = torch.device('cuda')
+   #torch.set_default_tensor_type('torch.cuda.FloatTensor')
+else:
+   device = torch.device('cpu')
+   torch.set_num_interop_threads(40) # Inter-op parallelism
+   torch.set_num_threads(40) # Intra-op parallelism
+torch.set_default_device(device)
 
 configfile = sys.argv[1]
 #eval_samples_fn = sys.argv[2]
@@ -18,15 +30,18 @@ n = 0
 
 config = Config(configfile)
 ### Load validation dataset
-print(f'Loading validating data')
+print(f'Loading validating data...')
 valid_samples = np.load(pjoin(config.traindir, 
     f'samples_{label_valid}_{N_sample_valid}_{n}.npy'))
 valid_data_vectors = np.load(pjoin(config.traindir, 
     f'data_vectors_{label_valid}_{N_sample_valid}_{n}.npy'))
 valid_sigma8 = np.load(pjoin(config.traindir, 
     f'sigma8_{label_valid}_{N_sample_valid}_{n}.npy'))
+N_samples = valid_samples.shape[0]
+print(f'Validation dataset loaded, total sample {N_samples}')
 
 ### Load emulators
+print(f'Loading emulator...')
 probe_fmts = ['xi_p', 'xi_m', 'gammat', 'wtheta', 'gk', 'ks', 'kk']
 probe_size = [config.probe_size[0]//2, 
               config.probe_size[0]//2, 
