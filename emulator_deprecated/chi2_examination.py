@@ -94,13 +94,16 @@ else:
     print(f'Can not find sigma8 emulator {fn}!')
     emu_s8 = None
 
+print("\n\n\n Computing dchi2...")
 ### Compute dchi2
 dchi2_list = []
 dsigma8_list = []
 assert valid_samples.shape[1]==config.n_dim, f'Inconsistent param dimension'+\
 f'{valid_samples.shape[1]} v.s. {config.n_dim}'
 for theta, dv, sigma8 in zip(valid_samples, valid_data_vectors, valid_sigma8):
-    mv = emu_sampler.get_data_vector_emu(theta)
+    # pad zeros for n_fast
+    theta_padded = np.hstack([theta, np.zeros(config.n_fast_pars)])
+    mv = emu_sampler.get_data_vector_emu(theta_padded)
     diff = (dv-mv)[config.mask_lkl]
     dchi2 = diff@config.masked_inv_cov@diff
     dchi2_list.append(dchi2)
