@@ -30,8 +30,20 @@ if __name__ == '__main__':
 	config = Config(configfile)
 	# read emulators
 	probe_fmts = ['xi_p', 'xi_m', 'gammat', 'wtheta', 'gk', 'ks', 'kk']
-	probe_size = [config.probe_size[0]//2, config.probe_size[0]//2, config.probe_size[1], config.probe_size[2], config.[3], config.probe_size[4], config.probe_size[5]]
-	probe_params_mask = [config.probe_params_mask[0], config.probe_params_mask[0], config.probe_params_mask[1], config.probe_params_mask[2], config.probe_params_mask[3], config.probe_params_mask[4], config.probe_params_mask[5]]
+	probe_size = [config.probe_size[0]//2, 
+				  config.probe_size[0]//2, 
+				  config.probe_size[1], 
+				  config.probe_size[2], 
+				  config.probe_size[3], 
+				  config.probe_size[4], 
+				  config.probe_size[5]]
+	probe_params_mask = [config.probe_params_mask[0], 
+						 config.probe_params_mask[0], 
+						 config.probe_params_mask[1], 
+						 config.probe_params_mask[2], 
+						 config.probe_params_mask[3], 
+						 config.probe_params_mask[4], 
+						 config.probe_params_mask[5]]
 	#Niter = config.n_train_iter
 	Niter=1
 	emu_list = []
