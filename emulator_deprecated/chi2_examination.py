@@ -129,8 +129,8 @@ for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma
     sigma8_predict = emu_s8.predict(torch.Tensor(theta[:config.n_pars_cosmo]))[0]
     mv_list.append(mv)
     dsigma8_list.append((sigma8 - sigma8_predict)[0])
-    print(f'dchi2 = {dchi2_list[-1]}, dsigma8 = {dsigma8_list[-1]}')
-    print("break-down dchi2s: ", dchi2_ss, dchi2_sg, dchi2_gg, dchi2_gk, dchi2_sk, dchi2_kk)
+    #print(f'dchi2 = {dchi2_list[-1]}, dsigma8 = {dsigma8_list[-1]}')
+    #print("break-down dchi2s: ", dchi2_ss, dchi2_sg, dchi2_gg, dchi2_gk, dchi2_sk, dchi2_kk)
 dchi2_list = np.array(dchi2_list)
 dsigma8_list = np.array(dsigma8_list)
 mv_list = np.array(mv_list)
