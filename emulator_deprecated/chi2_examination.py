@@ -109,9 +109,7 @@ for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma
         emu_sampler.bias_fid, emu_sampler.m_shear_fid, 
         np.zeros(emu_sampler.n_pcas_baryon)])
     mv = emu_sampler.get_data_vector_emu(theta_padded, skip_fast=True)
-    ### Look, here's a bug, the emulator is trained without mean subtracted
-    ### but the prediction add the mean. So, we subtract the mean here
-    diff = (dv-(mv-config.dv_lkl))
+    diff = (dv-mv)
     dchi2 = diff@config.inv_cov@diff
 
     # break-down dchi2s
@@ -121,12 +119,11 @@ for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma
         sub_dchi2 = diff[_l:_r]@config.inv_cov[_l:_r,_l:_r]@diff[_l:_r]
         dchi2_breakdown.append(sub_dchi2)
     dchi2_list.append(dchi2)
-    sigma8_predict = emu_s8.predict(torch.Tensor(theta[:config.n_pars_cosmo]))[0][0]
-    ### Look, there's also the bug here in sigma8, so get rid of the mean
+    sigma8_predict = emu_s8.predict(torch.Tensor(theta[:config.n_pars_cosmo]))[0]
     mv_list.append(mv)
-    dsigma8_list.append((sigma8 - (sigma8_predict-config.sigma8_fid)))
-    print(f'dchi2 = {dchi2_list[-1]}, dsigma8 = {dsigma8_list[-1]}')
-    print("break-down dchi2s: ", dchi2_breakdown)
+    dsigma8_list.append((sigma8 - (sigma8_predict))[0])
+    #print(f'dchi2 = {dchi2_list[-1]}, dsigma8 = {dsigma8_list[-1]}')
+    #print("break-down dchi2s: ", dchi2_breakdown)
 dchi2_list = np.array(dchi2_list)
 dsigma8_list = np.array(dsigma8_list)
 mv_list = np.array(mv_list)
