@@ -109,28 +109,24 @@ for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma
         emu_sampler.bias_fid, emu_sampler.m_shear_fid, 
         np.zeros(emu_sampler.n_pcas_baryon)])
     mv = emu_sampler.get_data_vector_emu(theta_padded, skip_fast=True)
-    diff = (dv-mv)
+    ### Look, here's a bug, the emulator is trained without mean subtracted
+    ### but the prediction add the mean. So, we subtract the mean here
+    diff = (dv-(mv-config.dv_lkl))
     dchi2 = diff@config.inv_cov@diff
 
     # break-down dchi2s
-    dchi2_ss = diff[:config.probe_size[0]]@config.inv_cov[:config.probe_size[0],:config.probe_size[0]]@diff[:config.probe_size[0]]
-    dchi2_sg = diff[config.probe_size[0]:config.probe_size[1]]@\
-                config.inv_cov[config.probe_size[0]:config.probe_size[1],config.probe_size[0]:config.probe_size[1]]@diff[config.probe_size[0]:config.probe_size[1]]
-    dchi2_gg = diff[config.probe_size[1]:config.probe_size[2]]@\
-                config.inv_cov[config.probe_size[1]:config.probe_size[2],config.probe_size[1]:config.probe_size[2]]@diff[config.probe_size[1]:config.probe_size[2]]
-    dchi2_gk = diff[config.probe_size[2]:config.probe_size[3]]@\
-                config.inv_cov[config.probe_size[2]:config.probe_size[3],config.probe_size[2]:config.probe_size[3]]@diff[config.probe_size[2]:config.probe_size[3]]
-    dchi2_sk = diff[config.probe_size[3]:config.probe_size[4]]@\
-                config.inv_cov[config.probe_size[3]:config.probe_size[4],config.probe_size[3]:config.probe_size[4]]@diff[config.probe_size[3]:config.probe_size[4]]
-    dchi2_kk = diff[config.probe_size[4]:config.probe_size[5]]@\
-                config.inv_cov[config.probe_size[4]:config.probe_size[5],config.probe_size[4]:config.probe_size[5]]@diff[config.probe_size[4]:config.probe_size[5]]
-
+    dchi2_breakdown = []
+    for i in range(6):
+        _l, _r = sum(config.probe_size[:i]), sum(config.probe_size[:i+1])
+        sub_dchi2 = diff[_l:_r]@config.inv_cov[_l:_r,_l:_r]@diff[_l:_r]
+        dchi2_breakdown.append(sub_dchi2)
     dchi2_list.append(dchi2)
-    sigma8_predict = emu_s8.predict(torch.Tensor(theta[:config.n_pars_cosmo]))[0]
+    sigma8_predict = emu_s8.predict(torch.Tensor(theta[:config.n_pars_cosmo]))[0][0]
+    ### Look, there's also the bug here in sigma8, so get rid of the mean
     mv_list.append(mv)
-    dsigma8_list.append((sigma8 - sigma8_predict)[0])
+    dsigma8_list.append((sigma8 - (sigma8_predict-config.sigma8_fid)))
     print(f'dchi2 = {dchi2_list[-1]}, dsigma8 = {dsigma8_list[-1]}')
-    print("break-down dchi2s: ", dchi2_ss, dchi2_sg, dchi2_gg, dchi2_gk, dchi2_sk, dchi2_kk)
+    print("break-down dchi2s: ", dchi2_breakdown)
 dchi2_list = np.array(dchi2_list)
 dsigma8_list = np.array(dsigma8_list)
 mv_list = np.array(mv_list)
