@@ -636,7 +636,8 @@ class NNEmulator:
             X_std  = self.X_std.clone().detach()
 
             X_norm = (X[:,self.param_mask] - X_mean) / X_std
-            y_pred = self.model(X_norm).cpu()*self.dv_std_reduced + self.dv_fid_reduced
+            ### Look, here's the bug. I didn't subtract the fid dv when training, so I should't add the fid back here.
+            y_pred = self.model(X_norm).cpu()*self.dv_std_reduced# + self.dv_fid_reduced
         if self.deproj_PCA:
             data_vector_masked = self.do_inverse_pca(y_pred).numpy()
         else:
