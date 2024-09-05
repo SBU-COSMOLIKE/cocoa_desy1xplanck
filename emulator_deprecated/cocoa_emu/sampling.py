@@ -184,6 +184,13 @@ class EmuSampler:
             dv_kk = self.emu_list[6].predict(theta)[0]
         else:
             dv_kk = np.zeros(self.probe_size[5])
+        print(f'dv_ssp {dv_ssp}')
+        print(f'dv_ssm {dv_ssm}')
+        print(f'dv_sg  {dv_sg}')
+        print(f'dv_gg  {dv_gg}')
+        print(f'dv_gk  {dv_gk}')
+        print(f'dv_sk  {dv_sk}')
+        print(f'dv_kk  {dv_kk}')
         datavector = np.hstack([dv_ssp,dv_ssm,dv_sg,dv_gg,dv_gk,dv_sk,dv_kk])
         return datavector
     
@@ -204,28 +211,31 @@ class EmuSampler:
             datavector = factor * datavector
         return datavector
 
-    def get_data_vector_emu(self, theta):
+    def get_data_vector_emu(self, theta, skip_fast=False):
         theta_emu     = theta[:-self.n_fast_pars]
         datavector = self.compute_datavector(theta_emu)
-        # ============== Add shear calibration bias ============================
-        if (self.probe!='wtheta'):
-            _l = self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo)
-            _r = self.n_sample_dims-self.n_pcas_baryon
-            m_shear_theta = theta[_l:_r]
-            if not self.block_shear_calib:
-                datavector = self.add_shear_calib(m_shear_theta, datavector)
-        # ====================== Add liner galaxy bias =========================
-        if (self.probe!='cosmic_shear'):
-            _l = self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo)
-            _r = self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo)
-            bias_theta = theta[_l:_r]
-            if not self.block_bias:
-                datavector = self.add_bias(bias_theta, datavector)        
-        # ======================== Add baryons =================================
-        if(self.n_pcas_baryon > 0):
-            baryon_q   = theta[-self.n_pcas_baryon:]
-            datavector = self.add_baryon_q(baryon_q, datavector)
-        return datavector
+        if skip_fast:
+            return datavector
+        else:
+            # ============== Add shear calibration bias ========================
+            if (self.probe!='wtheta'):
+                _l = self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo)
+                _r = self.n_sample_dims-self.n_pcas_baryon
+                m_shear_theta = theta[_l:_r]
+                if not self.block_shear_calib:
+                    datavector = self.add_shear_calib(m_shear_theta, datavector)
+            # ====================== Add liner galaxy bias =====================
+            if (self.probe!='cosmic_shear'):
+                _l = self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo)
+                _r = self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo)
+                bias_theta = theta[_l:_r]
+                if not self.block_bias:
+                    datavector = self.add_bias(bias_theta, datavector)        
+            # ======================== Add baryons =============================
+            if(self.n_pcas_baryon > 0):
+                baryon_q   = theta[-self.n_pcas_baryon:]
+                datavector = self.add_baryon_q(baryon_q, datavector)
+            return datavector
 
     def ln_prior(self, theta):        
         flat_prior_theta     = theta[self.flat_prior_indices]

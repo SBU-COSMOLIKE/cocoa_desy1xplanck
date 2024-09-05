@@ -620,7 +620,6 @@ class NNEmulator:
         '''
         assert self.trained, "The emulator needs to be trained first before predicting"
         assert X.dtype==torch.get_default_dtype()
-        self.model.eval()
         # wrap the input X if it's 1D
         _INPUT_1D_ = False
         if X.dim()==1:
@@ -632,6 +631,7 @@ class NNEmulator:
 
         # do prediction from 2D X
         with torch.no_grad():
+            self.model.eval()
             X_mean = self.X_mean.clone().detach()
             X_std  = self.X_std.clone().detach()
 
