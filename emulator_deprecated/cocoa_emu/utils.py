@@ -190,6 +190,8 @@ def readDatasetFile(filename, root=None):
             filename = pjoin(root, filename)
         with open(filename, 'r') as f:
             for line in f.readlines():
+                if line=='\n' or line[0]=='#':
+                    continue
                 split_line = (line.replace(' ', '').replace('\n','')).split('=')
                 if(len(split_line)==2):
                     dataset[split_line[0]] = split_line[1]
