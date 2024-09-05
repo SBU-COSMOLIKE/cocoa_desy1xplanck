@@ -119,4 +119,4 @@ print(f'{frac_dchi2_1} chance of getting dchi2 > 1.0 from validation sample')
 print(f'{frac_dchi2_2} chance of getting dchi2 > 0.2 from validation sample')
 
 np.save(pjoin(config.traindir, "../dchi2_dsigma8_validation"),
-	np.hstack([dchi2_list, dsigma8_list]))
+	np.vstack([dchi2_list, dsigma8_list]))
