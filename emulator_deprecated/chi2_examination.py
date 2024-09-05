@@ -30,15 +30,16 @@ n = 0
 
 config = Config(configfile)
 ### Load validation dataset
+thin=10
 print(f'Loading validating data...')
 valid_samples = np.load(pjoin(config.traindir, 
-    f'samples_{label_valid}_{N_sample_valid}_{n}.npy'))
+    f'samples_{label_valid}_{N_sample_valid}_{n}.npy'))[::thin]
 valid_data_vectors = np.load(pjoin(config.traindir, 
-    f'data_vectors_{label_valid}_{N_sample_valid}_{n}.npy'))
+    f'data_vectors_{label_valid}_{N_sample_valid}_{n}.npy'))[::thin]
 valid_sigma8 = np.load(pjoin(config.traindir, 
-    f'sigma8_{label_valid}_{N_sample_valid}_{n}.npy'))
+    f'sigma8_{label_valid}_{N_sample_valid}_{n}.npy'))[::thin]
 N_samples = valid_samples.shape[0]
-print(f'Validation dataset loaded, total sample {N_samples}')
+print(f'Validation dataset loaded, total sample {N_samples} (thin by {thin})')
 
 ### Load emulators
 print(f'Loading emulator...')
@@ -109,7 +110,8 @@ for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma
     dchi2 = diff@config.masked_inv_cov@diff
     dchi2_list.append(dchi2)
     sigma8_predict = emu_s8.predict(torch.Tensor(theta[:config.n_pars_cosmo]))[0]
-    dsigma8_list.append(sigma8 - sigma8_predict)
+    dsigma8_list.append((sigma8 - sigma8_predict)[0])
+    print(dchi2_list[-1], dsigma8_list[-1])
 dchi2_list = np.array(dchi2_list)
 dsigma8_list = np.array(dsigma8_list)
 
