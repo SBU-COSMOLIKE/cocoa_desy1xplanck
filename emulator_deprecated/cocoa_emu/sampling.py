@@ -184,13 +184,13 @@ class EmuSampler:
             dv_kk = self.emu_list[6].predict(theta)[0]
         else:
             dv_kk = np.zeros(self.probe_size[5])
-        print(f'dv_ssp {dv_ssp}')
-        print(f'dv_ssm {dv_ssm}')
-        print(f'dv_sg  {dv_sg}')
-        print(f'dv_gg  {dv_gg}')
-        print(f'dv_gk  {dv_gk}')
-        print(f'dv_sk  {dv_sk}')
-        print(f'dv_kk  {dv_kk}')
+        # print(f'dv_ssp {dv_ssp}')
+        # print(f'dv_ssm {dv_ssm}')
+        # print(f'dv_sg  {dv_sg}')
+        # print(f'dv_gg  {dv_gg}')
+        # print(f'dv_gk  {dv_gk}')
+        # print(f'dv_sk  {dv_sk}')
+        # print(f'dv_kk  {dv_kk}')
         datavector = np.hstack([dv_ssp,dv_ssm,dv_sg,dv_gg,dv_gk,dv_sk,dv_kk])
         return datavector
     

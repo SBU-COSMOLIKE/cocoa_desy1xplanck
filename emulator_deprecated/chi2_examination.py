@@ -108,12 +108,24 @@ for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma
         emu_sampler.bias_fid, emu_sampler.m_shear_fid, 
         np.zeros(emu_sampler.n_pcas_baryon)])
     mv = emu_sampler.get_data_vector_emu(theta_padded, skip_fast=True)
-    diff = (dv-mv)[config.mask_lkl]
-    dchi2 = diff@config.masked_inv_cov@diff
+    diff = (dv-mv)
+    dchi2 = diff@config.inv_cov@diff
+    dchi2_ss = diff[:config.probe_size[0]]@config.inv_cov[:config.probe_size[0],:config.probe_size[0]]@diff[:config.probe_size[0]]
+    dchi2_sg = diff[config.probe_size[0]:config.probe_size[1]]@\
+                config.inv_cov[config.probe_size[0]:config.probe_size[1],config.probe_size[0]:config.probe_size[1]]@diff[config.probe_size[0]:config.probe_size[1]]
+    dchi2_gg = diff[config.probe_size[1]:config.probe_size[2]]@\
+                config.inv_cov[config.probe_size[1]:config.probe_size[2],config.probe_size[1]:config.probe_size[2]]@diff[config.probe_size[1]:config.probe_size[2]]
+    dchi2_gk = diff[config.probe_size[2]:config.probe_size[3]]@\
+                config.inv_cov[config.probe_size[2]:config.probe_size[3],config.probe_size[2]:config.probe_size[3]]@diff[config.probe_size[2]:config.probe_size[3]]
+    dchi2_sk = diff[config.probe_size[3]:config.probe_size[4]]@\
+                config.inv_cov[config.probe_size[3]:config.probe_size[4],config.probe_size[3]:config.probe_size[4]]@diff[config.probe_size[3]:config.probe_size[4]]
+    dchi2_kk = diff[config.probe_size[4]:config.probe_size[5]]@\
+                config.inv_cov[config.probe_size[4]:config.probe_size[5],config.probe_size[4]:config.probe_size[5]]@diff[config.probe_size[4]:config.probe_size[5]]
     dchi2_list.append(dchi2)
     sigma8_predict = emu_s8.predict(torch.Tensor(theta[:config.n_pars_cosmo]))[0]
     dsigma8_list.append((sigma8 - sigma8_predict)[0])
     print(dchi2_list[-1], dsigma8_list[-1])
+    print(dchi2_ss, dchi2_sg, dchi2_gg, dchi2_gk, dchi2_sk, dchi2_kk)
 dchi2_list = np.array(dchi2_list)
 dsigma8_list = np.array(dsigma8_list)
 
