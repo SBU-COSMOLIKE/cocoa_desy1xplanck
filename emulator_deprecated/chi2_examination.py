@@ -100,6 +100,7 @@ print("\n\n\n Computing dchi2...")
 ### Compute dchi2
 dchi2_list = []
 dsigma8_list = []
+mv_list = []
 assert valid_samples.shape[1]==config.n_dim, f'Inconsistent param dimension'+\
 f'{valid_samples.shape[1]} v.s. {config.n_dim}'
 for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma8), total=N_samples):
@@ -110,6 +111,8 @@ for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma
     mv = emu_sampler.get_data_vector_emu(theta_padded, skip_fast=True)
     diff = (dv-mv)
     dchi2 = diff@config.inv_cov@diff
+
+    # break-down dchi2s
     dchi2_ss = diff[:config.probe_size[0]]@config.inv_cov[:config.probe_size[0],:config.probe_size[0]]@diff[:config.probe_size[0]]
     dchi2_sg = diff[config.probe_size[0]:config.probe_size[1]]@\
                 config.inv_cov[config.probe_size[0]:config.probe_size[1],config.probe_size[0]:config.probe_size[1]]@diff[config.probe_size[0]:config.probe_size[1]]
@@ -121,13 +124,16 @@ for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma
                 config.inv_cov[config.probe_size[3]:config.probe_size[4],config.probe_size[3]:config.probe_size[4]]@diff[config.probe_size[3]:config.probe_size[4]]
     dchi2_kk = diff[config.probe_size[4]:config.probe_size[5]]@\
                 config.inv_cov[config.probe_size[4]:config.probe_size[5],config.probe_size[4]:config.probe_size[5]]@diff[config.probe_size[4]:config.probe_size[5]]
+
     dchi2_list.append(dchi2)
     sigma8_predict = emu_s8.predict(torch.Tensor(theta[:config.n_pars_cosmo]))[0]
+    mv_list.append(mv)
     dsigma8_list.append((sigma8 - sigma8_predict)[0])
-    print(dchi2_list[-1], dsigma8_list[-1])
-    print(dchi2_ss, dchi2_sg, dchi2_gg, dchi2_gk, dchi2_sk, dchi2_kk)
+    print(f'dchi2 = {dchi2_list[-1]}, dsigma8 = {dsigma8_list[-1]}')
+    print("break-down dchi2s: ", dchi2_ss, dchi2_sg, dchi2_gg, dchi2_gk, dchi2_sk, dchi2_kk)
 dchi2_list = np.array(dchi2_list)
 dsigma8_list = np.array(dsigma8_list)
+mv_list = np.array(mv_list)
 
 frac_dchi2_1 = np.sum(dchi2_list>1.)/dchi2_list.shape[0]
 frac_dchi2_2 = np.sum(dchi2_list>0.2)/dchi2_list.shape[0]
@@ -136,3 +142,5 @@ print(f'{frac_dchi2_2} chance of getting dchi2 > 0.2 from validation sample')
 
 np.save(pjoin(config.traindir, "../dchi2_dsigma8_validation"),
 	np.vstack([dchi2_list, dsigma8_list]))
+np.save(pjoin(config.traindir, "../mv_thinned_validation"),
+    np.vstack(mv_list))

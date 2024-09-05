@@ -693,6 +693,18 @@ class NNEmulator:
                 self.invcov_reduced = torch.diag(1./self.dv_std_reduced**2)
             else:
                 self.PC_masked = None
+            print(f'=== X_mean = {self.X_mean}')
+            print(f'=== X_std  = {self.X_std}')
+            print(f'=== y_mean = {self.y_mean}')
+            print(f'=== y_std  = {self.y_std}')
+            print(f'=== dv_fid = {self.dv_fid}')
+            print(f'=== dv_std = {self.dv_std}')
+            print(f'=== dv_fid_reduced = {self.dv_fid_reduced}')
+            print(f'=== dv_std_reduced = {self.dv_std_reduced}')
+            print(f'=== mask   = {self.mask}')
+            print(f'=== param_mask = {self.param_mask}')
+            print(f'=== deproj_PCA = {self.deproj_PCA}')
+            print(f'=== PC_masked = {self.PC_masked}')
 
 #     def train(self, X, y, test_split=None, batch_size=32, n_epochs=100):
 #         assert self.deproj_PCA==False, f'Please use train_PCA()!'
