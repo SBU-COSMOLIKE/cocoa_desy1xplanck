@@ -9,6 +9,14 @@ from cocoa_emu.emulator import NNEmulator
 from cocoa_emu.sampling import EmuSampler
 os.environ["OMP_NUM_THREADS"] = "1"
 
+parser = ArgumentParser()
+parser.add_argument('config', type=str, help='Configuration file')
+parser.add_argument('--overwrite', action='store_true', default=False,
+                    help='Overwrite existing model files')
+parser.add_argument('--debug', action='store_true', default=False,
+                    help='Turn on debugging mode')
+args = parser.parse_args()
+
 #comm = MPI.COMM_WORLD
 #size = comm.Get_size()
 #rank = comm.Get_rank()
@@ -21,26 +29,21 @@ else:
    torch.set_num_interop_threads(40) # Inter-op parallelism
    torch.set_num_threads(40) # Intra-op parallelism
 
-configfile = sys.argv[1]
-#eval_samples_fn = sys.argv[2]
-#data_vector_fn = sys.argv[3]
-label_valid = "gaussian_t64.0"
-N_sample_valid = 100000
-n = 0
+config = Config(args.config)
+iss = f'{config.init_sample_type}'
+label_valid = iss+f'_t{config.gtemp_v:d}_{config.gnsamp_v}'
+N_sample_valid = config.gnsamp_v
 
-config = Config(configfile)
 ### Load validation dataset
 thin=10
 print(f'Loading validating data...')
-valid_samples = np.load(pjoin(config.traindir, 
-    f'samples_{label_valid}_{N_sample_valid}_{n}.npy'))[::thin]
-valid_data_vectors = np.load(pjoin(config.traindir, 
-    f'data_vectors_{label_valid}_{N_sample_valid}_{n}.npy'))[::thin]
-valid_sigma8 = np.load(pjoin(config.traindir, 
-    f'sigma8_{label_valid}_{N_sample_valid}_{n}.npy'))[::thin]
+valid_samples = np.load(pjoin(config.traindir, f'samples_{label_valid}.npy'))[::thin]
+valid_data_vectors = np.load(pjoin(config.traindir, f'dvs_{label_valid}.npy'))[::thin]
+valid_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label_valid}.npy'))[::thin]
 N_samples = valid_samples.shape[0]
 print(f'Validation dataset loaded, total sample {N_samples} (thin by {thin})')
 
+### TODO: see how the xi_pm emulator goes, decide whether to combine them.
 ### Load emulators
 print(f'Loading emulator...')
 probe_fmts = ['xi_p', 'xi_m', 'gammat', 'wtheta', 'gk', 'ks', 'kk']

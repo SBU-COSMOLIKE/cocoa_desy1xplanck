@@ -15,9 +15,14 @@ rank = comm.Get_rank()
 configfile = sys.argv[1]
 config = Config(configfile)
 if config.init_sample_type == "lhs":
-    label = f'{config.init_sample_type}_{config.n_lhs}'
+    # label_train = f'{config.init_sample_type}_{config.n_lhs}'
+    # label_valid = label_train
+    print("We don't support LHS any more!")
+    exit(1)
 else:
-    label =f'{config.init_sample_type}_t{config.gauss_temp}_{config.n_resample}'
+    iss = f'{config.init_sample_type}'
+    label_train = iss+f'_t{config.gtemp_t:d}_{config.gnsamp_t}'
+    label_valid = iss+f'_t{config.gtemp_v:d}_{config.gnsamp_v}'
 
 if(rank==0):
     print("Initializing configuration space data vector dimension!")
@@ -28,41 +33,32 @@ if(rank==0):
     print("N_gk: %d"%(config.probe_size[3]))
     print("N_sk: %d"%(config.probe_size[4]))
     print("N_kk: %d"%(config.probe_size[5]))
-    
-n = int(sys.argv[2])
 
-if(rank==0):
-    print("Iteration: %d"%(n))
-# ============== Retrieve training sample ======================
+# ============== Retrieve training & validation sample ======================
 # Note that training sample does not include fast parameters
-if(n==0):
-    if(rank==0):
-        if config.init_sample_type == "lhs":
-            # retrieve LHS parameters
-            # The parameter space boundary is set by config.lhs_mimax, which is 
-            # the prior boundaries for flat prior and 4 sigma for Gaussian prior
-            init_params = get_lhs_samples(config.n_dim, config.n_lhs, config.lhs_minmax)
-        else:
-            # retrieve Gaussian-approximation parameters
-            # The mean of the Gaussian is specified by config.running_params_fid
-            # plus shift from config.gauss_shift.
-            init_params = get_gaussian_samples(config.running_params_fid, 
-                config.running_params, config.params, config.n_resample, 
-                config.gauss_cov, config.gauss_temp, config.gauss_shift)
-    else:
-        init_params = None
-    init_params = comm.bcast(init_params, root=0)
-    params_list = init_params
+if(rank==0):
+    # retrieve Gaussian-approximation parameters
+    # The mean of the Gaussian is specified by config.running_params_fid
+    # plus shift from config.gauss_shift.
+    params_train = get_gaussian_samples(config.running_params_fid, 
+        config.running_params, config.params, config.gnsamp_t, 
+        config.gauss_cov, config.gtemp_t, config.gshift_t)
+    params_valid = get_gaussian_samples(config.running_params_fid, 
+        config.running_params, config.params, config.gnsamp_v, 
+        config.gauss_cov, config.gtemp_v, config.gshift_v)
 else:
-    next_training_samples = np.load(pjoin(config.traindir, f'samples_{label}_{n}.npy'))
-    params_list = get_params_list(next_training_samples, config.param_labels)
-np.save(pjoin(config.traindir, f'total_samples_{label}_{n}.npy'), params_list)
+    params_train, params_valid = None, None
+params_train = comm.bcast(params_train, root=0)
+params_valid = comm.bcast(params_valid, root=0)
+
+np.save(pjoin(config.traindir,f'total_samples_{label_train}.npy'),params_train)
+np.save(pjoin(config.traindir,f'total_samples_{label_valid}.npy'),params_valid)
 
 # ================== Calculate data vectors ==========================
 
 cocoa_model = CocoaModel(configfile, config.likelihood)
 
-def get_local_data_vector_list(params_list, rank, return_s8=False):
+def get_local_data_vector_list(params_list, rank, label, return_s8=False):
     ''' Evaluate data vectors dispatched to the local process
     Input:
     ======
@@ -76,7 +72,7 @@ def get_local_data_vector_list(params_list, rank, return_s8=False):
         - train_data_vectors: data vectors of the training sample
     '''
     # print results real time 
-    dump_file = pjoin(config.traindir, f'dump/{label}_{n}_{rank}-{size}.txt')
+    dump_file = pjoin(config.traindir, f'dump/{label}_{rank}-{size}.txt')
     fp = open(dump_file, "w")
     train_params_list      = []
     train_data_vector_list = []
@@ -109,7 +105,7 @@ def get_local_data_vector_list(params_list, rank, return_s8=False):
     else:
         return train_params_list, train_data_vector_list, None
 
-def get_data_vectors(params_list, comm, rank, return_s8=False):
+def get_data_vectors(params_list, comm, rank, label, return_s8=False):
     ''' Evaluate data vectors
     This function will further calls `get_local_data_vector_list` to dispatch jobs to and collect training data set from  other processes.
     Input:
@@ -127,7 +123,7 @@ def get_data_vectors(params_list, comm, rank, return_s8=False):
         - train_data_vectors:
             data vectors of the training sample
     '''
-    local_params_list, local_data_vector_list, local_sigma8_list = get_local_data_vector_list(params_list, rank, return_s8=return_s8)
+    local_params_list, local_data_vector_list, local_sigma8_list = get_local_data_vector_list(params_list,rank,label,return_s8=return_s8)
     comm.Barrier() # Synchronize before collecting results
     if rank!=0:
         comm.send([local_params_list, local_data_vector_list, local_sigma8_list], dest=0)
@@ -148,11 +144,8 @@ def get_data_vectors(params_list, comm, rank, return_s8=False):
         train_sigma8       = np.vstack(sigma8_list)
     return train_params, train_data_vectors, train_sigma8
 
-current_iter_samples, current_iter_data_vectors, current_iter_sigma8 = get_data_vectors(params_list, comm, rank, return_s8=True)
-    
-train_samples      = current_iter_samples
-train_data_vectors = current_iter_data_vectors
-train_sigma8       = current_iter_sigma8
+train_samples, train_data_vectors, train_sigma8 = get_data_vectors(params_train, comm, rank, label_train, return_s8=True)
+valid_samples, valid_data_vectors, valid_sigma8 = get_data_vectors(params_valid, comm, rank, label_valid, return_s8=True)
 
 # ============ Clean training data & save ====================
 if(rank==0):
@@ -168,19 +161,28 @@ if(rank==0):
         select_chi_sq = (chi_sq_arr < config.chi_sq_cut)
         return select_chi_sq
     # ===============================================
-    select_chi_sq = get_chi_sq_cut(train_data_vectors)
-    selected_obj = np.sum(select_chi_sq)
-    total_obj    = len(train_data_vectors)
-    print(f'[calculate_dv.py] Select {selected_obj} out of {total_obj}!')
+    select_chi_sq_train = get_chi_sq_cut(train_data_vectors)
+    selected_obj_train = np.sum(select_chi_sq_train)
+    total_obj_train    = len(train_data_vectors)
+    print(f'[calculate_dv.py] Select {selected_obj_train} training sample out of {total_obj_train}!')
+    select_chi_sq_valid = get_chi_sq_cut(valid_data_vectors)
+    selected_obj_valid = np.sum(select_chi_sq_valid)
+    total_obj_valid    = len(valid_data_vectors)
+    print(f'[calculate_dv.py] Select {selected_obj_valid} training sample out of {total_obj_valid}!')
     # ===============================================
-        
-    train_data_vectors = train_data_vectors[select_chi_sq]
-    train_samples      = train_samples[select_chi_sq]
-    train_sigma8       = train_sigma8[select_chi_sq]
+    train_data_vectors = train_data_vectors[select_chi_sq_train]
+    train_samples      = train_samples[select_chi_sq_train]
+    train_sigma8       = train_sigma8[select_chi_sq_train]
+    valid_data_vectors = valid_data_vectors[select_chi_sq_valid]
+    valid_samples      = valid_samples[select_chi_sq_valid]
+    valid_sigma8       = valid_sigma8[select_chi_sq_valid]
     # ========================================================
-    np.save(pjoin(config.traindir, f'data_vectors_{label}_{n}.npy'), train_data_vectors)
-    np.save(pjoin(config.traindir, f'samples_{label}_{n}.npy'), train_samples)
-    np.save(pjoin(config.traindir, f'sigma8_{label}_{n}.npy'), train_sigma8)
+    np.save(pjoin(config.traindir, f'dvs_{label_train}.npy'),train_data_vectors)
+    np.save(pjoin(config.traindir, f'samples_{label_train}.npy'), train_samples)
+    np.save(pjoin(config.traindir, f'sigma8_{label_train}.npy'), train_sigma8)
+    np.save(pjoin(config.traindir, f'dvs_{label_valid}.npy'),valid_data_vectors)
+    np.save(pjoin(config.traindir, f'samples_{label_valid}.npy'), valid_samples)
+    np.save(pjoin(config.traindir, f'sigma8_{label_valid}.npy'), valid_sigma8)
     # ======================================================== 
-    print(f'Done data vector calculation iteration {n}!')
+    print(f'Done data vector calculation!')
 MPI.Finalize

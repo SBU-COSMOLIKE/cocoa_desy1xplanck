@@ -12,19 +12,10 @@ from multiprocessing import Pool
 
 parser = ArgumentParser()
 parser.add_argument('config', type=str, help='Configuration file')
-parser.add_argument('iter', type=int, help='Training iteration')
-parser.add_argument('--temper', action='store_true', default=False,
-                    help='Turn on likelihood temperature')
-parser.add_argument('--save_emu', action='store_true', default=False,
-                    help='Save emulator model data set trained in this iteration')
+parser.add_argument('--overwrite', action='store_true', default=False,
+                    help='Overwrite existing model files')
 parser.add_argument('--debug', action='store_true', default=False,
                     help='Turn on debugging mode')
-parser.add_argument('--load_train_if_exist', action='store_true', default=False,
-                    help='Load existing model data set and skip training if exist')
-parser.add_argument('--only_new_sample', action='store_true', 
-    default=False, help='Only train on new data from this iteration.')
-parser.add_argument('--no_retrain', action='store_true', default=False, 
-    help='Do NOT retrain previous model, train a new model instead.')
 args = parser.parse_args()
 
 if torch.cuda.is_available():
@@ -34,116 +25,78 @@ else:
     device = torch.device('cpu')
     torch.set_num_interop_threads(40) # Inter-op parallelism
     torch.set_num_threads(40) # Intra-op parallelism
-#torch.set_default_device(device)
 print('Using device: ',device)
 
 #===============================================================================
-temper_schedule = [50, 10, 5, 2, 1.66, 1.42, 1.11, 1.11]
-
 config = Config(args.config)
-n      = args.iter
-if(args.temper):
-    temper_val = temper_schedule[n]
+print(f'\n>>> Start Emulator Training\n')
+if config.init_sample_type == "lhs":
+    print("We don't support LHS any more!")
+    exit(1)
 else:
-    temper_val = 1.
-print(f'\n>>> Start Emulator Training [Iteration {args.iter}] [1/Temperature {temper_val:2.3f}]\n')
-#label = config.emu_type.lower()
-#if label=="nn":
-#    label = label+f'{config.nn_model}'
-#if config.init_sample_type == "lhs":
-#    label = f'{config.init_sample_type}_{config.n_lhs}'
-#else:
-#    label =f'{config.init_sample_type}_t{config.gauss_temp}_{config.n_resample}'
-label_train = "gaussian_t128.0"
-label_valid = "gaussian_t64.0"
-N_sample_train = 1000000
-N_sample_valid = 100000
-#label = "nn1" # quick hack
+    iss = f'{config.init_sample_type}'
+    label_train = iss+f'_t{config.gtemp_t:d}_{config.gnsamp_t}'
+    label_valid = iss+f'_t{config.gtemp_v:d}_{config.gnsamp_v}'
+    N_sample_train = config.gnsamp_t
+    N_sample_valid = config.gnsamp_v
 #================== Loading Training & Validating Data =========================
-if args.only_new_sample:
-    print(f'Loading training data: ONLY LOADING DATA FROM ITERATION {n}!')
-    train_samples = np.load(pjoin(config.traindir, 
-        f'samples_{label_train}_{N_sample_train}_{n}.npy'))
-    train_data_vectors = np.load(pjoin(config.traindir, 
-        f'data_vectors_{label_train}_{N_sample_train}_{n}.npy'))
-    train_sigma8 = np.load(pjoin(config.traindir, 
-        f'sigma8_{label_train}_{N_sample_train}_{n}.npy'))
-    print(f'Dataset dimension: s{train_samples.shape}/d{train_data_vectors.shape}/8{train_sigma8.shape}')
-    print(f'Loading validating data: ONLY LOADING DATA FROM ITERATION {n}!')
-    valid_samples = np.load(pjoin(config.traindir, 
-        f'samples_{label_valid}_{N_sample_valid}_{n}.npy'))
-    valid_data_vectors = np.load(pjoin(config.traindir, 
-        f'data_vectors_{label_valid}_{N_sample_valid}_{n}.npy'))
-    valid_sigma8 = np.load(pjoin(config.traindir, 
-        f'sigma8_{label_valid}_{N_sample_valid}_{n}.npy'))
-    print(f'Dataset dimension: s{valid_samples.shape}/d{valid_data_vectors.shape}/8{valid_sigma8.shape}')
-else:
-    print(f'Loading training data: LOADING ALL DATA UNTIL ITERATION {n}!')
-    train_samples = np.load(pjoin(config.traindir, 
-        f'samples_{label_train}_{N_sample_train}_{0}.npy'))
-    train_data_vectors = np.load(pjoin(config.traindir, 
-        f'data_vectors_{label_train}_{N_sample_train}_{0}.npy'))
-    train_sigma8 = np.load(pjoin(config.traindir, 
-        f'sigma8_{label_train}_{N_sample_train}_{0}.npy'))
-    for i in range(1, n+1):
-        train_samples = np.vstack([train_samples, np.load(pjoin(config.traindir, 
-            f'samples_{label_train}_{N_sample_train}_{i}.npy'))])
-        train_data_vectors = np.vstack([train_data_vectors, np.load(pjoin(config.traindir, 
-            f'data_vectors_{label_train}_{N_sample_train}_{i}.npy'))])
-        train_sigma8 = np.vstack([train_sigma8, np.load(pjoin(config.traindir, 
-            f'sigma8_{label_train}_{N_sample_train}_{i}.npy'))])
-    print(f'Dataset dimension: s{train_samples.shape}/d{train_data_vectors.shape}/8{train_sigma8.shape}')
-    print(f'Loading training data: LOADING ALL DATA UNTIL ITERATION {n}!')
-    valid_samples = np.load(pjoin(config.traindir, 
-        f'samples_{label_valid}_{N_sample_valid}_{0}.npy'))
-    valid_data_vectors = np.load(pjoin(config.traindir, 
-        f'data_vectors_{label_valid}_{N_sample_valid}_{0}.npy'))
-    valid_sigma8 = np.load(pjoin(config.traindir, 
-        f'sigma8_{label_valid}_{N_sample_valid}_{0}.npy'))
-    for i in range(1, n+1):
-        valid_samples = np.vstack([valid_samples, np.load(pjoin(config.traindir,
-            f'samples_{label_valid}_{N_sample_valid}_{i}.npy'))])
-        valid_data_vectors = np.vstack([valid_data_vectors, np.load(pjoin(config.traindir,
-            f'data_vectors_{label_valid}_{N_sample_valid}_{i}.npy'))])
-        valid_sigma8 = np.vstack([valid_sigma8, np.load(pjoin(config.traindir,
-            f'sigma8_{label_valid}_{N_sample_valid}_{i}.npy'))])
-    print(f'Dataset dimension: s{valid_samples.shape}/d{valid_data_vectors.shape}/8{valid_sigma8.shape}')
-
-#================= Clean data by chi2 cut ======================================
-
-def get_chi_sq_cut(train_data_vectors):
-    chi_sq_list = []
-    for dv in train_data_vectors:
-        delta_dv = (dv - config.dv_lkl)[config.mask_lkl]
-        chi_sq = delta_dv @ config.masked_inv_cov @ delta_dv
-        chi_sq_list.append(chi_sq)
-    chi_sq_arr = np.array(chi_sq_list)
-    select_chi_sq = (chi_sq_arr < config.chi_sq_cut)
-    return select_chi_sq
-
-#select_chi_sq_train = get_chi_sq_cut(train_data_vectors)
-#selected_obj_train = np.sum(select_chi_sq_train)
-#total_obj_train    = len(train_data_vectors)
-#print("Total number of objects: %d"%(selected_obj_train))
-#train_data_vectors = train_data_vectors[select_chi_sq_train]
-#train_samples      = train_samples[select_chi_sq_train]
-#train_sigma8       = train_sigma8[select_chi_sq_train]
-
-#select_chi_sq_valid = get_chi_sq_cut(valid_data_vectors)
-#selected_obj_valid = np.sum(select_chi_sq_valid)
-#total_obj_valid    = len(valid_data_vectors)
-#print("Total number of objects: %d"%(selected_obj_valid))
-#valid_data_vectors = valid_data_vectors[select_chi_sq_valid]
-#valid_samples      = valid_samples[select_chi_sq_valid]
-#valid_sigma8       = valid_sigma8[select_chi_sq_valid]
-
-#================= Init emulator ===============================================
-# NN only hard-coded?
-#full_emu = NNEmulator(config.n_dim, sum(config.probe_size), config.dv_lkl, config.dv_std, config.inv_cov, config.mask_lkl, config.nn_model)
+print(f'Loading training data!')
+train_samples = np.load(pjoin(config.traindir, f'samples_{label_train}.npy'))
+train_data_vectors = np.load(pjoin(config.traindir, f'dvs_{label_train}.npy'))
+train_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label_train}.npy'))
+print(f'Training dataset dimension: {train_samples.shape}')
+print(f'Loading validating data!')
+valid_samples = np.load(pjoin(config.traindir, f'samples_{label_valid}.npy'))
+valid_data_vectors = np.load(pjoin(config.traindir, f'dvs_{label_valid}.npy'))
+valid_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label_valid}.npy'))
+print(f'Validation dataset dimension: {valid_samples.shape}')
+train_samples = torch.Tensor(train_samples)
+train_data_vectors = torch.Tensor(train_data_vectors)
+train_sigma8 = torch.Tensor(train_sigma8)
+valid_samples = torch.Tensor(valid_samples)
+valid_data_vectors = torch.Tensor(valid_data_vectors)
+valid_sigma8 = torch.Tensor(valid_sigma8)
 #================= Training emulator ===========================================
 # switch according to probes
+probes = ["xi_pm", "gammat", "wtheta", "wgk", "wsk", "Ckk"]
+for i in range(len(config.probe_mask)):
+    print("============= Training %s Emulator ================="%(probes[i]))
+    l, r = sum(config.probe_size[:i]), sum(config.probe_size[:i+1])
+    emu = NNEmulator(config.n_dim, config.probe_size[i], 
+        config.dv_lkl[l:r], config.dv_std[l:r], 
+        config.inv_cov[l:r,l:r],
+        mask=config.mask_lkl[l:r], param_mask=config.probe_params_mask[i], 
+        model=config.nn_model, device=device,
+        deproj_PCA=True, lr=config.learning_rate, 
+        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
+        dtype="double")
+    emu_fn = pjoin(config.modeldir, f'{probes[i]}_nn{config.nn_model}')
+    if (not os.path.exists(emu_fn)) or args.overwrite:
+        emu.train(train_samples, train_data_vectors[:,l:r],
+                valid_samples, valid_data_vectors[:,l:r],
+                batch_size=config.batch_size, n_epochs=config.n_epochs, 
+                loss_type=config.loss_type)
+        emu.save(emu_fn)
+# train sigma_8 emulator
+if (config.derived==1):
+    print("============= Training sigma8 Emulator =================")
+    emu_s8 = NNEmulator(config.n_pars_cosmo, 1, 
+        config.sigma8_fid, config.sigma8_std, 
+        np.atleast_2d(1.0/config.sigma8_std**2), 
+        model=config.nn_model, device=device,
+        deproj_PCA=False, lr=config.learning_rate, 
+        reduce_lr=config.reduce_lr, weight_decay=config.weight_decay,
+        dtype="double")
+    emu_s8_fn = pjoin(config.modeldir, f'sigma8_nn{config.nn_model}')
+    if (not os.path.exists(emu_s8_fn)) or args.overwrite:
+        emu_s8.train(train_samples[:,:config.n_pars_cosmo], train_sigma8,
+            valid_samples[:,:config.n_pars_cosmo], valid_sigma8,
+            batch_size=config.batch_size, n_epochs=config.n_epochs,
+            loss_type=config.loss_type)
+        emu_s8.save(emu_s8_fn)
+
+'''
 if (config.probe_mask[0]==1):
-    # TODO: refactor NNEmulator to include data vector normalization, validation dataset
     print("=======================================")
     _l, _r = 0, config.probe_size[0]//2
     emu_xi_plus = NNEmulator(config.n_dim, config.probe_size[0]//2, 
@@ -397,102 +350,4 @@ if (config.derived==1):
         if(args.save_emu):
             emu_s8.save(emu_s8_fn)
     print("=======================================")
-
-'''  
-#==============================================
-os.environ["OMP_NUM_THREADS"] = "1"
-
-emu_sampler = EmuSampler(full_emu, config)
-pos0 = emu_sampler.get_starting_pos()
-#==============================================
-self = emu_sampler
-
-def compute_datavector(theta, emu):
-    theta = torch.Tensor(theta)
-    datavector = emu.predict(theta)[0]        
-    return datavector
-    
-def get_data_vector_emu(theta):
-    theta_emu   = theta[:-self.n_fast_pars]
-    
-    if (config.probe_mask[0]==1):
-        dv_xi_plus  = compute_datavector(theta_emu, emu_xi_plus)
-        dv_xi_minus = compute_datavector(theta_emu, emu_xi_minus)
-    else:
-        dv_xi_plus  = np.zeros(config.probe_mask[0]//2)
-        dv_xi_minus = np.zeros(config.probe_mask[0]//2)
-    if (config.probe_mask[1]==1):
-        dv_gammat   = compute_datavector(theta_emu, emu_gammat)
-    else:
-        dv_gammat   = np.zeros(config.probe_mask[1])
-    if (config.probe_mask[2]==1):
-        dv_wtheta   = compute_datavector(theta_emu, emu_wtheta)
-    else:
-        dv_wtheta   = np.zeros(config.probe_mask[2])
-    if (config.probe_mask[3]==1):
-        dv_gk       = compute_datavector(theta_emu, emu_gk)
-    else:
-        dv_gk = np.zeros(config.probe_mask[3])
-    if (config.probe_mask[4]==1):
-        dv_ks       = compute_datavector(theta_emu, emu_ks)
-    else:
-        dv_ks = np.zeros(config.probe_mask[4])
-    if (config.probe_mask[5]==1):
-        dv_kk       = compute_datavector(theta_emu, emu_kk)
-    else:
-        dv_kk       = np.zeros(config.probe_mask[5])
-    
-    datavector  = np.hstack([dv_xi_plus, dv_xi_minus, dv_gammat, dv_wtheta, dv_gk, dv_ks, dv_kk])
-
-    # ============== Add shear calibration bias ======================
-    if(config.probe!='wtheta'):
-        m_shear_theta = theta[self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo):self.n_sample_dims-(self.n_pcas_baryon)]
-        datavector  = self.add_shear_calib(m_shear_theta, datavector)
-    # ============== Add baryons ======================
-    if(self.n_pcas_baryon > 0.):
-        baryon_Q    = theta[self.n_sample_dims-self.n_pcas_baryon:]
-        datavector  = self.add_baryon_q(baryon_Q, datavector)
-    # ============== Add liner galaxy bias ============
-    if(config.probe!='cosmic_shear'):
-        gbias_theta = theta[self.n_sample_dims-(self.n_pcas_baryon+self.source_ntomo+self.lens_ntomo): self.n_sample_dims-(self.n_pcas_baryon+self.source_ntomo)]
-        datavector = self.add_bias(gbias_theta, datavector)
-    return datavector
-    
-def ln_lkl(theta):
-    model_datavector = get_data_vector_emu(theta)
-    delta_dv = (model_datavector - emu_sampler.dv_obs)[emu_sampler.mask]
-    return -0.5 * delta_dv @ emu_sampler.masked_inv_cov @ delta_dv        
-
-def ln_prob(theta, temper_val=1.):
-    return emu_sampler.ln_prior(theta) + (1/temper_val) * ln_lkl(theta)
-
-#================= Run MCMC chains using emulator ==============================
-print("temper_val: %2.3f"%(temper_val))
-
-with Pool() as pool:
-    sampler = emcee.EnsembleSampler(config.n_emcee_walkers, 
-        emu_sampler.n_sample_dims, ln_prob, args=(temper_val,), pool=pool)
-    sampler.run_mcmc(pos0, config.n_mcmc, progress=True)
-    # save the sampler for debug purpose
-    if (args.debug):
-        _sample = sampler.get_chain(flat=True)
-        _logprob= sampler.get_log_prob(flat=True)
-        _sigma8 = emu_s8.predict(torch.Tensor(_sample[:,:config.n_pars_cosmo]))
-        np.save(pjoin(config.traindir, f'DBG_chain_{label}_{n}.npy'), 
-            np.hstack([_sample, _sigma8, _logprob[:,np.newaxis]]))
-
-samples = sampler.get_chain(discard=config.n_burn_in, thin=config.n_thin, flat=True)
-
-if(args.temper):
-    # only save samples to explore posterior regions
-    select_indices = np.random.choice(np.arange(len(samples)), replace=False, size=config.n_resample)
-    next_training_samples = samples[select_indices,:-(config.n_fast_pars)]
-    np.save(pjoin(config.traindir, f'samples_{label}_{n+1}.npy'), next_training_samples)
-else:
-    # we want the chain
-    logprobs= sampler.get_log_prob(discard=config.n_burn_in, thin=config.n_thin, flat=True)
-    derived_sigma8 = emu_s8.predict(torch.Tensor(samples[:,:config.n_pars_cosmo]))
-    np.save(pjoin(config.chaindir, config.chainname+f'_{label}_{n}.npy'), 
-        np.hstack([samples, derived_sigma8, logprobs[:,np.newaxis]]))
-print("train_emulator.py: iteration %d Done!"%n)
 '''

@@ -8,20 +8,7 @@ import h5py as h5
 import sys
 from torchinfo import summary
 from datetime import datetime
-'''
-Affine, \
-                                  ResBlock, \
-                                  ResBottle, \
-                                  DenseBlock, \
-                                  Attention, \
-                                  Transformer, \
-                                  True_Transformer, \
-                                  Better_Attention, \
-                                  Better_Transformer, \
-                                  Better_ResBlock, \
-                                  mamba_block, \
-                                  SSM
-'''
+
 class Affine(nn.Module):
     def __init__(self):
         super(Affine, self).__init__()
@@ -261,11 +248,10 @@ class NNEmulator:
     def __init__(self, N_DIM, OUTPUT_DIM, dv_fid, dv_std, invcov, mask=None, 
         param_mask=None, model=None, deproj_PCA=False, optim=None, 
         device=torch.device('cpu'), lr=1e-3, reduce_lr=True, scheduler=None, 
-        weight_decay=1e-3, dtype='float'):
+        weight_decay=1e-3, dtype='float', print_summary=False):
         if dtype=='double':
             torch.set_default_dtype(torch.double)
             print('default data type = double')
-        #self.generator=torch.Generator(device=self.device)
         self.generator=torch.Generator("cpu")
 
         ### Set the input parameter space dimension
@@ -294,6 +280,9 @@ class NNEmulator:
         OUTPUT_DIM_REDUCED = self.mask.sum()
         # init data vector, dv covariance, and dv std (and deproject to PCs)
         # and also get rid off masked data points
+        self.dv_fid = torch.Tensor(dv_fid)
+        self.dv_std = torch.Tensor(dv_std)
+        self.invcov = torch.Tensor(invcov)
         if self.deproj_PCA:
             # note that mask the dv and cov before building PCs
             dv_fid_masked = torch.Tensor(dv_fid[self.mask])
@@ -304,21 +293,11 @@ class NNEmulator:
             self.dv_std_reduced = torch.Tensor(1./np.sqrt(eigenvalues))
             self.dv_fid_reduced = torch.Tensor(dv_fid_masked@self.PC_masked)
             self.invcov_reduced = torch.Tensor(np.diag(eigenvalues))
-            self.dv_fid = np.zeros(len(dv_fid))
-            self.dv_fid[self.mask] = self.dv_fid_reduced
-            self.dv_std = np.zeros(len(dv_std))
-            self.dv_std[self.mask] = self.dv_std_reduced
-            self.invcov = torch.Tensor(np.zeros(invcov.shape))
-            self.invcov[np.ix_(self.mask,self.mask)] = self.invcov_reduced
         else:
-            self.dv_fid = torch.Tensor(dv_fid)
-            self.dv_std = torch.Tensor(dv_std)
-            self.invcov = torch.Tensor(invcov)
+            self.PC_masked = None
             self.dv_fid_reduced = torch.Tensor(dv_fid[self.mask])
             self.dv_std_reduced = torch.Tensor(dv_std[self.mask])
             self.invcov_reduced = torch.Tensor(invcov[self.mask][:,self.mask])
-            self.PC_masked = None
-
         
         if (model==0):
             print("Using simply connected NN...")
@@ -422,7 +401,7 @@ class NNEmulator:
                             Affine()
                         )
         elif(model==6):
-            print("Using Evan's simplified Res model...")
+            print("Using Evan's simplified ResNet model...")
             int_dim_res = 256
             self.model = nn.Sequential(
                             nn.Linear(self.N_DIM_REDUCED, int_dim_res),
@@ -435,7 +414,8 @@ class NNEmulator:
         else:
             print(f'Can not support model {model}!')
             exit(1)
-        summary(self.model)
+        if print_summary:
+            summary(self.model)
         self.model.to(device)
 
         if self.optim is None:
@@ -522,12 +502,12 @@ class NNEmulator:
         # pre-process training & validation data sets
         if self.deproj_PCA:
             # reduce & normalize y and y_validation by PC, and subtract mean
-            y_reduced = self.do_pca(y[:,self.mask])
-            y_validation_reduced = self.do_pca(y_validation[:,self.mask])
+            y_reduced = self.do_pca(y[:,self.mask]) - self.dv_fid_reduced
+            y_validation_reduced = self.do_pca(y_validation[:,self.mask]) - self.dv_fid_reduced
         else:
             # only get rid off masked elements
-            y_reduced = y[:,self.mask]
-            y_validation_reduced = y_validation[:,self.mask]
+            y_reduced = y[:,self.mask] - self.dv_fid_reduced
+            y_validation_reduced = y_validation[:,self.mask] - self.dv_fid_reduced
         X_reduced = X[:,self.param_mask]
         X_validation_reduced = X_validation[:,self.param_mask]
 
@@ -621,10 +601,8 @@ class NNEmulator:
         assert self.trained, "The emulator needs to be trained first before predicting"
         assert X.dtype==torch.get_default_dtype()
         # wrap the input X if it's 1D
-        _INPUT_1D_ = False
         if X.dim()==1:
             X = torch.atleast_2d(X)
-            _INPUT_1D_ = True
         elif X.dim()>2:
             print(f'Error: Can not support {X.dim()}-dimension input X!')
             exit(1)
@@ -634,17 +612,17 @@ class NNEmulator:
             self.model.eval()
             X_mean = self.X_mean.clone().detach()
             X_std  = self.X_std.clone().detach()
+            y_mean = self.y_mean.clone().detach()
+            y_std  = self.y_std.clone().detach()
 
             X_norm = (X[:,self.param_mask] - X_mean) / X_std
-            ### Look, here's the bug. I didn't subtract the fid dv when training, so I should't add the fid back here.
-            y_pred = self.model(X_norm).cpu()*self.dv_std_reduced# + self.dv_fid_reduced
+            y_pred = self.model(X_norm).cpu()*y_std + y_mean
         if self.deproj_PCA:
             data_vector_masked = self.do_inverse_pca(y_pred).numpy()
         else:
             data_vector_masked = y_pred.numpy()
         data_vector = np.zeros([X.size(0), self.mask.shape[0]])
         data_vector[:,self.mask] = data_vector_masked
-        #return data_vector[0] if _INPUT_1D_ else data_vector
         return data_vector
         
     def save(self, filename):
@@ -655,10 +633,10 @@ class NNEmulator:
             f['X_std']  = self.X_std
             f['Y_mean'] = self.y_mean
             f['Y_std']  = self.y_std
-            f['dv_fid'] = self.dv_fid
-            f['dv_std'] = self.dv_std
-            f['dv_fid_reduced'] = self.dv_fid_reduced
-            f['dv_std_reduced'] = self.dv_std_reduced
+            # f['dv_fid'] = self.dv_fid
+            # f['dv_std'] = self.dv_std
+            # f['dv_fid_reduced'] = self.dv_fid_reduced
+            # f['dv_std_reduced'] = self.dv_std_reduced
             f['mask'] = self.mask
             f['param_mask'] = self.param_mask
             f['deproj_PCA'] = self.deproj_PCA
@@ -682,30 +660,30 @@ class NNEmulator:
             self.X_std  = torch.Tensor(f['X_std'][:])
             self.y_mean = torch.Tensor(f['Y_mean'][:])
             self.y_std  = torch.Tensor(f['Y_std'][:])
-            self.dv_fid = torch.Tensor(f['dv_fid'][:])
-            self.dv_std = torch.Tensor(f['dv_std'][:])
-            self.dv_fid_reduced = torch.Tensor(f['dv_fid_reduced'][:])
-            self.dv_std_reduced = torch.Tensor(f['dv_std_reduced'][:])
+            # self.dv_fid = torch.Tensor(f['dv_fid'][:])
+            # self.dv_std = torch.Tensor(f['dv_std'][:])
+            # self.dv_fid_reduced = torch.Tensor(f['dv_fid_reduced'][:])
+            # self.dv_std_reduced = torch.Tensor(f['dv_std_reduced'][:])
             self.mask = f['mask'][:].astype(bool)
             self.param_mask = f['param_mask'][:].astype(bool)
             self.deproj_PCA = f['deproj_PCA'][()].astype(bool)
             if self.deproj_PCA:
                 self.PC_masked = torch.Tensor(f['PC_masked'][:])
-                self.invcov_reduced = torch.diag(1./self.dv_std_reduced**2)
+                self.invcov_reduced = torch.diag(1./self.y_std**2)
             else:
                 self.PC_masked = None
-            print(f'=== X_mean = {self.X_mean}')
-            print(f'=== X_std  = {self.X_std}')
-            print(f'=== y_mean = {self.y_mean}')
-            print(f'=== y_std  = {self.y_std}')
-            print(f'=== dv_fid = {self.dv_fid}')
-            print(f'=== dv_std = {self.dv_std}')
-            print(f'=== dv_fid_reduced = {self.dv_fid_reduced}')
-            print(f'=== dv_std_reduced = {self.dv_std_reduced}')
-            print(f'=== mask   = {self.mask}')
-            print(f'=== param_mask = {self.param_mask}')
-            print(f'=== deproj_PCA = {self.deproj_PCA}')
-            print(f'=== PC_masked = {self.PC_masked}')
+            # print(f'=== X_mean = {self.X_mean}')
+            # print(f'=== X_std  = {self.X_std}')
+            # print(f'=== y_mean = {self.y_mean}')
+            # print(f'=== y_std  = {self.y_std}')
+            # print(f'=== dv_fid = {self.dv_fid}')
+            # print(f'=== dv_std = {self.dv_std}')
+            # print(f'=== dv_fid_reduced = {self.dv_fid_reduced}')
+            # print(f'=== dv_std_reduced = {self.dv_std_reduced}')
+            # print(f'=== mask   = {self.mask}')
+            # print(f'=== param_mask = {self.param_mask}')
+            # print(f'=== deproj_PCA = {self.deproj_PCA}')
+            # print(f'=== PC_masked = {self.PC_masked}')
 
 #     def train(self, X, y, test_split=None, batch_size=32, n_epochs=100):
 #         assert self.deproj_PCA==False, f'Please use train_PCA()!'

@@ -108,18 +108,18 @@ class Config:
 
     def load_emu(self, config_args_emu):
         # Read emulator related data
-        self.mask_emu = np.loadtxt(config_args_emu['sampling']['scalecut_mask'])[:,1].astype(bool)
-        self.dv_fid = np.loadtxt(config_args_emu['training']['dv_fid'])[:,1]
+        # self.mask_emu = np.loadtxt(config_args_emu['sampling']['scalecut_mask'])[:,1].astype(bool)
+        # self.dv_fid = np.loadtxt(config_args_emu['training']['dv_fid'])[:,1]
         # also train an emulator for sigma_8 at z=0
         self.derived = 1
-        self.sigma8_fid = np.array([float(config_args_emu['derived']['sigma8_fid'])])
-        self.sigma8_std = np.array([float(config_args_emu['derived']['sigma8_std'])])
+        self.sigma8_fid = np.array([config_args_emu['derived']['sigma8_fid']])
+        self.sigma8_std = np.array([config_args_emu['derived']['sigma8_std']])
         try:
             self.n_pcas_baryon = config_args_emu['baryons']['n_pcas_baryon']
         except:
             self.n_pcas_baryon = 0
         try:
-            self.chi_sq_cut = float(config_args_emu['training']['chi_sq_cut'])
+            self.chi_sq_cut = config_args_emu['training']['chi_sq_cut']
         except:
             self.chi_sq_cut = 1e+5
 
@@ -135,7 +135,7 @@ class Config:
         # else:
         #     self.n_fast_pars = self.n_pcas_baryon + self.source_ntomo
         self.n_fast_pars = self.source_ntomo + self.n_pcas_baryon
-        assert len(self.dv_lkl)==len(self.dv_fid),"Observed data vector is of different size compared to the fiducial data vector."
+        # assert len(self.dv_lkl)==len(self.dv_fid),"Observed data vector is of different size compared to the fiducial data vector."
 
         # Set I/O path
         self.savedir = config_args_emu['io']['savedir']
@@ -188,21 +188,23 @@ class Config:
             self.lhs_minmax = self.get_lhs_minmax()
         elif self.init_sample_type == "gaussian":
             self.gauss_cov = _init_sample['gauss_cov']
-            self.gauss_temp = float(_init_sample.get('gauss_temp', 1.))
-            self.gauss_shift = _init_sample.get('gauss_shift', None) # dict
+            self.gtemp_t = _init_sample.get('gauss_temp_train', 1.)
+            self.gshift_t = _init_sample.get('gauss_shift_train', None)
+            self.gnsamp_t = _init_sample.get('n_train')
+            self.gtemp_v = _init_sample.get('gauss_temp_valid', 1.)
+            self.gshift_v = _init_sample.get('gauss_shift_valid', None)
+            self.gnsamp_v = _init_sample.get('n_valid')
             self.gauss_minmax = self.get_gaussian_minmax()
         else:
             print(f'Can not recognize init sample type {self.init_sample_type}')
             exit(1)
         self.n_train_iter = int(config_args_emu['training']['n_train_iter'])
+
+        # Read the emcee sampler setting
         self.n_emcee_walkers=int(config_args_emu['sampling']['n_emcee_walkers'])
-        # n_sample down-select from n_mcmc
         self.n_mcmc = int(config_args_emu['sampling']['n_mcmc'])
         self.n_burn_in = int(config_args_emu['sampling']['n_burn_in'])
         self.n_thin = int(config_args_emu['sampling']['n_thin'])
-        self.n_resample = int(config_args_emu['training']['n_resample'])
-        # self.temper0 = float(config_args_emu['sampling']['temper0'])
-        # self.temper_increment = float(config_args_emu['sampling']['temper_increment'])
         
         # Read parameter blocking settings
         try:
