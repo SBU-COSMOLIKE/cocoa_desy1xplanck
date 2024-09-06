@@ -280,7 +280,7 @@ class EmuSampler:
         elif "omegabh2" in _param_dict:
             ombh2 = _param_dict["omegabh2"]
         else:
-            ombh2 = 0.3
+            ombh2 = 0.02
         if ombh2<0.005 or ombh2>0.04:
             prior_bbn_consistency = -np.inf
         else:

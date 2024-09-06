@@ -104,7 +104,7 @@ class Config:
             for j in range(self.inv_cov.shape[1]):
                 if (self.mask_lkl[i]>0) and (self.mask_lkl[j]>0):
                     i_reduce, j_reduce = int(self.mask_lkl[:i].sum()), int(self.mask_lkl[:j].sum())
-                self.inv_cov[i,j] = self.masked_inv_cov[i_reduce,j_reduce]
+                    self.inv_cov[i,j] = self.masked_inv_cov[i_reduce,j_reduce]
 
     def load_emu(self, config_args_emu):
         # Read emulator related data
@@ -124,15 +124,17 @@ class Config:
             self.chi_sq_cut = 1e+5
 
         self.shear_calib_mask = np.load(config_args_emu['shear_calib']['mask'])
-        # Fast parameters sequence: linear bias, shear calib, baryon PCs
-        # Note: 1. Those fast parameters are not being sampled in the yaml file
+        # Fast parameters sequence: shear calibration, baryon PCs
+        # Note: 1. Those fast parameters are not being sampled in the YAML file
         #       2. Technically linear galaxy bias is not a fast parameter due to
-        #          RSD (?) and magnification bias.
-        if self.probe != 'cosmic_shear':
-            self.galaxy_bias_mask = np.load(self.config_args_emu['galaxy_bias']['mask'])
-            self.n_fast_pars = self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo
-        else:
-            self.n_fast_pars = self.n_pcas_baryon + self.source_ntomo
+        #          RSD and magnification bias.
+        #       3. We are including linear gbias as slow parameters now.
+        # if self.probe != 'cosmic_shear':
+        #     self.galaxy_bias_mask = np.load(self.config_args_emu['galaxy_bias']['mask'])
+        #     self.n_fast_pars = self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo
+        # else:
+        #     self.n_fast_pars = self.n_pcas_baryon + self.source_ntomo
+        self.n_fast_pars = self.source_ntomo + self.n_pcas_baryon
         assert len(self.dv_lkl)==len(self.dv_fid),"Observed data vector is of different size compared to the fiducial data vector."
 
         # Set I/O path
@@ -275,6 +277,8 @@ class Config:
                     self.running_params_type.append(3) # Lens photo-z
                 elif param.startswith("DES_STRETCH_L"):
                     self.running_params_type.append(3) # Lens photo-z stretch
+                elif param.startswith("DES_B1"):
+                    self.running_params_type.append(3) # Lens linear gbias
                 else:
                     print(f'Can not support param {param} now!')
                     exit(1)
