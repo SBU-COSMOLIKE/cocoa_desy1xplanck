@@ -24,7 +24,7 @@ stop_at_error: False
 likelihood:
   desy1xplanck.desy3xplanck_6x2pt:
     path: ./external_modules/data/desy1xplanck
-    data_file: datasets/Y3xPlanckPR4_emu_DMO.dataset
+    data_file: datasets/Y3xPlanckPR4_050_ILLUSTRIS.dataset
     integration_accuracy: 0
     subtract_mean: False
     use_weights_for_scenarios: False
@@ -459,14 +459,15 @@ emulator:
     savedir: /groups/timeifler/jiachuanxu/emulator_output
     save_train_data: true
     save_intermediate_model: true
-    ##chainname: emu_testing_chain_nn1_iter4
+    chainname: emu_testing_chain_nn6_vs_MCMC24
   shear_calib:
     mask: ./projects/desy1xplanck/data/emu_data/DESY3xPLKR4_Maglim_baseline_Ntheta30_shear_calib_mask.npy
     prior_std: 0.0091,0.0078,0.0076,0.0076
   baryons:
-    n_pcas_baryon: 2
-    prior_Q1: -6.,20.
-    prior_Q2: -4.,4.
+    n_pcas_baryon: 1
+    #prior_Q1: -6.,20.
+    prior_Q1: 0.0, 7.0
+    #prior_Q2: -4.,4.
   galaxy_bias:
     mask: ./projects/desy1xplanck/data/emu_data/DESY3xPLKR4_Maglim_baseline_Ntheta30_linear_gbias_mask.npy
     bias_fid: 1.5,1.8,1.8,1.9,2.3,2.3
@@ -504,9 +505,9 @@ emulator:
     ### BUT setting a different mask here would block the gradient back propagation, thus
     ### the cutted scales are note learnt. 
     scalecut_mask: ./projects/desy1xplanck/data/masks/xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_emucons.mask
-    n_mcmc: 30000
+    n_mcmc: 1000000
     n_emcee_walkers: 100
-    n_burn_in: 20000
+    n_burn_in: 500000
     n_thin: 10
     temper0: 0.02
     temper_increment: 0.05
