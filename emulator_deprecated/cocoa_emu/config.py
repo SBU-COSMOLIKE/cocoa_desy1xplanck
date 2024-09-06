@@ -104,7 +104,7 @@ class Config:
             for j in range(self.inv_cov.shape[1]):
                 if (self.mask_lkl[i]>0) and (self.mask_lkl[j]>0):
                     i_reduce, j_reduce = int(self.mask_lkl[:i].sum()), int(self.mask_lkl[:j].sum())
-                self.inv_cov[i,j] = self.masked_inv_cov[i_reduce,j_reduce]
+                    self.inv_cov[i,j] = self.masked_inv_cov[i_reduce,j_reduce]
 
     def load_emu(self, config_args_emu):
         # Read emulator related data
