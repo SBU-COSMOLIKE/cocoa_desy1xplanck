@@ -471,7 +471,7 @@ emulator:
     # Gaussian section
     gauss_cov: ./projects/desy1xplanck/yaml/proposal_covmats/DESY3xPLKR4_6x2pt_syn.covmat
     gauss_temp_train: 128. # training dataset temperature
-    n_train: 100000
+    n_train: 1000000
     gauss_shift_train: 
      # omegam: 0.0
      # sigma8: 0.0
