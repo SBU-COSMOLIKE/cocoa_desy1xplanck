@@ -21,8 +21,8 @@ if config.init_sample_type == "lhs":
     exit(1)
 else:
     iss = f'{config.init_sample_type}'
-    label_train = iss+f'_t{config.gtemp_t:d}_{config.gnsamp_t}'
-    label_valid = iss+f'_t{config.gtemp_v:d}_{config.gnsamp_v}'
+    label_train = iss+f'_t{config.gtemp_t}_{config.gnsamp_t}'
+    label_valid = iss+f'_t{config.gtemp_v}_{config.gnsamp_v}'
 
 if(rank==0):
     print("Initializing configuration space data vector dimension!")
