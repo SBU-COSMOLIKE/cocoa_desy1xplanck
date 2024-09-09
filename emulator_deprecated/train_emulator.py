@@ -35,19 +35,19 @@ if config.init_sample_type == "lhs":
     exit(1)
 else:
     iss = f'{config.init_sample_type}'
-    label_train = iss+f'_t{config.gtemp_t:d}_{config.gnsamp_t}'
-    label_valid = iss+f'_t{config.gtemp_v:d}_{config.gnsamp_v}'
+    label_train = iss+f'_t{config.gtemp_t}_{config.gnsamp_t}'
+    label_valid = iss+f'_t{config.gtemp_v}_{config.gnsamp_v}'
     N_sample_train = config.gnsamp_t
     N_sample_valid = config.gnsamp_v
 #================== Loading Training & Validating Data =========================
 print(f'Loading training data!')
 train_samples = np.load(pjoin(config.traindir, f'samples_{label_train}.npy'))
-train_data_vectors = np.load(pjoin(config.traindir, f'dvs_{label_train}.npy'))
+train_data_vectors = np.load(pjoin(config.traindir, f'data_vectors_{label_train}.npy'))
 train_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label_train}.npy'))
 print(f'Training dataset dimension: {train_samples.shape}')
 print(f'Loading validating data!')
 valid_samples = np.load(pjoin(config.traindir, f'samples_{label_valid}.npy'))
-valid_data_vectors = np.load(pjoin(config.traindir, f'dvs_{label_valid}.npy'))
+valid_data_vectors = np.load(pjoin(config.traindir, f'data_vectors_{label_valid}.npy'))
 valid_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label_valid}.npy'))
 print(f'Validation dataset dimension: {valid_samples.shape}')
 train_samples = torch.Tensor(train_samples)
