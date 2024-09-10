@@ -49,7 +49,7 @@ print(f'Validation dataset loaded (thin by {args.thin} down to {N_samples})')
 ### TODO: see how the xi_pm emulator goes, decide whether to combine them.
 ### Load emulators
 print(f'Loading emulator...')
-probe_fmts = ['xi_pm', 'gammat', 'wtheta', 'gk', 'ks', 'kk']
+probe_fmts = ["xi_pm", "gammat", "wtheta", "wgk", "wsk", "Ckk"]
 emu_list = []
 for i,p in enumerate(probe_fmts):
     _l, _r = sum(config.probe_size[:i]), sum(config.probe_size[:i+1])

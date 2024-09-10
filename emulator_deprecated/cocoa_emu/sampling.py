@@ -54,19 +54,20 @@ class EmuSampler:
         self.m_shear_prior_std = split_with_comma(config.config_args_emu['shear_calib']['prior_std'])
         self.config_args_baryons = config.config_args_emu['baryons']
         
-        if self.probe!='cosmic_shear':
-            self.config_args_bias  = config.config_args_emu['galaxy_bias']
-            try:
-                self.bias_prior_type = self.config_args_bias['prior_type']
-            except:
-                self.bias_prior_type = 'flat'            
-            self.bias_fid          = split_with_comma(self.config_args_bias['bias_fid'])
-            self.galaxy_bias_mask  = config.galaxy_bias_mask
+        # Move linear gbias to slow parameters
+        # if self.probe!='cosmic_shear':
+        #     self.config_args_bias  = config.config_args_emu['galaxy_bias']
+        #     try:
+        #         self.bias_prior_type = self.config_args_bias['prior_type']
+        #     except:
+        #         self.bias_prior_type = 'flat'            
+        #     self.bias_fid          = split_with_comma(self.config_args_bias['bias_fid'])
+        #     self.galaxy_bias_mask  = config.galaxy_bias_mask
         
         self.get_priors()
         
-        if self.probe!='cosmic_shear':
-            self.n_sample_dims    = config.n_dim + self.lens_ntomo + self.source_ntomo + config.n_pcas_baryon
+        if self.probe=='wtheta':
+            self.n_sample_dims    = config.n_dim + config.n_pcas_baryon
         else:
             self.n_sample_dims    = config.n_dim + self.source_ntomo + config.n_pcas_baryon
 
@@ -104,14 +105,14 @@ class EmuSampler:
         self.gaussian_prior_parameters = np.array(gaussian_prior_parameters)
         self.flat_prior_parameters     = np.array(flat_prior_parameters)
         
-        if self.probe!='cosmic_shear':
-            if self.bias_prior_type == 'flat':
-                self.bias_prior        = split_with_comma(self.config_args_bias['bias_prior'])
-                self.bias_prior        = np.tile(self.bias_prior[np.newaxis], (self.lens_ntomo, 1))
-            elif self.bias_prior_type == 'gauss':
-                self.galaxy_bias_std  = split_with_comma(self.config_args_bias['bias_std'])
-                self.galaxy_bias_mean = split_with_comma(self.config_args_bias['bias_mean'])
-                self.galaxy_bias_prior_parameters = np.array([self.galaxy_bias_mean, self.galaxy_bias_std]).T
+        # if self.probe!='cosmic_shear':
+        #     if self.bias_prior_type == 'flat':
+        #         self.bias_prior        = split_with_comma(self.config_args_bias['bias_prior'])
+        #         self.bias_prior        = np.tile(self.bias_prior[np.newaxis], (self.lens_ntomo, 1))
+        #     elif self.bias_prior_type == 'gauss':
+        #         self.galaxy_bias_std  = split_with_comma(self.config_args_bias['bias_std'])
+        #         self.galaxy_bias_mean = split_with_comma(self.config_args_bias['bias_mean'])
+        #         self.galaxy_bias_prior_parameters = np.array([self.galaxy_bias_mean, self.galaxy_bias_std]).T
         self.m_shear_prior_parameters = np.array([self.m_shear_fid, self.m_shear_prior_std]).T
         
         if(self.n_pcas_baryon > 0):
@@ -131,16 +132,16 @@ class EmuSampler:
                 p0_i = loc + scale * np.random.normal(size=self.n_walkers)
                 p0.append(p0_i)        
         p0 = np.array(p0).T
-        if self.probe!='cosmic_shear':
-            if self.bias_prior_type == 'flat':
-                bias_pars_std = 0.05 * (self.bias_prior[:,1] - self.bias_prior[:,0]) * np.ones(self.lens_ntomo)
-            elif self.bias_prior_type == 'gauss':
-                bias_pars_std = self.galaxy_bias_std            
-            fast_pars_std = np.hstack([bias_pars_std, self.m_shear_prior_std])
-            fast_pars_mean = np.hstack([self.bias_fid, self.m_shear_fid])
-        else:
-            fast_pars_std = self.m_shear_prior_std
-            fast_pars_mean = self.m_shear_fid
+        # if self.probe!='cosmic_shear':
+        #     if self.bias_prior_type == 'flat':
+        #         bias_pars_std = 0.05 * (self.bias_prior[:,1] - self.bias_prior[:,0]) * np.ones(self.lens_ntomo)
+        #     elif self.bias_prior_type == 'gauss':
+        #         bias_pars_std = self.galaxy_bias_std            
+        #     fast_pars_std = np.hstack([bias_pars_std, self.m_shear_prior_std])
+        #     fast_pars_mean = np.hstack([self.bias_fid, self.m_shear_fid])
+        # else:
+        fast_pars_std = self.m_shear_prior_std
+        fast_pars_mean = self.m_shear_fid
         if(self.n_pcas_baryon > 0):
             baryon_std = np.hstack([0.1 * np.ones(self.n_pcas_baryon)])
             fast_pars_std = np.hstack([fast_pars_std, baryon_std])
@@ -153,37 +154,40 @@ class EmuSampler:
             
     def compute_datavector(self, theta):
         theta = np.array(theta)
-        if(self.emu_type=='nn'):
-            theta = torch.Tensor(theta)
-        elif(self.emu_type=='gp'):
-            theta = theta[np.newaxis]
+        assert self.emu_type=='nn', f'Can not support GP anymore'
+        theta = torch.Tensor(theta)
         # evaluate data vector using list of emulators
-        if self.probe_mask[0]==1:
-            dv_ssp = self.emu_list[0].predict(theta)[0]
-            dv_ssm = self.emu_list[1].predict(theta)[0]
-        else:
-            dv_ssp = np.zeros(self.probe_size[0]//2)
-            dv_ssm = np.zeros(self.probe_size[0]//2)
-        if self.probe_mask[1]==1:
-            dv_sg = self.emu_list[2].predict(theta)[0]
-        else:
-            dv_sg = self.zeros(self.probe_size[1])
-        if self.probe_mask[2]==1:
-            dv_gg = self.emu_list[3].predict(theta)[0]
-        else:
-            dv_gg = self.zeros(self.probe_size[2])
-        if self.probe_mask[3]==1:
-            dv_gk = self.emu_list[4].predict(theta)[0]
-        else:
-            dv_gk = np.zeros(self.probe_size[3])
-        if self.probe_mask[4]==1:
-            dv_sk = self.emu_list[5].predict(theta)[0]
-        else:
-            dv_sk = np.zeros(self.probe_size[4])
-        if self.probe_mask[5]==1:
-            dv_kk = self.emu_list[6].predict(theta)[0]
-        else:
-            dv_kk = np.zeros(self.probe_size[5])
+        model_vectors = []
+        for i in range(6):
+            if self.probe_mask[i]==1:
+                _mv = self.emu_list[i].predict(theta)[0]
+            else:
+                _mv = np.zeros(self.probe_size[i])
+            model_vectors.append(_mv)
+        # if self.probe_mask[0]==1:
+        #     dv_ss = self.emu_list[0].predict(theta)[0]
+        # else:
+        #     dv_ss = np.zeros(self.probe_size[0])
+        # if self.probe_mask[1]==1:
+        #     dv_sg = self.emu_list[1].predict(theta)[0]
+        # else:
+        #     dv_sg = self.zeros(self.probe_size[1])
+        # if self.probe_mask[2]==1:
+        #     dv_gg = self.emu_list[2].predict(theta)[0]
+        # else:
+        #     dv_gg = self.zeros(self.probe_size[2])
+        # if self.probe_mask[3]==1:
+        #     dv_gk = self.emu_list[3].predict(theta)[0]
+        # else:
+        #     dv_gk = np.zeros(self.probe_size[3])
+        # if self.probe_mask[4]==1:
+        #     dv_sk = self.emu_list[4].predict(theta)[0]
+        # else:
+        #     dv_sk = np.zeros(self.probe_size[4])
+        # if self.probe_mask[5]==1:
+        #     dv_kk = self.emu_list[5].predict(theta)[0]
+        # else:
+        #     dv_kk = np.zeros(self.probe_size[5])
         # print(f'dv_ssp {dv_ssp}')
         # print(f'dv_ssm {dv_ssm}')
         # print(f'dv_sg  {dv_sg}')
@@ -191,14 +195,15 @@ class EmuSampler:
         # print(f'dv_gk  {dv_gk}')
         # print(f'dv_sk  {dv_sk}')
         # print(f'dv_kk  {dv_kk}')
-        datavector = np.hstack([dv_ssp,dv_ssm,dv_sg,dv_gg,dv_gk,dv_sk,dv_kk])
-        return datavector
+        # datavector = np.hstack([dv_ssp,dv_ssm,dv_sg,dv_gg,dv_gk,dv_sk,dv_kk])
+        modelvector = np.hstack(model_vectors)
+        return modelvector
     
-    def add_bias(self, bias_theta, datavector):
-        for i in range(self.lens_ntomo):
-            factor = (bias_theta[i] / self.bias_fid[i])**self.galaxy_bias_mask[i]
-            datavector = factor * datavector
-        return datavector
+    # def add_bias(self, bias_theta, datavector):
+    #     for i in range(self.lens_ntomo):
+    #         factor = (bias_theta[i] / self.bias_fid[i])**self.galaxy_bias_mask[i]
+    #         datavector = factor * datavector
+    #     return datavector
 
     def add_baryon_q(self, Q, datavector):
         for i in range(self.n_pcas_baryon):
@@ -225,12 +230,12 @@ class EmuSampler:
                 if not self.block_shear_calib:
                     datavector = self.add_shear_calib(m_shear_theta, datavector)
             # ====================== Add liner galaxy bias =====================
-            if (self.probe!='cosmic_shear'):
-                _l = self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo)
-                _r = self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo)
-                bias_theta = theta[_l:_r]
-                if not self.block_bias:
-                    datavector = self.add_bias(bias_theta, datavector)        
+            # if (self.probe!='cosmic_shear'):
+            #     _l = self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo)
+            #     _r = self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo)
+            #     bias_theta = theta[_l:_r]
+            #     if not self.block_bias:
+            #         datavector = self.add_bias(bias_theta, datavector)        
             # ======================== Add baryons =============================
             if(self.n_pcas_baryon > 0):
                 baryon_q   = theta[-self.n_pcas_baryon:]
@@ -240,18 +245,18 @@ class EmuSampler:
     def ln_prior(self, theta):        
         flat_prior_theta     = theta[self.flat_prior_indices]
         gaussian_prior_theta = theta[self.gaussian_prior_indices]
-        if self.probe!='cosmic_shear':
-            bias_theta = theta[self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo):
-                                  self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo)]
-            if not self.block_bias:
-                if self.bias_prior_type=='flat':
-                    prior_galaxy_bias = hard_prior(bias_theta, self.bias_prior)
-                elif self.bias_prior_type=='gauss':
-                    prior_galaxy_bias = gaussian_prior(bias_theta, self.galaxy_bias_prior_parameters)
-            else:
-                prior_galaxy_bias = 0.
-        else:
-            prior_galaxy_bias = 0.
+        # if self.probe!='cosmic_shear':
+        #     bias_theta = theta[self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo):
+        #                           self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo)]
+        #     if not self.block_bias:
+        #         if self.bias_prior_type=='flat':
+        #             prior_galaxy_bias = hard_prior(bias_theta, self.bias_prior)
+        #         elif self.bias_prior_type=='gauss':
+        #             prior_galaxy_bias = gaussian_prior(bias_theta, self.galaxy_bias_prior_parameters)
+        #     else:
+        #         prior_galaxy_bias = 0.
+        # else:
+        #     prior_galaxy_bias = 0.
         m_shear_theta        = theta[self.n_sample_dims-(self.n_pcas_baryon + self.source_ntomo):
                                      self.n_sample_dims-self.n_pcas_baryon]
         if len(flat_prior_theta)>0:
@@ -286,7 +291,7 @@ class EmuSampler:
         else:
             prior_bbn_consistency = 0.
                 
-        return prior_flat + prior_gauss + prior_galaxy_bias + prior_m_shear + prior_baryons + prior_bbn_consistency
+        return prior_flat + prior_gauss + prior_m_shear + prior_baryons + prior_bbn_consistency
     
     def ln_lkl(self, theta):
         model_datavector = self.get_data_vector_emu(theta)
