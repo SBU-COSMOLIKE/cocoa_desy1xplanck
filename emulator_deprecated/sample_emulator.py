@@ -8,10 +8,17 @@ from cocoa_emu import Config, get_lhs_params_list, get_params_list, CocoaModel
 from cocoa_emu.emulator import NNEmulator, GPEmulator
 from cocoa_emu.sampling import EmuSampler
 import emcee
+from argparse import ArgumentParser
 
 ### Parallelization
 #from multiprocessing import Pool
 from schwimmbad import MPIPool
+
+### This file use pre-trained emulator to run MCMC chains based on input YAML
+### Usage: ${PYTHON3} sample_emulator.py ${CONFIG}
+parser = ArgumentParser()
+parser.add_argument('config', type=str, help='Configuration file')
+args = parser.parse_args()
 
 #if torch.cuda.is_available():
 #    device = torch.device('cuda')
@@ -24,11 +31,8 @@ from schwimmbad import MPIPool
 device=torch.device("cpu")
 print('Using device: ', device)
 
-### This file use pre-trained emulator to run MCMC chains based on input YAML
-### Usage: ${PYTHON3} sample_emulator.py ${CONFIG}
-
 if __name__ == '__main__':
-	configfile = sys.argv[1]
+	configfile = args.config
 	config = Config(configfile)
 	assert config.emu_type.lower()=='nn', f'Only support NN emulator now!'
 	

@@ -7,6 +7,7 @@ import torch
 from cocoa_emu import Config
 from cocoa_emu.emulator import NNEmulator
 from cocoa_emu.sampling import EmuSampler
+from argparse import ArgumentParser
 os.environ["OMP_NUM_THREADS"] = "1"
 
 parser = ArgumentParser()
