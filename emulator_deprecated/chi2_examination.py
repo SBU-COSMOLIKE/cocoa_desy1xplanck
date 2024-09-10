@@ -41,7 +41,7 @@ N_sample_valid = config.gnsamp_v
 ### Load validation dataset
 print(f'Loading validating data...')
 valid_samples = np.load(pjoin(config.traindir, f'samples_{label_valid}.npy'))[::args.thin]
-valid_data_vectors = np.load(pjoin(config.traindir, f'dvs_{label_valid}.npy'))[::args.thin]
+valid_data_vectors = np.load(pjoin(config.traindir, f'data_vectors_{label_valid}.npy'))[::args.thin]
 valid_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label_valid}.npy'))[::args.thin]
 N_samples = valid_samples.shape[0]
 print(f'Validation dataset loaded (thin by {args.thin} down to {N_samples})')

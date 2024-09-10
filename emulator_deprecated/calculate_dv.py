@@ -26,8 +26,7 @@ else:
 
 if(rank==0):
     print("Initializing configuration space data vector dimension!")
-    print("N_xip: %d"%(config.probe_size[0]//2))
-    print("N_xim: %d"%(config.probe_size[0]//2))
+    print("N_xi_pm: %d"%(config.probe_size[0]))
     print("N_ggl: %d"%(config.probe_size[1]))
     print("N_w: %d"%(config.probe_size[2]))
     print("N_gk: %d"%(config.probe_size[3]))
@@ -177,10 +176,10 @@ if(rank==0):
     valid_samples      = valid_samples[select_chi_sq_valid]
     valid_sigma8       = valid_sigma8[select_chi_sq_valid]
     # ========================================================
-    np.save(pjoin(config.traindir, f'dvs_{label_train}.npy'),train_data_vectors)
+    np.save(pjoin(config.traindir, f'data_vectors_{label_train}.npy'),train_data_vectors)
     np.save(pjoin(config.traindir, f'samples_{label_train}.npy'), train_samples)
     np.save(pjoin(config.traindir, f'sigma8_{label_train}.npy'), train_sigma8)
-    np.save(pjoin(config.traindir, f'dvs_{label_valid}.npy'),valid_data_vectors)
+    np.save(pjoin(config.traindir, f'data_vectors_{label_valid}.npy'),valid_data_vectors)
     np.save(pjoin(config.traindir, f'samples_{label_valid}.npy'), valid_samples)
     np.save(pjoin(config.traindir, f'sigma8_{label_valid}.npy'), valid_sigma8)
     # ======================================================== 
