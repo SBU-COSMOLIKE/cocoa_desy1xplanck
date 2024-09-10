@@ -485,7 +485,7 @@ emulator:
     chi_sq_cut: 1.0e+5
     n_train_iter: 1
     batch_size: 256
-    n_epochs: 100
+    n_epochs: 200
     loss_type: "hyperbola"
     #loss_type: "clipped_mean"
     #loss_type: "mean"
