@@ -1,5 +1,6 @@
 import sys
 import os
+os.environ["OMP_NUM_THREADS"] = "1"
 from os.path import join as pjoin
 import numpy as np
 import torch
@@ -29,98 +30,53 @@ print('Using device: ', device)
 if __name__ == '__main__':
 	configfile = sys.argv[1]
 	config = Config(configfile)
-	# read emulators
-	probe_fmts = ['xi_p', 'xi_m', 'gammat', 'wtheta', 'gk', 'ks', 'kk']
-	probe_size = [config.probe_size[0]//2, 
-				  config.probe_size[0]//2, 
-				  config.probe_size[1], 
-				  config.probe_size[2], 
-				  config.probe_size[3], 
-				  config.probe_size[4], 
-				  config.probe_size[5]]
-	probe_params_mask = [config.probe_params_mask[0], 
-						 config.probe_params_mask[0], 
-						 config.probe_params_mask[1], 
-						 config.probe_params_mask[2], 
-						 config.probe_params_mask[3], 
-						 config.probe_params_mask[4], 
-						 config.probe_params_mask[5]]
-	#Niter = config.n_train_iter
-	Niter=1
+	assert config.emu_type.lower()=='nn', f'Only support NN emulator now!'
+	
+	### read emulators
+	probe_fmts = ['xi_pm', 'gammat', 'wtheta', 'gk', 'ks', 'kk']
 	emu_list = []
-	N_count = 0
-	if (config.emu_type.lower()=='nn'):
-		for i,p in enumerate(probe_fmts):
-			_l, _r = N_count, N_count + probe_size[i]
-			fn = pjoin(config.modeldir, f'{p}_{Niter-1}_nn{config.nn_model}')
-			if os.path.exists(fn+".h5"):
-				print(f'Reading {p} NN emulator from {fn}.h5 ...')
-				emu = NNEmulator(config.n_dim, probe_size[i], 
-					config.dv_lkl[_l:_r], config.dv_std[_l:_r],
-					config.inv_cov[_l:_r,_l:_r],
-					mask=config.mask_lkl[_l:_r],param_mask=probe_params_mask[i],
-					model=config.nn_model, device=device,
-					deproj_PCA=True, lr=config.learning_rate, 
-        			reduce_lr=config.reduce_lr, 
-        			weight_decay=config.weight_decay, dtype="double")
-				emu.load(fn)
-			else:
-				print(f'Can not find {p} emulator {fn}! Ignore probe {p}!')
-				emu = None
-			N_count += probe_size[i]
-			emu_list.append(emu)
-	elif (config.emu_type.lower()=='gp'):
-		for i,p in enumerate(probe_fmts):
-			_l, _r = N_count, N_count + probe_size[i]
-			fn = pjoin(config.modeldir, f'{p}_{Niter-1}_gp')
-			if os.path.exists(fn+".h5"):
-				print(f'Reading {p} GP emulator from {fn}.h5 ...')
-				emu = GPEmulator(config.n_dim, probe_size[i], config.dv_fid[_l:_r],
-					config.dv_std[_l:_r])
-				emu.load(fn)
-			else:
-				print(f'Can not find {p} emulator {fn}! Ignore probe {p}!')
-				emu = None
-			N_count += probe_size[i]
-			emu_list.append(emu)
-	else:
-		print(f'emulator {config.emu_type} is not implemented!')
-		exit(-1)
-
+	for i,p in enumerate(probe_fmts):
+		_l, _r = sum(config.probe_size[:i]), sum(config.probe_size[:i+1])
+		fn = pjoin(config.modeldir, f'{p}_nn{config.nn_model}')
+		if os.path.exists(fn+".h5"):
+			print(f'Reading {p} NN emulator from {fn}.h5 ...')
+			emu = NNEmulator(config.n_dim, config.probe_size[i], 
+				config.dv_lkl[_l:_r], config.dv_std[_l:_r],
+				config.inv_cov[_l:_r,_l:_r],
+				mask=config.mask_lkl[_l:_r],
+				param_mask=config.probe_params_mask[i],
+				model=config.nn_model, device=device,
+				deproj_PCA=True, lr=config.learning_rate, 
+    			reduce_lr=config.reduce_lr, 
+    			weight_decay=config.weight_decay, dtype="double")
+			emu.load(fn)
+		else:
+			print(f'Can not find {p} emulator {fn}! Ignore probe {p}!')
+			emu = None
+		emu_list.append(emu)
 	# read sigma8 emulator
-	if (config.emu_type.lower()=='nn'):
-		fn = pjoin(config.modeldir, f'sigma8_{Niter-1}_nn{config.nn_model}')
-		if os.path.exists(fn+".h5"):
-			print(f'Reading sigma8 NN emulator from {fn}.h5 ...')
-			emu_s8 = NNEmulator(config.n_pars_cosmo, 1, config.sigma8_fid, 
-					config.sigma8_std, np.atleast_2d(1.0/config.sigma8_std**2), 
-        			model=config.nn_model, device=device,
-        			deproj_PCA=False, lr=config.learning_rate, 
-        			reduce_lr=config.reduce_lr, 
-        			weight_decay=config.weight_decay, dtype="double")
-			emu_s8.load(fn)
-		else:
-			print(f'Can not find sigma8 emulator {fn}!')
-			emu_s8 = None
-	elif (config.emu_type.lower()=='gp'):
-		fn = pjoin(config.modeldir, f'sigma8_{Niter-1}_gp')
-		if os.path.exists(fn+".h5"):
-			print(f'Reading sigma8 GP emulator from {fn}.h5 ...')
-			emu_s8 = GPEmulator(config.n_pars_cosmo, 1, config.sigma8_fid,
-					config.sigma8_std)
-			emu_s8.load(fn)
-		else:
-			print(f'Can not find sigma8 emulator {fn}!')
-			emu_s8 = None
+	fn = pjoin(config.modeldir, f'sigma8_nn{config.nn_model}')
+	if os.path.exists(fn+".h5"):
+		print(f'Reading sigma8 NN emulator from {fn}.h5 ...')
+		emu_s8 = NNEmulator(config.n_pars_cosmo, 1, config.sigma8_fid, 
+				config.sigma8_std, np.atleast_2d(1.0/config.sigma8_std**2), 
+    			model=config.nn_model, device=device,
+    			deproj_PCA=False, lr=config.learning_rate, 
+    			reduce_lr=config.reduce_lr, 
+    			weight_decay=config.weight_decay, dtype="double")
+		emu_s8.load(fn)
+	else:
+		print(f'Can not find sigma8 emulator {fn}!')
+		emu_s8 = None
 
-
-	os.environ["OMP_NUM_THREADS"] = "1"
+	### Build EmuSampler
 	emu_sampler = EmuSampler(emu_list, config)
 	pos0 = emu_sampler.get_starting_pos()
 
 	def ln_prob_wrapper(theta, temper=1.0):
 		return emu_sampler.ln_prob(theta, temper)
 
+	### Run emcee
 	with MPIPool() as pool:
 		if not pool.is_master():
 			pool.wait()
@@ -131,11 +87,13 @@ if __name__ == '__main__':
 	samples = sampler.get_chain(discard=config.n_burn_in, thin=config.n_thin, flat=True)
 	logprobs= sampler.get_log_prob(discard=config.n_burn_in, thin=config.n_thin, flat=True)
 
+	### Get sigma_8 for the chain
 	if emu_s8 is not None:
+		print(f'Getting sigma8 for the emcee chain...')
 		derived_sigma8 = emu_s8.predict(torch.Tensor(samples[:,:config.n_pars_cosmo]))
 		np.save(pjoin(config.chaindir, config.chainname+'.npy'), 
 				np.hstack([samples, derived_sigma8, logprobs[:,np.newaxis]]))
 	else:
 		np.save(pjoin(config.chaindir, config.chainname+'.npy'), 
 			    np.hstack([samples, logprobs[:,np.newaxis]]))
-
+	print("Done!")

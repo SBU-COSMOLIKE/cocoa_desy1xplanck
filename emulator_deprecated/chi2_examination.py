@@ -15,6 +15,8 @@ parser.add_argument('--overwrite', action='store_true', default=False,
                     help='Overwrite existing model files')
 parser.add_argument('--debug', action='store_true', default=False,
                     help='Turn on debugging mode')
+parser.add_argument('-thin', type=int, default=1,
+                    help='Thin the validation dataset when comparing dchi2')
 args = parser.parse_args()
 
 #comm = MPI.COMM_WORLD
@@ -28,6 +30,7 @@ else:
    device = torch.device('cpu')
    torch.set_num_interop_threads(40) # Inter-op parallelism
    torch.set_num_threads(40) # Intra-op parallelism
+torch.set_default_dtype(torch.double)
 
 config = Config(args.config)
 iss = f'{config.init_sample_type}'
@@ -35,43 +38,27 @@ label_valid = iss+f'_t{config.gtemp_v:d}_{config.gnsamp_v}'
 N_sample_valid = config.gnsamp_v
 
 ### Load validation dataset
-thin=10
 print(f'Loading validating data...')
-valid_samples = np.load(pjoin(config.traindir, f'samples_{label_valid}.npy'))[::thin]
-valid_data_vectors = np.load(pjoin(config.traindir, f'dvs_{label_valid}.npy'))[::thin]
-valid_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label_valid}.npy'))[::thin]
+valid_samples = np.load(pjoin(config.traindir, f'samples_{label_valid}.npy'))[::args.thin]
+valid_data_vectors = np.load(pjoin(config.traindir, f'dvs_{label_valid}.npy'))[::args.thin]
+valid_sigma8 = np.load(pjoin(config.traindir, f'sigma8_{label_valid}.npy'))[::args.thin]
 N_samples = valid_samples.shape[0]
-print(f'Validation dataset loaded, total sample {N_samples} (thin by {thin})')
+print(f'Validation dataset loaded (thin by {args.thin} down to {N_samples})')
 
 ### TODO: see how the xi_pm emulator goes, decide whether to combine them.
 ### Load emulators
 print(f'Loading emulator...')
-probe_fmts = ['xi_p', 'xi_m', 'gammat', 'wtheta', 'gk', 'ks', 'kk']
-probe_size = [config.probe_size[0]//2, 
-              config.probe_size[0]//2, 
-              config.probe_size[1], 
-              config.probe_size[2], 
-              config.probe_size[3], 
-              config.probe_size[4], 
-              config.probe_size[5]]
-probe_params_mask = [config.probe_params_mask[0], 
-                     config.probe_params_mask[0], 
-                     config.probe_params_mask[1], 
-                     config.probe_params_mask[2], 
-                     config.probe_params_mask[3], 
-                     config.probe_params_mask[4], 
-                     config.probe_params_mask[5]]
+probe_fmts = ['xi_pm', 'gammat', 'wtheta', 'gk', 'ks', 'kk']
 emu_list = []
-N_count = 0
 for i,p in enumerate(probe_fmts):
-    _l, _r = N_count, N_count + probe_size[i]
-    fn = pjoin(config.modeldir, f'{p}_{n}_nn{config.nn_model}')
+    _l, _r = sum(config.probe_size[:i]), sum(config.probe_size[:i+1])
+    fn = pjoin(config.modeldir, f'{p}_nn{config.nn_model}')
     if os.path.exists(fn+".h5"):
         print(f'Reading {p} NN emulator from {fn}.h5 ...')
-        emu = NNEmulator(config.n_dim, probe_size[i], 
+        emu = NNEmulator(config.n_dim, config.probe_size[i], 
             config.dv_lkl[_l:_r], config.dv_std[_l:_r],
             config.inv_cov[_l:_r,_l:_r],
-            mask=config.mask_lkl[_l:_r],param_mask=probe_params_mask[i],
+            mask=config.mask_lkl[_l:_r],param_mask=config.probe_params_mask[i],
             model=config.nn_model, device=device,
             deproj_PCA=True, lr=config.learning_rate, 
             reduce_lr=config.reduce_lr, 
@@ -80,12 +67,11 @@ for i,p in enumerate(probe_fmts):
     else:
         print(f'Can not find {p} emulator {fn}! Ignore probe {p}!')
         emu = None
-    N_count += probe_size[i]
     emu_list.append(emu)
 emu_sampler = EmuSampler(emu_list, config)
 
 ### Load sigma_8 emulator
-fn = pjoin(config.modeldir, f'sigma8_{n}_nn{config.nn_model}')
+fn = pjoin(config.modeldir, f'sigma8_nn{config.nn_model}')
 if os.path.exists(fn+".h5"):
     print(f'Reading sigma8 NN emulator from {fn}.h5 ...')
     emu_s8 = NNEmulator(config.n_pars_cosmo, 1, config.sigma8_fid, 
@@ -108,8 +94,7 @@ assert valid_samples.shape[1]==config.n_dim, f'Inconsistent param dimension'+\
 f'{valid_samples.shape[1]} v.s. {config.n_dim}'
 for theta, dv, sigma8 in tqdm(zip(valid_samples, valid_data_vectors, valid_sigma8), total=N_samples):
     # pad fiducial values for n_fast
-    theta_padded = np.hstack([theta, 
-        emu_sampler.bias_fid, emu_sampler.m_shear_fid, 
+    theta_padded = np.hstack([theta, emu_sampler.m_shear_fid, 
         np.zeros(emu_sampler.n_pcas_baryon)])
     mv = emu_sampler.get_data_vector_emu(theta_padded, skip_fast=True)
     diff = (dv-mv)
@@ -136,7 +121,9 @@ frac_dchi2_2 = np.sum(dchi2_list>0.2)/dchi2_list.shape[0]
 print(f'{frac_dchi2_1} chance of getting dchi2 > 1.0 from validation sample')
 print(f'{frac_dchi2_2} chance of getting dchi2 > 0.2 from validation sample')
 
-np.save(pjoin(config.traindir, "../dchi2_dsigma8_validation"),
+np.save(pjoin(config.traindir, "../dchi2_dsigma8_validation_v2"),
 	np.vstack([dchi2_list, dsigma8_list]))
-np.save(pjoin(config.traindir, "../mv_thinned_validation"),
+np.save(pjoin(config.traindir, "../mv_thinned_validation_v2"),
     np.vstack(mv_list))
+
+print("Done!")
