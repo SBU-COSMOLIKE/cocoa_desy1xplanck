@@ -24,24 +24,24 @@ class desy3xplanck_6x2pt_emu(Likelihood):
 
 		### Read dataset file: data vector, covariance, mask
 		ini = IniFile(os.path.normpath(os.path.join(self.path, self.data_file)))
-    	self.probe = "6x2pt"
-    	self.data_vector_file = ini.relativeFileName('data_file')
-    	self.cov_file = ini.relativeFileName('cov_file')
-	    try:
-	    	self.U_PMmarg_file = ini.relativeFileName('U_PMmarg')
-	    except:
-	    	raise LoggedError(self.log, "Can not find Point-Mass analytical marginalization matrix, go without it.")
-	    	self.U_PMmarg_file = ""
-    	self.mask_file = ini.relativeFileName('mask_file')
-    	self.source_ntomo = ini.int("source_ntomo")
-    	self.lens_ntomo = ini.int("lens_ntomo", default = -1)
-	    self.ntheta = ini.int("n_theta")
-	    self.nbp = ini.int("n_bp")
-	    self.dv_size = self.ntheta*(self.source_ntomo*(self.source_ntomo+1)+\
-            self.source_ntomo*self.lens_ntomo + self.lens_ntomo+\
-            self.lens_ntomo + self.source_ntomo) + self.nbp
-	    # CMB lensing covariance specs
-	    self.is_cmbl_cov_sim = ini.int("is_cmb_kkkk_cov_from_sim", default = -1)
+		self.probe = "6x2pt"
+		self.data_vector_file = ini.relativeFileName('data_file')
+		self.cov_file = ini.relativeFileName('cov_file')
+		try:
+			self.U_PMmarg_file = ini.relativeFileName('U_PMmarg')
+		except:
+			raise LoggedError(self.log, "Can not find Point-Mass analytical marginalization matrix, go without it.")
+			self.U_PMmarg_file = ""
+		self.mask_file = ini.relativeFileName('mask_file')
+		self.source_ntomo = ini.int("source_ntomo")
+		self.lens_ntomo = ini.int("lens_ntomo", default = -1)
+		self.ntheta = ini.int("n_theta")
+		self.nbp = ini.int("n_bp")
+		self.dv_size = self.ntheta*(self.source_ntomo*(self.source_ntomo+1)+\
+			self.source_ntomo*self.lens_ntomo + self.lens_ntomo+\
+			self.lens_ntomo + self.source_ntomo) + self.nbp
+		# CMB lensing covariance specs
+		self.is_cmbl_cov_sim = ini.int("is_cmb_kkkk_cov_from_sim", default = -1)
 		if(self.is_cmbl_cov_sim == 1):
 			Nvar = ini.float("Hartlap_Nvar")
 			self.alpha_Hartlap = (Nvar - self.nbp -2.0)/(Nvar - 1.0) # < 1
@@ -55,34 +55,34 @@ class desy3xplanck_6x2pt_emu(Likelihood):
 
 		### Initialize baryon feedback PCs
 		if ini.string('baryon_pca_file', default=''):
-	        baryon_pca_file = ini.relativeFileName('baryon_pca_file')
-	        self.baryon_pcs = np.loadtxt(baryon_pca_file)
-	        self.log.info('use_baryon_pca = True')
-	        self.log.info('baryon_pca_file = %s loaded', baryon_pca_file)
-	        self.use_baryon_pca = True
-	        if self.subtract_mean:
+			baryon_pca_file = ini.relativeFileName('baryon_pca_file')
+			self.baryon_pcs = np.loadtxt(baryon_pca_file)
+			self.log.info('use_baryon_pca = True')
+			self.log.info('baryon_pca_file = %s loaded', baryon_pca_file)
+			self.use_baryon_pca = True
+			if self.subtract_mean:
 				mean_baryon_diff_file = ini.relativeFileName('mean_baryon_diff_file')
 				self.mean_baryon_diff = np.loadtxt(mean_baryon_diff_file)
 				self.log.info('subtract_mean = True')
 				self.log.info('mean_baryon_diff_file = %s loaded', mean_baryon_diff_file)
 			else:
 				self.log.info('subtract_mean = False')
-    	else:
-        	self.log.info('use_baryon_pca = False')
-        	self.use_baryon_pca = False
-        self.baryon_pcs_qs = np.zeros(4)
+		else:
+			self.log.info('use_baryon_pca = False')
+			self.use_baryon_pca = False
+		self.baryon_pcs_qs = np.zeros(4)
 
 		# Note: This config file is only used to calculate data vector
 		#       The baryon PCs and priors are overwritten during sampling
 		self.log.info(f'Init emulator with config file {self.train_config}')
 		config = Config(self.train_config)
 		assert config.emu_type.lower()=='nn', f'Only support NN emulator now!'
-        self.probe_mask        = config.probe_mask
-        self.probe_size        = config.probe_size
-        self.shear_calib_mask  = config.shear_calib_mask
-        self.n_pars_cosmo      = config.n_pars_cosmo
-        self.running_params    = config.running_params
-        self.m_shear_fid       = np.array([config.params["DES_M%d"%(i+1)]["value"] for i in range(self.source_ntomo)])
+		self.probe_mask        = config.probe_mask
+		self.probe_size        = config.probe_size
+		self.shear_calib_mask  = config.shear_calib_mask
+		self.n_pars_cosmo      = config.n_pars_cosmo
+		self.running_params    = config.running_params
+		self.m_shear_fid       = np.array([config.params["DES_M%d"%(i+1)]["value"] for i in range(self.source_ntomo)])
 
 		### read emulators
 		# try include emu_list as object attribute. If not work, global variable
@@ -100,8 +100,8 @@ class desy3xplanck_6x2pt_emu(Likelihood):
 					param_mask=config.probe_params_mask[i],
 					model=config.nn_model, device=device,
 					deproj_PCA=True, lr=config.learning_rate, 
-	    			reduce_lr=config.reduce_lr, 
-	    			weight_decay=config.weight_decay, dtype="double")
+					reduce_lr=config.reduce_lr, 
+					weight_decay=config.weight_decay, dtype="double")
 				emu.load(fn)
 			else:
 				self.log.info(f'{fn} not found! Ignore probe {p} emulator!')
@@ -113,10 +113,10 @@ class desy3xplanck_6x2pt_emu(Likelihood):
 			self.log.info(f'--- Reading sigma8 NN emulator from {fn}.h5 ...')
 			self.emu_s8 = NNEmulator(config.n_pars_cosmo, 1, config.sigma8_fid, 
 					config.sigma8_std, np.atleast_2d(1.0/config.sigma8_std**2), 
-	    			model=config.nn_model, device=device,
-	    			deproj_PCA=False, lr=config.learning_rate, 
-	    			reduce_lr=config.reduce_lr, 
-	    			weight_decay=config.weight_decay, dtype="double")
+					model=config.nn_model, device=device,
+					deproj_PCA=False, lr=config.learning_rate, 
+					reduce_lr=config.reduce_lr, 
+					weight_decay=config.weight_decay, dtype="double")
 			self.emu_s8.load(fn)
 		else:
 			self.log.info(f'{fn} not found! Ignore sigma8 emulator!')
@@ -131,67 +131,67 @@ class desy3xplanck_6x2pt_emu(Likelihood):
 		self.dv   = np.loadtxt(self.data_vector_file)[:,1]
 		self.mask = np.loadtxt(self.mask_file)[:,1].astype(bool)
 		### prepare inverse covariance
-        invcov = self.get_full_cov(self.cov_file)
-        # Add Hartlap factor to CMB lensing covariance
-        invcov[-self.nbp:,-self.nbp:] /= self.alpha_Hartlap
-        invcov = np.linalg.inv(invcov[self.mask][:,self.mask])
-        # Add PM marginalization
-        if self.U_PMmarg_file:
-            U_PMmarg = np.loadtxt(self.U_PMmarg_file)
-            U = np.zeros([self.mask.shape[0], self.lens_ntomo])
-            for line in U_PMmarg:
-                i, j = int(line[0]), int(line[1])
-                U[i,j] = float(line[2])
-            U = U[self.mask,:]
-            central_block = np.diag(np.ones(self.lens_ntomo)) + U.T@invcov@U
-            w, v = np.linalg.eig(central_block)
-            assert np.min(w)>=0, f'Central block not positive-definite!'
-            corr = invcov @ (U@np.linalg.inv(central_block)@U.T) @ invcov
-            invcov -= corr
-        self.masked_inv_cov = invcov
-        # test positive-definite
-        w, v = np.linalg.eig(self.masked_inv_cov)
-        assert np.min(w)>=0, f'Precision matrix not positive-definite!'
+		invcov = self.get_full_cov(self.cov_file)
+		# Add Hartlap factor to CMB lensing covariance
+		invcov[-self.nbp:,-self.nbp:] /= self.alpha_Hartlap
+		invcov = np.linalg.inv(invcov[self.mask][:,self.mask])
+		# Add PM marginalization
+		if self.U_PMmarg_file:
+			U_PMmarg = np.loadtxt(self.U_PMmarg_file)
+			U = np.zeros([self.mask.shape[0], self.lens_ntomo])
+			for line in U_PMmarg:
+				i, j = int(line[0]), int(line[1])
+				U[i,j] = float(line[2])
+			U = U[self.mask,:]
+			central_block = np.diag(np.ones(self.lens_ntomo)) + U.T@invcov@U
+			w, v = np.linalg.eig(central_block)
+			assert np.min(w)>=0, f'Central block not positive-definite!'
+			corr = invcov @ (U@np.linalg.inv(central_block)@U.T) @ invcov
+			invcov -= corr
+		self.masked_inv_cov = invcov
+		# test positive-definite
+		w, v = np.linalg.eig(self.masked_inv_cov)
+		assert np.min(w)>=0, f'Precision matrix not positive-definite!'
 
-    def get_full_cov(self, cov_file):
-    	full_cov = np.loadtxt(cov_file)
-        cov = np.zeros((self.dv_size, self.dv_size))
-        cov_scenario = full_cov.shape[1]
-        
-        for line in full_cov:
-            i = int(line[0])
-            j = int(line[1])
+	def get_full_cov(self, cov_file):
+		full_cov = np.loadtxt(cov_file)
+		cov = np.zeros((self.dv_size, self.dv_size))
+		cov_scenario = full_cov.shape[1]
+		
+		for line in full_cov:
+			i = int(line[0])
+			j = int(line[1])
 
-            if(cov_scenario==3):
-                cov_ij = line[2]
-            elif(cov_scenario==10):
-                cov_g_block  = line[8]
-                cov_ng_block = line[9]
-                cov_ij = cov_g_block + cov_ng_block
-            cov[i,j] = cov_ij
-            cov[j,i] = cov_ij
-        return cov
+			if(cov_scenario==3):
+				cov_ij = line[2]
+			elif(cov_scenario==10):
+				cov_g_block  = line[8]
+				cov_ng_block = line[9]
+				cov_ij = cov_g_block + cov_ng_block
+			cov[i,j] = cov_ij
+			cov[j,i] = cov_ij
+		return cov
 
 	def emu_predict(self, theta):
 		''' Get the emulator prediction for slow parameters
 		'''
-        theta = torch.Tensor(theta)
-        # evaluate data vector using list of emulators
-        model_vectors = []
-        for i in range(6):
-            if self.probe_mask[i]==1:
-                _mv = self.emu_list[i].predict(theta)[0]
-            else:
-                _mv = np.zeros(self.probe_size[i])
-            model_vectors.append(_mv)
-        modelvector = np.hstack(model_vectors)
-        return modelvector
+		theta = torch.Tensor(theta)
+		# evaluate data vector using list of emulators
+		model_vectors = []
+		for i in range(6):
+			if self.probe_mask[i]==1:
+				_mv = self.emu_list[i].predict(theta)[0]
+			else:
+				_mv = np.zeros(self.probe_size[i])
+			model_vectors.append(_mv)
+		modelvector = np.hstack(model_vectors)
+		return modelvector
 
-    def get_sigma8(self, **params_values):
-    	theta = np.array([params_values.get(p) for p in self.running_params])
-    	theta = torch.Tensor(theta[:self.n_pars_cosmo])
-    	sigma8 = self.emu_s8.predict(theta)[0]
-    	return sigma8
+	def get_sigma8(self, **params_values):
+		theta = np.array([params_values.get(p) for p in self.running_params])
+		theta = torch.Tensor(theta[:self.n_pars_cosmo])
+		sigma8 = self.emu_s8.predict(theta)[0]
+		return sigma8
 
 	def get_model_vector_emu(self, **params_values):
 		''' Evaluate model vector given parsed input sampled parameter array
@@ -205,9 +205,9 @@ class desy3xplanck_6x2pt_emu(Likelihood):
 		# add shear calibration bias
 		m = np.array([params_values.get(f'DES_M{i+1}') for i in range(self.source_ntomo)])
 		for i in range(self.source_ntomo):
-            factor = ((1+m[i])/(1+self.m_shear_fid[i]))**self.shear_calib_mask[i]
-            mv = factor * mv
-        
+			factor = ((1+m[i])/(1+self.m_shear_fid[i]))**self.shear_calib_mask[i]
+			mv = factor * mv
+		
 		# add baryon feedback PCs
 		if self.use_baryon_pca:
 			# Warning: we assume the PCs were created with the same mask
@@ -237,13 +237,13 @@ class desy3xplanck_6x2pt_emu(Likelihood):
 		params_values: dict
 			dictionary of sampled input parameters
 		'''
-        mv = self.get_data_vector_emu(**params_values)
-        delta_dv = (mv - self.dv)[self.mask]
-        log_p = -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv
+		mv = self.get_data_vector_emu(**params_values)
+		delta_dv = (mv - self.dv)[self.mask]
+		log_p = -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv
 
-        # derived parameters: sigma8
-        _derived = params_values.get('_derived', None)
-        if (_derived is not None) and (self.derive_sigma8):
-        	_derived['sigma8'] = self.get_sigma8(**params_values)
+		# derived parameters: sigma8
+		_derived = params_values.get('_derived', None)
+		if (_derived is not None) and (self.derive_sigma8):
+			_derived['sigma8'] = self.get_sigma8(**params_values)
 
-        return log_p
+		return log_p
