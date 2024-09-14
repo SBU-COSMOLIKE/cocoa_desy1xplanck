@@ -127,6 +127,27 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 			self.emu_s8 = None
 		self.log.info("Emulator likelihood initialized!")
 
+	def get_requirements(self):
+		return {
+			"As_1e9": None,
+			"H0": None,
+			"ns": None,
+			"omegab": None,
+			"omegam": None,
+			#"LSST_DZ_S1": None,
+			#"LSST_DZ_S2": None,
+			#"LSST_DZ_S3": None,
+			#"LSST_DZ_S4": None,
+			#"LSST_DZ_S5": None,
+			#"LSST_A1_1": None,
+			#"LSST_A1_2": None,
+			#"LSST_M1": None,
+			#"LSST_M2": None,
+			#"LSST_M3": None,
+			#"LSST_M4": None,
+			#"LSST_M5": None,
+		}
+
 	def init_data(self):
 		''' Prepare the likelihood dataset
 		Including inverse covariance, data vector, data vector mask
