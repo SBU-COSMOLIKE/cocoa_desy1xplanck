@@ -12,6 +12,12 @@ fi
 addvar LD_LIBRARY_PATH $ROOTDIR/projects/desy1xplanck/interface
 
 addvar PYTHONPATH $ROOTDIR/projects/desy1xplanck/interface
+addvar PYTHONPATH $ROOTDIR/projects/desy1xplanck/emulator_deprecated
+
+### Link emulator likelihoods into the usual cocoa likelihood
+if [ -d "$ROOTDIR/projects/desy1xplanck/emulator_deprecated/likelihood" ]; then
+	ln -sf $ROOTDIR/projects/desy1xplanck/emulator_deprecated/likelihood/* $ROOTDIR/projects/desy1xplanck/likelihood/
+fi
 
 if [ -n "${COSMOLIKE_DEBUG_MODE}" ]; then
     export SPDLOG_LEVEL=debug
