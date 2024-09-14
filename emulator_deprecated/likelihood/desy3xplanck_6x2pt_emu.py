@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from os.path import join as pjoin
 import sys
 import numpy as np
 from getdist import IniFile
@@ -9,10 +10,10 @@ from cobaya.likelihoods._base_classes import _DataSetLikelihood
 import torch
 from cocoa_emu import Config
 from cocoa_emu.emulator import NNEmulator
-sys.path.insert(0, './projects/desy1xplanck/emulator_output/models/')
+#sys.path.insert(0, './projects/desy1xplanck/emulator_output/models/')
 ### Replaced with load/predict function below; be careful with normalization choicies
 #from projects.lsst_y1 import cocoa_emu
-sys.path.append('./')
+#sys.path.append('./')
 
 class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 	''' Attributes needed from the likelihood yaml file:
@@ -24,6 +25,7 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 		self.device = torch.device("cpu")
 
 		### Read dataset file: data vector, covariance, mask
+		self.log.info("Loading likelihood dataset...")
 		ini = IniFile(os.path.normpath(os.path.join(self.path, self.data_file)))
 		self.probe = "6x2pt"
 		self.data_vector_file = ini.relativeFileName('data_file')
@@ -87,6 +89,7 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 
 		### read emulators
 		# try include emu_list as object attribute. If not work, global variable
+		self.log.info("Reading emulator models...")
 		probe_fmts = ["xi_pm", "gammat", "wtheta", "wgk", "wsk", "Ckk"]
 		self.emu_list = []
 		for i,p in enumerate(probe_fmts):
@@ -122,6 +125,7 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 		else:
 			self.log.info(f'{fn} not found! Ignore sigma8 emulator!')
 			self.emu_s8 = None
+		self.log.info("Emulator likelihood initialized!")
 
 	def init_data(self):
 		''' Prepare the likelihood dataset
