@@ -1,19 +1,11 @@
 import numpy as np
 import os
 from os.path import join as pjoin
-import sys
-import numpy as np
 from getdist import IniFile
-#from cobaya.likelihood import Likelihood
 from cobaya.likelihoods._base_classes import _DataSetLikelihood
-# Import emulator related
 import torch
 from cocoa_emu import Config
 from cocoa_emu.emulator import NNEmulator
-#sys.path.insert(0, './projects/desy1xplanck/emulator_output/models/')
-### Replaced with load/predict function below; be careful with normalization choicies
-#from projects.lsst_y1 import cocoa_emu
-#sys.path.append('./')
 
 class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 	''' Attributes needed from the likelihood yaml file:
@@ -26,7 +18,7 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 
 		### Read dataset file: data vector, covariance, mask
 		self.log.info("Loading likelihood dataset...")
-		ini = IniFile(os.path.normpath(os.path.join(self.path, self.data_file)))
+		ini = IniFile(os.path.normpath(pjoin(self.path, self.data_file)))
 		self.probe = "6x2pt"
 		self.data_vector_file = ini.relativeFileName('data_file')
 		self.cov_file = ini.relativeFileName('cov_file')
@@ -126,28 +118,6 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 			self.emu_s8 = None
 		self.log.info("Emulator likelihood initialized!")
 
-#	def get_requirements(self):
-#		return {
-#			"As_1e9": None,
-#			"H0": None,
-#			"ns": None,
-#			"omegab": None,
-#			"omegam": None,
-#			"mnu": None,
-			#"LSST_DZ_S1": None,
-			#"LSST_DZ_S2": None,
-			#"LSST_DZ_S3": None,
-			#"LSST_DZ_S4": None,
-			#"LSST_DZ_S5": None,
-			#"LSST_A1_1": None,
-			#"LSST_A1_2": None,
-			#"LSST_M1": None,
-			#"LSST_M2": None,
-			#"LSST_M3": None,
-			#"LSST_M4": None,
-			#"LSST_M5": None,
-#		}
-
 	def init_data(self):
 		''' Prepare the likelihood dataset
 		Including inverse covariance, data vector, data vector mask
@@ -225,9 +195,7 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 		bias and RSD.
 		'''
 		# get model vector from emulated parameters
-		self.log.info(f'Running params: {self.running_params}')
 		theta = np.array([params_values.get(p) for p in self.running_params])
-		self.log.info(f'Convert to theta = {theta}')
 		mv = self.emu_predict(theta)
 
 		# add shear calibration bias
@@ -270,8 +238,6 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 		log_p = -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv
 
 		# derived parameters: sigma8
-		#derived = {}
-		derived = params_values.get("_derived")
-		derived['sigma8'] = self.get_sigma8_emu(**params_values)
+		params_values["_derived"]['sigma8'] = self.get_sigma8_emu(**params_values)
 
 		return log_p

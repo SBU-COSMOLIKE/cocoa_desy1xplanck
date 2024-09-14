@@ -8,6 +8,5 @@ scenario_weights: "./projects/desy1xplanck/data/PCs/antilles_weights_p"
 
 print_datavector: False
 print_datavector_file: "./projects/desy1xplanck/chains/example_evaluate1_desy1xplanck_6x2pt.emuvector"
-#input_params: ['As_1e9', 'ns', 'H0', 'omegab', 'omegam', 'mnu']
 output_params: ["sigma8"]
 params: !defaults [params_desy3_3x2pt_maglim_emu]
