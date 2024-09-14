@@ -164,38 +164,6 @@ class EmuSampler:
             else:
                 _mv = np.zeros(self.probe_size[i])
             model_vectors.append(_mv)
-        # if self.probe_mask[0]==1:
-        #     dv_ss = self.emu_list[0].predict(theta)[0]
-        # else:
-        #     dv_ss = np.zeros(self.probe_size[0])
-        # if self.probe_mask[1]==1:
-        #     dv_sg = self.emu_list[1].predict(theta)[0]
-        # else:
-        #     dv_sg = self.zeros(self.probe_size[1])
-        # if self.probe_mask[2]==1:
-        #     dv_gg = self.emu_list[2].predict(theta)[0]
-        # else:
-        #     dv_gg = self.zeros(self.probe_size[2])
-        # if self.probe_mask[3]==1:
-        #     dv_gk = self.emu_list[3].predict(theta)[0]
-        # else:
-        #     dv_gk = np.zeros(self.probe_size[3])
-        # if self.probe_mask[4]==1:
-        #     dv_sk = self.emu_list[4].predict(theta)[0]
-        # else:
-        #     dv_sk = np.zeros(self.probe_size[4])
-        # if self.probe_mask[5]==1:
-        #     dv_kk = self.emu_list[5].predict(theta)[0]
-        # else:
-        #     dv_kk = np.zeros(self.probe_size[5])
-        # print(f'dv_ssp {dv_ssp}')
-        # print(f'dv_ssm {dv_ssm}')
-        # print(f'dv_sg  {dv_sg}')
-        # print(f'dv_gg  {dv_gg}')
-        # print(f'dv_gk  {dv_gk}')
-        # print(f'dv_sk  {dv_sk}')
-        # print(f'dv_kk  {dv_kk}')
-        # datavector = np.hstack([dv_ssp,dv_ssm,dv_sg,dv_gg,dv_gk,dv_sk,dv_kk])
         modelvector = np.hstack(model_vectors)
         return modelvector
     
