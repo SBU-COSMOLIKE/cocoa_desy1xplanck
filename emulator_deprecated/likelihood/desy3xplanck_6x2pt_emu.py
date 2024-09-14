@@ -247,8 +247,10 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 		log_p = -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv
 
 		# derived parameters: sigma8
-		_derived = params_values.get('_derived', None)
-		if (_derived is not None) and (self.derive_sigma8):
-			_derived['sigma8'] = self.get_sigma8(**params_values)
+		derived = {}
+		if self.derive_sigma8:
+			derived['sigma8'] = self.get_sigma8(**params_values)
+		else:
+			derived['sigma8'] = np.nan
 
-		return log_p
+		return log_p, derived
