@@ -1,27 +1,17 @@
-###
-from cobaya.likelihood import Likelihood
 import numpy as np
 import os
 import sys
-from tqdm import tqdm
 import numpy as np
-import h5py as h5
 from getdist import IniFile
-
+from cobaya.likelihood import Likelihood
 # Import emulator related
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.distributions import MultivariateNormal
 from cocoa_emu import Config
 from cocoa_emu.emulator import NNEmulator
 sys.path.insert(0, './projects/desy1xplanck/emulator_output/models/')
 ### Replaced with load/predict function below; be careful with normalization choicies
 #from projects.lsst_y1 import cocoa_emu
 sys.path.append('./')
-from projects.desy1xplanck.cocoa_emu.nn_emulator import nn_pca_emulator 
-from projects.desy1xplanck.cocoa_emu.config import cocoa_config
-from projects.desy1xplanck.cocoa_emu.nn_emulator import Affine,ResBlock,Better_Transformer,Better_Attention
 
 class desy3xplanck_6x2pt_emu(Likelihood):
 	''' Attributes needed from the likelihood yaml file:
