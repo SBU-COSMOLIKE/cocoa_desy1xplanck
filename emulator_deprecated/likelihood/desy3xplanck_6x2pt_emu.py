@@ -226,7 +226,9 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 		bias and RSD.
 		'''
 		# get model vector from emulated parameters
+		self.log.info(f'Running params: {self.running_params}')
 		theta = np.array([params_values.get(p) for p in self.running_params])
+		self.log.info(f'Convert to theta = {theta}')
 		mv = self.emu_predict(theta)
 
 		# add shear calibration bias
