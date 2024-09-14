@@ -102,7 +102,7 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 					config.inv_cov[_l:_r,_l:_r],
 					mask=config.mask_lkl[_l:_r],
 					param_mask=config.probe_params_mask[i],
-					model=config.nn_model, device=device,
+					model=config.nn_model, device=self.device,
 					deproj_PCA=True, lr=config.learning_rate, 
 					reduce_lr=config.reduce_lr, 
 					weight_decay=config.weight_decay, dtype="double")
@@ -117,7 +117,7 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 			self.log.info(f'--- Reading sigma8 NN emulator from {fn}.h5 ...')
 			self.emu_s8 = NNEmulator(config.n_pars_cosmo, 1, config.sigma8_fid, 
 					config.sigma8_std, np.atleast_2d(1.0/config.sigma8_std**2), 
-					model=config.nn_model, device=device,
+					model=config.nn_model, device=self.device,
 					deproj_PCA=False, lr=config.learning_rate, 
 					reduce_lr=config.reduce_lr, 
 					weight_decay=config.weight_decay, dtype="double")
