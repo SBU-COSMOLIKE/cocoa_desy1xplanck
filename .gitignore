@@ -18,3 +18,4 @@ emulator/validating_chains/
 emulator/emu_y1_cosmic_shear.py
 likelihood/.params_des_3x2pt.yaml
 likelihood/.params_des_cosmic_shear.yaml
+likelihood/*_emu*
