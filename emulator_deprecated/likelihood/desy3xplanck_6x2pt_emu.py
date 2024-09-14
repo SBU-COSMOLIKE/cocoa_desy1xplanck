@@ -54,7 +54,6 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 			self.is_cmbl_cov_sim = 0
 			self.alpha_Hartlap = 1.0
 		self.init_data()
-		self.derive_sigma8 = ('sigma8' in self.params)
 
 		### Initialize baryon feedback PCs
 		if ini.string('baryon_pca_file', default=''):
@@ -271,10 +270,8 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 		log_p = -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv
 
 		# derived parameters: sigma8
-		derived = {}
-		if self.derive_sigma8:
-			derived['sigma8'] = self.get_sigma8_emu(**params_values)
-		else:
-			derived['sigma8'] = np.nan
+		#derived = {}
+		derived = params_values.get("_derived")
+		derived['sigma8'] = self.get_sigma8_emu(**params_values)
 
-		return log_p, derived
+		return log_p
