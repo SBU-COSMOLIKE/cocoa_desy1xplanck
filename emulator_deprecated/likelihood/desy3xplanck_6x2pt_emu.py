@@ -134,6 +134,7 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 			"ns": None,
 			"omegab": None,
 			"omegam": None,
+			"mnu": None,
 			#"LSST_DZ_S1": None,
 			#"LSST_DZ_S2": None,
 			#"LSST_DZ_S3": None,
