@@ -3,7 +3,8 @@ import os
 import sys
 import numpy as np
 from getdist import IniFile
-from cobaya.likelihood import Likelihood
+#from cobaya.likelihood import Likelihood
+from cobaya.likelihoods._base_classes import _DataSetLikelihood
 # Import emulator related
 import torch
 from cocoa_emu import Config
@@ -13,7 +14,7 @@ sys.path.insert(0, './projects/desy1xplanck/emulator_output/models/')
 #from projects.lsst_y1 import cocoa_emu
 sys.path.append('./')
 
-class desy3xplanck_6x2pt_emu(Likelihood):
+class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 	''' Attributes needed from the likelihood yaml file:
 	- train_config: filename of the training config file
 	'''
