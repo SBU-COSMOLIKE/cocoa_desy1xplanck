@@ -214,7 +214,7 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 		modelvector = np.hstack(model_vectors)
 		return modelvector
 
-	def get_sigma8(self, **params_values):
+	def get_sigma8_emu(self, **params_values):
 		theta = np.array([params_values.get(p) for p in self.running_params])
 		theta = torch.Tensor(theta[:self.n_pars_cosmo])
 		sigma8 = self.emu_s8.predict(theta)[0]
@@ -264,14 +264,14 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 		params_values: dict
 			dictionary of sampled input parameters
 		'''
-		mv = self.get_data_vector_emu(**params_values)
+		mv = self.get_model_vector_emu(**params_values)
 		delta_dv = (mv - self.dv)[self.mask]
 		log_p = -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv
 
 		# derived parameters: sigma8
 		derived = {}
 		if self.derive_sigma8:
-			derived['sigma8'] = self.get_sigma8(**params_values)
+			derived['sigma8'] = self.get_sigma8_emu(**params_values)
 		else:
 			derived['sigma8'] = np.nan
 
