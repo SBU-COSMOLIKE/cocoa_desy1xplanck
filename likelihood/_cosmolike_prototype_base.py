@@ -621,16 +621,17 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     if(np.all(np.diff(Sdig) <= 0) != True):
       raise LoggedError(self.log, "LOGICAL ERROR WITH NUMPY FUNCTION GEN PCA")
 
-    PCs = np.empty(shape=(ndata_reduced, nbaryons_scenario))
+    PC_ncols = min(nbaryons_scenario, ndata_reduced)
+    PCs = np.empty(shape=(ndata_reduced, PC_ncols))
 
-    for i in range(nbaryons_scenario):
+    for i in range(PC_ncols):
       PCs[:,i] = U[:,i]
 
     PCs = np.dot(cov_L_cholesky, PCs)
 
     if self.save_Qs:
       # Calculate the PCs' amplitude of each scenario, NPCs x Nsims
-      Qs = np.dot(U[:,:nbaryons_scenario].T, 
+      Qs = np.dot(U[:,:PC_ncols].T, 
             np.dot(inv_cov_L_cholesky, baryon_diff))
       print(f'Qs shape = {Qs.shape}/barydiff shape = {baryon_weighted_diff.shape}')
       scenarios = [ci.get_baryon_pca_scenario_name(i) for i in range(nbaryons_scenario)]
@@ -640,9 +641,9 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
 
     # Now we need to expand the number of dimensions
     ndata = ci.get_ndim()
-    PCS_FINAL = np.empty(shape=(ndata, nbaryons_scenario))
+    PCS_FINAL = np.empty(shape=(ndata, PC_ncols))
 
-    for i in range(nbaryons_scenario):
+    for i in range(PC_ncols):
       PCS_FINAL[:,i] = ci.get_expand_dim_from_masked_reduced_dim(PCs[:,i])
     np.savetxt(self.filename_baryon_pca, PCS_FINAL)
 
