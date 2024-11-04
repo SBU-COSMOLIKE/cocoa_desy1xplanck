@@ -12,6 +12,7 @@ fi
 addvar LD_LIBRARY_PATH $ROOTDIR/projects/desy1xplanck/interface
 
 addvar PYTHONPATH $ROOTDIR/projects/desy1xplanck/interface
+
 addvar PYTHONPATH $ROOTDIR/projects/desy1xplanck/emulator_deprecated
 
 ### Link emulator likelihoods into the usual cocoa likelihood
