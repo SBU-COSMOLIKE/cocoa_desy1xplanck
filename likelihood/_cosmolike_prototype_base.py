@@ -610,6 +610,23 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     baryon_weighted_diff = np.dot(baryon_weighted_diff, weights_sqrt_mat)
 
     U, Sdig, VT = np.linalg.svd(baryon_weighted_diff, full_matrices=True)
+    ### regulate the sign convention of PCs
+    ### note that PCs are unique only up to a sign change
+    ### at scales ~ 20 arcmin in xi_p bin 1-1, we assume PC1<0, PC2>0, PC2>0
+    # PC1 (index 18 / 30 is ~ 20 arcmin scale)
+    u1 = ci.get_expand_dim_from_masked_reduced_dim(U[:,0])
+    sign1 = np.sign(u1[18]) * -1 # PC1 < 0
+    U[:,0] = U[:,0]*sign1; VT[0,:] = VT[0,:]*sign1
+    # PC2
+    u2 = ci.get_expand_dim_from_masked_reduced_dim(U[:,1])
+    sign2 = np.sign(u2[18]) # PC2 > 0
+    U[:,1] = U[:,1]*sign2; VT[1,:] = VT[1,:]*sign2
+    # PC3
+    u3 = ci.get_expand_dim_from_masked_reduced_dim(U[:,2])
+    sign3 = np.sign(u3[18]) # PC2 > 0
+    U[:,2] = U[:,2]*sign3; VT[2,:] = VT[2,:]*sign3
+    # we don't care higher order PCs so far.
+
     # for debug purpose
     np.save(self.filename_baryon_pca+"_U", U)
     if self.subtract_mean:
