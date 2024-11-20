@@ -122,9 +122,9 @@ frac_dchi2_2 = np.sum(dchi2_list>0.2)/dchi2_list.shape[0]
 print(f'{frac_dchi2_1} chance of getting dchi2 > 1.0 from validation sample')
 print(f'{frac_dchi2_2} chance of getting dchi2 > 0.2 from validation sample')
 
-np.save(pjoin(config.traindir, "../dchi2_dsigma8_validation_v2"),
+np.save(pjoin(config.traindir, "../dchi2_dsigma8_validation_v3_025"),
 	np.vstack([dchi2_list, dsigma8_list]))
-np.save(pjoin(config.traindir, "../mv_thinned_validation_v2"),
+np.save(pjoin(config.traindir, "../mv_thinned_validation_v3_025"),
     np.vstack(mv_list))
 
 print("Done!")

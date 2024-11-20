@@ -124,15 +124,20 @@ class desy3xplanck_6x2pt_emu(_DataSetLikelihood):
 		Equivalent to `ci.init_data`
 		'''
 		### prepare data vector & mask
+		self.log.info(f'Load data vector from {self.data_vector_file}')
 		self.dv   = np.loadtxt(self.data_vector_file)[:,1]
+		self.log.info(f'Load mask from {self.mask_file}')
 		self.mask = np.loadtxt(self.mask_file)[:,1].astype(bool)
 		### prepare inverse covariance
+		self.log.info(f'Load covariance from {self.cov_file}')
 		invcov = self.get_full_cov(self.cov_file)
 		# Add Hartlap factor to CMB lensing covariance
+		self.log.info(f'Apply Hartlap factor {self.alpha_Hartlap}')
 		invcov[-self.nbp:,-self.nbp:] /= self.alpha_Hartlap
 		invcov = np.linalg.inv(invcov[self.mask][:,self.mask])
 		# Add PM marginalization
 		if self.U_PMmarg_file:
+			self.log.info(f'Load PM-marg template from {self.U_PMmarg_file}')
 			U_PMmarg = np.loadtxt(self.U_PMmarg_file)
 			U = np.zeros([self.mask.shape[0], self.lens_ntomo])
 			for line in U_PMmarg:
