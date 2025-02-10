@@ -131,13 +131,12 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 		self.mask = np.loadtxt(self.mask_file)[:,1].astype(bool)
 		# update the mask if some probes are not included
 		for i in range(6):
-			_start = self.probe_size[:i].sum()
-			_end = self.probe_size[:i+1].sum()
+			_l, _r = sum(config.probe_size[:i]), sum(config.probe_size[:i+1])
 			if self.probe_mask[i]==0:
-				self.mask[_start:_end] = 0.0
+				self.mask[_l:_r] = 0.0
 				self.log.info(f'Probe {probe_fmts[i]} is not included.')
 			else:
-				_Ndp = self.mask[_start:_end].sum()
+				_Ndp = self.mask[_l:_r].sum()
 				self.log.info(f'Probe {probe_fmts[i]} has {_Ndp} elements after scale cut.')
 		### prepare inverse covariance
 		self.log.info(f'Load covariance from {self.cov_file}')
