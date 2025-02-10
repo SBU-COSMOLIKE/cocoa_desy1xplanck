@@ -11,7 +11,7 @@ class Config:
     # valid probes:
     # xi, wtheta, gammat, 2x2pt, 3x2pt, xi_ggl, 5x2pt, 6x2pt, c3x2pt
     probe_mask_choices = {
-        "cosmic_shear": [1, 0, 0, 0, 0, 0],
+        "xi": [1, 0, 0, 0, 0, 0],
         "wtheta":       [0, 0, 1, 0, 0, 0],
         "gammat":       [0, 1, 0, 0, 0, 0],
         "2x2pt":        [0, 1, 1, 0, 0, 0],
@@ -20,6 +20,11 @@ class Config:
         "5x2pt":        [1, 1, 1, 1, 1, 0],
         "c3x2pt":       [0, 0, 0, 1, 1, 1],
         "6x2pt":        [1, 1, 1, 1, 1, 1],
+        "CMBL":         [0, 0, 0, 0, 0, 1],
+        "gk2x2pt":      [0, 0, 1, 1, 0, 0],
+        "sk2x2pt":      [1, 0, 0, 0, 1, 0],
+        "gk3x2pt":      [0, 0, 1, 1, 0, 1],
+        "sk3x2pt":      [1, 0, 0, 0, 1, 1],
     }
 
     def __init__(self, configfile):
@@ -129,7 +134,7 @@ class Config:
         #       2. Technically linear galaxy bias is not a fast parameter due to
         #          RSD and magnification bias.
         #       3. We are including linear gbias as slow parameters now.
-        # if self.probe != 'cosmic_shear':
+        # if self.probe != 'xi':
         #     self.galaxy_bias_mask = np.load(self.config_args_emu['galaxy_bias']['mask'])
         #     self.n_fast_pars = self.n_pcas_baryon + self.source_ntomo + self.lens_ntomo
         # else:

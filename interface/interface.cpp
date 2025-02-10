@@ -235,6 +235,37 @@ void cpp_init_probes(std::string possible_probes)
     like.kk = 1;
     spdlog::info("\x1b[90m{}\x1b[0m: {} = {} selected", "init_probes", "possible_probes", "c3x2pt (complementary 3x2pt, gk+sk+kk)");
   }
+  else if (possible_probes.compare("CMBL") == 0)
+  {
+    like.kk = 1;
+    spdlog::info("\x1b[90m{}\x1b[0m: {} = {} selected", "init_probes", "possible_probes", "CMBL (CMB lensing bandpower)");
+  }
+  else if (possible_probes.compare("gk2x2pt") == 0)
+  {
+    like.pos_pos = 1;
+    like.gk = 1;
+    spdlog::info("\x1b[90m{}\x1b[0m: {} = {} selected", "init_probes", "possible_probes", "gk2x2pt");
+  }
+  else if (possible_probes.compare("sk2x2pt") == 0)
+  {
+    like.shear_shear = 1;
+    like.ks = 1;
+    spdlog::info("\x1b[90m{}\x1b[0m: {} = {} selected", "init_probes", "possible_probes", "sk2x2pt");
+  }
+  else if (possible_probes.compare("gk3x2pt") == 0)
+  {
+    like.pos_pos = 1;
+    like.gk = 1;
+    like.kk = 1;
+    spdlog::info("\x1b[90m{}\x1b[0m: {} = {} selected", "init_probes", "possible_probes", "gk3x2pt");
+  }
+  else if (possible_probes.compare("sk3x2pt") == 0)
+  {
+    like.shear_shear = 1;
+    like.ks = 1;
+    like.kk = 1;
+    spdlog::info("\x1b[90m{}\x1b[0m: {} = {} selected", "init_probes", "possible_probes", "sk3x2pt");
+  }
   else
   {
     spdlog::critical("\x1b[90m{}\x1b[0m: {} = {} probe not supported",

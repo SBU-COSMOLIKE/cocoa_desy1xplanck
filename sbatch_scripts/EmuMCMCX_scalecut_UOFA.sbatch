@@ -33,7 +33,7 @@ echo Slurm job NAME is $SLURM_JOB_NAME
 echo Slurm job ID is $SLURM_JOBID
 
 ###SAMPLEEMU=./projects/desy1xplanck/emulator/sample_emulator.py
-YAML_EMU="./projects/desy1xplanck/yaml/Y3xPLKR4_EMU/EmuMCMC_scalecut_v5_${SLURM_ARRAY_TASK_ID}.yaml"
+YAML_EMU="./projects/desy1xplanck/yaml/Y3xPLKR4_EMU/EmuMCMC_scalecut_v8_${SLURM_ARRAY_TASK_ID}.yaml"
 cd $SLURM_SUBMIT_DIR
 conda activate cocoatorch
 source start_cocoa
