@@ -17,6 +17,7 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 		super(_cosmolike_emu_prototype_base, self)
 		torch.set_num_threads(1)
 		self.device = torch.device("cpu")
+		self.probe = probe
 
 		# Note: This config file is only used to calculate data vector
 		#       The baryon PCs and priors are overwritten during sampling
@@ -25,15 +26,10 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 		assert config.emu_type.lower()=='nn', f'Only support NN emulator now!'
 		self.probe_mask        = config.probe_mask_choices[self.probe]
 		self.probe_size        = config.probe_size
-		self.shear_calib_mask  = config.shear_calib_mask
-		self.n_pars_cosmo      = config.n_pars_cosmo
-		self.running_params    = config.running_params
-		self.m_shear_fid       = np.array([config.params["DES_M%d"%(i+1)]["value"] for i in range(self.source_ntomo)])
 
 		### Read dataset file: data vector, covariance, mask
 		self.log.info("Loading likelihood dataset...")
 		ini = IniFile(os.path.normpath(pjoin(self.path, self.data_file)))
-		self.probe = probe
 		self.data_vector_file = ini.relativeFileName('data_file')
 		self.cov_file = ini.relativeFileName('cov_file')
 		try:
@@ -79,6 +75,11 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 			self.log.info('use_baryon_pca = False')
 			self.use_baryon_pca = False
 		self.baryon_pcs_qs = np.zeros(4)
+
+		self.shear_calib_mask  = config.shear_calib_mask
+		self.n_pars_cosmo      = config.n_pars_cosmo
+		self.running_params    = config.running_params
+		self.m_shear_fid       = np.array([config.params["DES_M%d"%(i+1)]["value"] for i in range(self.source_ntomo)])
 
 		### read emulators
 		# try include emu_list as object attribute. If not work, global variable
