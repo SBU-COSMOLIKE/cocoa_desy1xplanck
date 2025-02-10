@@ -139,6 +139,7 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 			else:
 				_Ndp = self.mask[_l:_r].sum()
 				self.log.info(f'Probe {probe_fmts[i]} has {_Ndp} elements after scale cut.')
+		self.log.info(f'Total data points: {sum(self.mask)}')
 		### prepare inverse covariance
 		self.log.info(f'Load covariance from {self.cov_file}')
 		invcov = self.get_full_cov(self.cov_file)
@@ -252,6 +253,7 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 		mv = self.get_model_vector_emu(**params_values)
 		delta_dv = (mv - self.dv)[self.mask]
 		log_p = -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv
+		self.log.info(f'log-post = {log_p:.2e}')
 
 		# derived parameters: sigma8
 		params_values["_derived"]['sigma8'] = self.get_sigma8_emu(**params_values)
