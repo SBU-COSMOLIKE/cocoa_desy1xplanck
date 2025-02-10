@@ -18,6 +18,7 @@ import math
 
 import cosmolike_desy1xplanck_interface as ci
 
+
 # default is best fit LCDM - just need to be an ok Cosmology
 default_omega_matter = 0.315
 default_hubble = 74.03
@@ -266,6 +267,22 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
 
     self.do_cache_cosmo = np.zeros(2)
 
+    # set up parameterization (CAMB v.s. CLASS)
+    if self.boltzmann_code.lower() == "class":
+      self.omega_m_str = "Omega_m"
+      self.omega_b_str = "Omega_b"
+      self.mnu_str = "m_ncdm_in_eV"
+      self.w0_str = "w0_fld"
+      self.wa_str = "wa_fld"
+    elif self.boltzmann_code.lower() == "camb":
+      self.omega_m_str = "omegam"
+      self.omega_b_str = "omegab"
+      self.mnu_str = "mnu"
+      self.w0_str = "w"
+      self.wa_str = "wa"
+    else:
+      raise ValueError(f'Can not recognize Boltzmann code {self.boltzmann_code}!')
+
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
@@ -273,10 +290,14 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
   def get_requirements(self):
     return {
       "H0": None,
-      "omegab": None,
-      "w": None,
-      "wa": None,
-      "omegam": None,
+      #"omegam": None,
+      #"omegab": None,
+      #"w": None,
+      #"wa": None,
+      self.omega_m_str: None,
+      self.omega_b_str: None,
+      self.w0_str: None, # classy
+      self.wa_str: None, # classy
       "Pk_interpolator": {
         "z": self.z_interp_2D,
         "k_max": self.kmax_boltzmann * self.accuracyboost,
@@ -313,7 +334,7 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     cache_alert_4 = np.array_equal(
       self.do_cache_cosmo,
       np.array([
-        self.provider.get_param("omegam"),
+        self.provider.get_param(self.omega_m_str),
         self.provider.get_param("H0")
       ])
     )
@@ -348,14 +369,14 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
       lnPL += np.log((h**3))  
       
       params = {
-        'Omm'  : self.provider.get_param("omegam"),
+        'Omm'  : self.provider.get_param(self.omega_m_str),
         'As'   : self.provider.get_param("As"),
-        'Omb'  : self.provider.get_param("omegab"),
+        'Omb'  : self.provider.get_param(self.omega_b_str),
         'ns'   : self.provider.get_param("ns"),
         'h'    : h,
-        'mnu'  : self.provider.get_param("mnu"), 
-        'w'    : self.provider.get_param("w"),
-        'wa'   : self.provider.get_param("wa")
+        'mnu'  : self.provider.get_param(self.mnu_str), 
+        'w'    : self.provider.get_param(self.w0_str),
+        'wa'   : self.provider.get_param(self.wa_str)
       }
 
       kbt = np.power(10.0, np.linspace(-2.0589, 0.973, self.len_k_interp_2D))
@@ -389,7 +410,7 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     cache_alert = self.set_cache_alert(chi, lnPL, lnPNL)
 
     ci.set_cosmological_parameters(
-      omega_matter = self.provider.get_param("omegam"),
+      omega_matter = self.provider.get_param(self.omega_m_str),
       hubble = self.provider.get_param("H0"),
       is_cached = cache_alert
     )
@@ -402,7 +423,7 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
       self.do_cache_lnPNL = np.copy(lnPNL)
 
       self.do_cache_cosmo = np.array([
-        self.provider.get_param("omegam"),
+        self.provider.get_param(self.omega_m_str),
         self.provider.get_param("H0")
       ])
 
@@ -642,14 +663,14 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     PCs = np.empty(shape=(ndata_reduced, PC_ncols))
 
     for i in range(PC_ncols):
-      PCs[:,i] = U[:,i]
+      PCs[:,i] = U[:,i]*Sdig[i]
 
     PCs = np.dot(cov_L_cholesky, PCs)
 
     if self.save_Qs:
       # Calculate the PCs' amplitude of each scenario, NPCs x Nsims
       Qs = np.dot(U[:,:PC_ncols].T, 
-            np.dot(inv_cov_L_cholesky, baryon_diff))
+            np.dot(inv_cov_L_cholesky, baryon_diff))/Sdig[:PC_ncols,np.newaxis]
       print(f'Qs shape = {Qs.shape}/barydiff shape = {baryon_weighted_diff.shape}')
       scenarios = [ci.get_baryon_pca_scenario_name(i) for i in range(nbaryons_scenario)]
       np.savetxt(self.filename_baryon_pca+"_Qs", Qs, 
