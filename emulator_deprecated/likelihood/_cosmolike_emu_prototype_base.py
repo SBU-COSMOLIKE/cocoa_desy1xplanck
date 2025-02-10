@@ -18,6 +18,18 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 		torch.set_num_threads(1)
 		self.device = torch.device("cpu")
 
+		# Note: This config file is only used to calculate data vector
+		#       The baryon PCs and priors are overwritten during sampling
+		self.log.info(f'Init emulator with config file {self.train_config}')
+		config = Config(self.train_config)
+		assert config.emu_type.lower()=='nn', f'Only support NN emulator now!'
+		self.probe_mask        = config.probe_mask_choices[self.probe]
+		self.probe_size        = config.probe_size
+		self.shear_calib_mask  = config.shear_calib_mask
+		self.n_pars_cosmo      = config.n_pars_cosmo
+		self.running_params    = config.running_params
+		self.m_shear_fid       = np.array([config.params["DES_M%d"%(i+1)]["value"] for i in range(self.source_ntomo)])
+
 		### Read dataset file: data vector, covariance, mask
 		self.log.info("Loading likelihood dataset...")
 		ini = IniFile(os.path.normpath(pjoin(self.path, self.data_file)))
@@ -47,7 +59,7 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 		else:
 			self.is_cmbl_cov_sim = 0
 			self.alpha_Hartlap = 1.0
-		self.init_data()
+		self.init_data(config)
 
 		### Initialize baryon feedback PCs
 		if ini.string('baryon_pca_file', default=''):
@@ -67,18 +79,6 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 			self.log.info('use_baryon_pca = False')
 			self.use_baryon_pca = False
 		self.baryon_pcs_qs = np.zeros(4)
-
-		# Note: This config file is only used to calculate data vector
-		#       The baryon PCs and priors are overwritten during sampling
-		self.log.info(f'Init emulator with config file {self.train_config}')
-		config = Config(self.train_config)
-		assert config.emu_type.lower()=='nn', f'Only support NN emulator now!'
-		self.probe_mask        = config.probe_mask_choices[self.probe]
-		self.probe_size        = config.probe_size
-		self.shear_calib_mask  = config.shear_calib_mask
-		self.n_pars_cosmo      = config.n_pars_cosmo
-		self.running_params    = config.running_params
-		self.m_shear_fid       = np.array([config.params["DES_M%d"%(i+1)]["value"] for i in range(self.source_ntomo)])
 
 		### read emulators
 		# try include emu_list as object attribute. If not work, global variable
@@ -119,7 +119,7 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 			self.emu_s8 = None
 		self.log.info("Emulator likelihood initialized!")
 
-	def init_data(self):
+	def init_data(self, config):
 		''' Prepare the likelihood dataset
 		Including inverse covariance, data vector, data vector mask
 		Equivalent to `ci.init_data`
