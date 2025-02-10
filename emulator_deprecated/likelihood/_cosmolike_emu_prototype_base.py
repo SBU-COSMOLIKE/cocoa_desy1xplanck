@@ -201,7 +201,7 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 		return modelvector
 
 	def get_sigma8_emu(self, **params_values):
-		theta = np.array([params_values.get(p) for p in self.running_params])
+		theta = np.array([params_values.get(p, 0.0) for p in self.running_params])
 		theta = torch.Tensor(theta[:self.n_pars_cosmo])
 		sigma8 = self.emu_s8.predict(theta)[0]
 		return sigma8
@@ -212,11 +212,11 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 		bias and RSD.
 		'''
 		# get model vector from emulated parameters
-		theta = np.array([params_values.get(p) for p in self.running_params])
+		theta = np.array([params_values.get(p, 0.0) for p in self.running_params])
 		mv = self.emu_predict(theta)
 
 		# add shear calibration bias
-		m = np.array([params_values.get(f'DES_M{i+1}') for i in range(self.source_ntomo)])
+		m = np.array([params_values.get(f'DES_M{i+1}', 0.0) for i in range(self.source_ntomo)])
 		for i in range(self.source_ntomo):
 			factor = ((1+m[i])/(1+self.m_shear_fid[i]))**self.shear_calib_mask[i]
 			mv = factor * mv
@@ -253,7 +253,6 @@ class _cosmolike_emu_prototype_base(_DataSetLikelihood):
 		mv = self.get_model_vector_emu(**params_values)
 		delta_dv = (mv - self.dv)[self.mask]
 		log_p = -0.5 * delta_dv @ self.masked_inv_cov @ delta_dv
-		self.log.info(f'log-post = {log_p:.2e}')
 
 		# derived parameters: sigma8
 		params_values["_derived"]['sigma8'] = self.get_sigma8_emu(**params_values)
