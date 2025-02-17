@@ -1680,12 +1680,19 @@ std::vector<double> cpp_compute_data_vector_masked()
     else
     {
       ima::RealData& instance = ima::RealData::get_instance();
+      /*FILE *F;
+      F=fopen("desy1xplanck_Clpp.txt", "w");
+      if(F==NULL){
+        printf("ERORR: Can not open file desy1xplanck_Clpp.txt\nAborting...\n");
+        exit(1);
+      }*/
       for (int L=like.lmin_bp; L<like.lmax_bp+1; L++)
       {
         const double Ckk = 
           (L <= limits.LMIN_tab) ? C_kk_limber_nointerp((double) L, 0, 0) : C_kk_limber((double) L);
 
         const int i = L - like.lmin_bp;
+        //fprintf(F, "%d %le\n", L, Ckk);
 
         for (int j=0; j<like.Nbp; j++)
         { // Loop through bandpower bins
@@ -1705,6 +1712,7 @@ std::vector<double> cpp_compute_data_vector_masked()
           data_vector[index] -= instance.get_cmb_theory_offset(j);
         }
       }
+      //fclose(F);
     }
   }
 
