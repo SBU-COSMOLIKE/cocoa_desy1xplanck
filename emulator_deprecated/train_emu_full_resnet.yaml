@@ -450,7 +450,7 @@ theory:
 emulator:
   io:
     ###savedir: ./projects/desy1xplanck/emulator
-    savedir: /groups/timeifler/jiachuanxu/emulator_output
+    savedir: /groups/timeifler/jiachuanxu/emulator_output_v2
     save_train_data: true
     save_intermediate_model: true
     chainname: emu_testing_chain_nn6_vs_MCMC24
@@ -471,9 +471,10 @@ emulator:
     # LHS section
     lhs_n: 18000 # Latin-Hyper Sample size
     # Gaussian section
-    gauss_cov: ./projects/desy1xplanck/yaml/proposal_covmats/DESY3xPLKR4_6x2pt_syn.covmat
+    gauss_cov: ./projects/desy1xplanck/yaml/proposal_covmats/DESY3xPLKR4_6x2pt_wideQ1.covmat
     gauss_temp_train: 128 # training dataset temperature
     n_train: 1000000
+    #n_train: 10000
     gauss_shift_train: 
      # omegam: 0.0
      # sigma8: 0.0

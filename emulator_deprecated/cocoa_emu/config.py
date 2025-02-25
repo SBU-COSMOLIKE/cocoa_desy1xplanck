@@ -46,8 +46,8 @@ class Config:
             - config_args_lkl: the `likelihood` section in the YAML file, dict
         '''
         self.likelihood = list(config_args_lkl.keys())[0]
-        # self.probe = self.likelihood[self.likelihood.find('_')+1:]
-        # self.probe_mask = self.probe_mask_choices[self.probe]
+        self.probe = self.likelihood[self.likelihood.find('_')+1:]
+        self.probe_mask = self.probe_mask_choices[self.probe]
         self.config_args_lkl = config_args_lkl[self.likelihood]
 
         dataset = readDatasetFile(self.config_args_lkl['data_file'], 
