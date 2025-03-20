@@ -160,17 +160,18 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     # ------------------------------------------------------------------------
     self.z_interp_1D = np.linspace(0,2.0,1000)
     self.z_interp_1D = np.concatenate((self.z_interp_1D,
-      np.linspace(2.0,10.1,200)),axis=0)
+      np.linspace(2.0,30.1,200)),axis=0)
     self.z_interp_1D = np.concatenate((self.z_interp_1D, 
       np.linspace(1080,2000,20)),axis=0) #CMB 6x2pt g_CMB
     self.z_interp_1D[0] = 0
 
-    # EUCLID EMULATOR CAN ONLY HANDLE 100 Z's
+    # EUCLID EMULATOR CAN ONLY HANDLE 100 Z's BELOW Z=10
     self.z_interp_2D = np.linspace(0, 2.0, 80)
-    self.z_interp_2D = np.concatenate((self.z_interp_2D, np.linspace(2.01, 10.0, 20)),axis=0)
+    self.z_interp_2D = np.concatenate((self.z_interp_2D, np.linspace(2.01, 30.0, 20)),axis=0)
     self.z_interp_2D[0] = 0
 
     self.len_z_interp_2D = len(self.z_interp_2D)
+    self.len_z_interp_2D_EE2 = int(np.sum(self.z_interp_2D < 10.0))
     self.len_log10k_interp_2D = 1200
     self.log10k_interp_2D = np.linspace(-4.2,2.0,self.len_log10k_interp_2D)
 
@@ -365,6 +366,8 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
 
     if self.non_linear_emul == 1:
       for i in range(self.len_z_interp_2D):
+        # lnPL/lnPNL: (k,z)
+        # t1/t2: (z,k)
         lnPL[i::self.len_z_interp_2D]  = t2[i*self.len_k_interp_2D:(i+1)*self.len_k_interp_2D]
       lnPL += np.log((h**3))  
       
@@ -380,10 +383,11 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
       }
 
       kbt = np.power(10.0, np.linspace(-2.0589, 0.973, self.len_k_interp_2D))
-      kbt, tmp_bt = self.emulator.get_boost(params, self.z_interp_2D, kbt)
+      kbt, tmp_bt = self.emulator.get_boost(params, self.z_interp_2D[:self.len_z_interp_2D_EE2], kbt)
       logkbt = np.log10(kbt)
 
-      for i in range(self.len_z_interp_2D):    
+      ### Euclid Emulator can only handle redshift < 10
+      for i in range(self.len_z_interp_2D_EE2):    
         interp = interp1d(logkbt, 
             np.log(tmp_bt[i]), 
             kind = 'linear', 
@@ -395,6 +399,9 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
         lnbt[np.power(10,log10k_interp_2D) < 8.73e-3] = 0.0
     
         lnPNL[i::self.len_z_interp_2D] = lnPL[i::self.len_z_interp_2D] + lnbt
+      ### We'll append the z>=10 nonlinear power spectrum using CAMB/CLASS
+      for i in range(self.len_z_interp_2D_EE2, self.len_z_interp_2D):
+        lnPNL[i::self.len_z_interp_2D] = t1[i*self.len_k_interp_2D:(i+1)*self.len_k_interp_2D] + np.log((h**3))
 
     elif self.non_linear_emul == 2: 
       
