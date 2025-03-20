@@ -36,11 +36,13 @@ cd /home/u17/jiachuanxu/cocoa/Cocoa/
 conda activate cocoatorch
 source start_cocoa
 
-MPIRUN=/groups/timeifler/jiachuanxu/python_envs/envs/cocoatorch/bin/mpirun
-
+MPIRUN="${CONDA_PREFIX}/bin/mpirun"
+PYTHON="${CONDA_PREFIX}/bin/python3"
 CONFIGFILE=./projects/desy1xplanck/emulator_deprecated/train_emu_full_resnet.yaml
 CALDV=./projects/desy1xplanck/emulator_deprecated/calculate_dv.py
 
 export OMP_NUM_THREADS=1
 
-${MPIRUN} -n ${SLURM_NTASKS} --mca btl tcp,self $PYTHON3 ${CALDV} $CONFIGFILE
+${MPIRUN} -n ${SLURM_NTASKS} --mca btl tcp,self ${PYTHON} ${CALDV} $CONFIGFILE
+
+source stop_cocoa

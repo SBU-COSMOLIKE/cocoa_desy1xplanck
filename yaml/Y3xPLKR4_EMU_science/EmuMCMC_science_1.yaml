@@ -1,0 +1,179 @@
+### Science Run 1 (Emulator)
+### Motivation:
+###     science run stales, run with emulator to see if anything wrong
+###     - data vector: data vector v3 (include SOMPZ v0.50 file)
+###     - scale cut: mask34
+###     - number of Qs marginalized: 1
+###     - Q prior: info
+### -----------------------------------------------------------------
+### cosmology: baseline (omegam, As, ns, omegab, H0, mnu)
+### survey footprint: include the extended annulus around DES Y3
+### systematics: 
+###     - baryon effects: the first one PC
+###     - shear calibration bias: multiplicative, 
+###     - photo-z uncertainty: shift + stretch
+###     - galaxy bias: linear bias
+###     - intrinsic alignment: NLA
+### analysis choice: 
+###     - shear-shear: mask34 + 1PC
+###     - Extended footprint
+###     - with cross-cov between Ckk bandpower and 5x2pt
+###     - using Planck DR4 map
+### external probes: None
+### data vector: measurement from DES Y3 and Planck PR4
+
+timing: True
+debug: False
+stop_at_error: False
+
+likelihood:
+  desy1xplanck.desy3xplanck_cosmic_shear_emu:
+    path: ./external_modules/data/desy1xplanck
+    data_file: datasets/Y3xPlanckPR4_mask34_real.dataset
+    train_config: ./projects/desy1xplanck/emulator_deprecated/train_emu_full_resnet.yaml
+
+params:
+  As_1e9:
+    prior:
+      min: 0.5
+      max: 5
+    ref:
+      dist: norm
+      loc: 2.1
+      scale: 0.65
+    proposal: 0.4
+    latex: 10^9 A_\mathrm{s}
+  ns:
+    prior:
+      min: 0.87
+      max: 1.07
+    ref:
+      dist: norm
+      loc: 0.96605
+      scale: 0.01
+    proposal: 0.01
+    latex: n_\mathrm{s}
+  H0:
+    prior:
+      min: 55
+      max: 91
+    ref:
+      dist: norm
+      loc: 67.32
+      scale: 5
+    proposal: 3
+    latex: H_0
+  omegab:
+    prior:
+      min: 0.03
+      max: 0.07
+    ref:
+      dist: norm
+      loc: 0.04
+      scale: 0.004
+    proposal: 0.004
+    latex: \Omega_\mathrm{b}
+  omegam:
+    prior:
+      min: 0.1
+      max: 0.9
+    ref:
+      dist: norm
+      loc: 0.3
+      scale: 0.02
+    proposal: 0.02
+    latex: \Omega_\mathrm{m}
+  mnu:
+    prior:
+      min: 0.0558
+      max: 0.12
+    ref:
+      dist: norm
+      loc: 0.06
+      scale: 0.01
+    proposal: 0.01
+    latex: \m_\\nu
+  # ------------------------------------------------------------------
+  # ------------- Derived Parameters ---------------------------------
+  # ------------------------------------------------------------------
+  sigma8:
+    latex: \sigma_8
+  # ------------------------------------------------------------------
+  # DES-Y3 3x2 nuissance parameter begins
+  # ------------------------------------------------------------------
+  # baryon effects: the first two PCs
+  # Q1 informative: [-0.03, 0.16]
+  # Q1 wide: [-20, 20]
+  # =================================
+  DES_BARYON_Q1:
+    prior:
+      min: -0.0
+      max: 0.1
+    ref:
+      dist: norm
+      loc: 0.05
+      scale: 0.01
+    proposal: 0.01
+    latex: Q_\mathrm{DES}^1
+  # ------------------------------------------------------------------
+  # DES-Y3 3x2 nuissance parameter ends
+  # ------------------------------------------------------------------
+prior:
+  bbn_consistency: "lambda omegab, H0: 1.45 if 0.005<=omegab*(H0/100)**2<=0.04 else -np.inf"
+sampler:
+  mcmc:
+    # ---------------------------------------------------------------------
+    # File (w/ path) or matrix defining a covariance matrix for the proposal:
+    # - null (default): will be generated from params info (prior and proposal)
+    # - matrix: remember to set `covmat_params` to the parameters in the matrix
+    covmat: ./projects/desy1xplanck/yaml/proposal_covmats/DESY3xPLKR4_cosmic_shear_wideQ1.covmat
+    #covmat_params:
+    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    # Proposal covariance matrix learning
+    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    learn_proposal: True
+    # Don't learn if convergence better than...
+    learn_proposal_Rminus1_min: 0.03
+    # Don't learn if convergence is worse than...
+    learn_proposal_Rminus1_max: 50.
+    # (even earlier if a param is not in the given covariance matrix)
+    learn_proposal_Rminus1_max_early: 2000.
+    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    # Convergence and stopping
+    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    # Maximum number of posterior evaluations
+    max_samples: .inf
+    # Gelman-Rubin R-1 on means
+    #Rminus1_stop: 0.02
+    # Gelman-Rubin R-1 on std deviations
+    Rminus1_cl_stop: 0.01
+    #Rminus1_cl_level: 0.95
+    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    # Exploiting speed hierarchy
+    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    measure_speeds: False
+    drag: False
+    oversample_power: 0.25
+    oversample_thin: True
+    blocking:
+    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    # Avoid chain getting suck forever
+    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    max_tries: 50000
+    burn_in: 0
+    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    # When no MPI used, number of fractions of the chain to compare
+    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
+    Rminus1_single_split: 4
+
+output: /xdisk/timeifler/jiachuanxu/cocoa_chains/EmuDESY3xPLKR4_science/EmuMCMC1

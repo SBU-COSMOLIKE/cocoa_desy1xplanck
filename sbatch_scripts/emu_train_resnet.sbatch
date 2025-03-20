@@ -33,7 +33,8 @@ cd /home/u17/jiachuanxu/cocoa/Cocoa/
 conda activate cocoatorch
 source start_cocoa
 
-MPIRUN=/groups/timeifler/jiachuanxu/python_envs/envs/cocoatorch/bin/mpirun
+MPIRUN="${CONDA_PREFIX}/bin/mpirun"
+PYTHON="${CONDA_PREFIX}/bin/python3"
 
 CONFIGFILE=./projects/desy1xplanck/emulator_deprecated/train_emu_full_resnet.yaml
 TRAINEMU=./projects/desy1xplanck/emulator_deprecated/train_emulator.py
@@ -41,7 +42,7 @@ SAMPLEEMU=./projects/desy1xplanck/emulator_deprecated/sample_emulator.py
 
 export OMP_NUM_THREADS=1
 
-$PYTHON3 -u ${TRAINEMU} $CONFIGFILE
+$PYTHON -u ${TRAINEMU} $CONFIGFILE
 
 #mpirun -n ${SLURM_NTASKS} --mca btl tcp,self ${PYTHON3} -u ${SAMPLEEMU} ${CONFIGFILE} -r
 

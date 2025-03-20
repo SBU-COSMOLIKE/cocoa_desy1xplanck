@@ -1,4 +1,5 @@
 import sys
+import os
 from os.path import join as pjoin
 from mpi4py import MPI
 import numpy as np
@@ -32,6 +33,8 @@ if(rank==0):
     print("N_gk: %d"%(config.probe_size[3]))
     print("N_sk: %d"%(config.probe_size[4]))
     print("N_kk: %d"%(config.probe_size[5]))
+    dump_dir = pjoin(config.traindir, 'dump')
+    os.makedirs(dump_dir, exist_ok=True)
 
 # ============== Retrieve training & validation sample ======================
 # Note that training sample does not include fast parameters

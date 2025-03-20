@@ -133,7 +133,7 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
         Nvar = ini.float("Hartlap_Nvar")
         self.alpha_Hartlap = (Nvar - self.nbp -2.0)/(Nvar - 1.0) # < 1
       elif(self.is_cmb_kkkk_cov_from_sim == -1 or self.is_cmb_kkkk_cov_from_sim > 1):
-        raise LoggedError(self.log, 
+        raise LoggedError(self.log,
             "MUST SPECIFY is_cmb_kkkk_cov_from_sim (0 or 1) IN THE DATA FILE!")
       else:
         self.is_cmb_kkkk_cov_from_sim = 0
@@ -159,15 +159,20 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
 
     # ------------------------------------------------------------------------
     self.z_interp_1D = np.linspace(0,2.0,1000)
+#    self.z_interp_1D = np.concatenate((self.z_interp_1D,
+#      np.linspace(2.0,10.1,200)),axis=0)
+#    self.z_interp_1D = np.concatenate((self.z_interp_1D,
+#      np.linspace(1080,2000,20)),axis=0) #CMB 6x2pt g_CMB
     self.z_interp_1D = np.concatenate((self.z_interp_1D,
       np.linspace(2.0,30.1,200)),axis=0)
-    self.z_interp_1D = np.concatenate((self.z_interp_1D, 
+    self.z_interp_1D = np.concatenate((self.z_interp_1D,
       np.linspace(1080,2000,20)),axis=0) #CMB 6x2pt g_CMB
     self.z_interp_1D[0] = 0
 
     # EUCLID EMULATOR CAN ONLY HANDLE 100 Z's BELOW Z=10
     self.z_interp_2D = np.linspace(0, 2.0, 80)
-    self.z_interp_2D = np.concatenate((self.z_interp_2D, np.linspace(2.01, 30.0, 20)),axis=0)
+    #self.z_interp_2D = np.concatenate((self.z_interp_2D, np.linspace(2.01, 10.0, 20)),axis=0)
+    self.z_interp_2D = np.concatenate((self.z_interp_2D, np.linspace(2.01, 30.1, 20)),axis=0)
     self.z_interp_2D[0] = 0
 
     self.len_z_interp_2D = len(self.z_interp_2D)
@@ -186,7 +191,7 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     ci.initial_setup()
 
     ci.init_accuracy_boost(self.accuracyboost, self.samplingboost, self.integration_accuracy, self.pm_integrate_exact)
-    
+
     ci.init_probes(possible_probes=self.probe)
 
     ci.init_binning(self.ntheta, self.theta_min_arcmin, self.theta_max_arcmin)
@@ -195,9 +200,9 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
 
     ci.init_cmb(self.lmin_kappa_cmb, self.lmax_kappa_cmb, self.fwhm, self.pathHealpixWinFunc)
 
-    if (self.is_cmb_bandpower == 1):      
+    if (self.is_cmb_bandpower == 1):
       ci.init_binning_cmb_bandpower(self.nbp, self.lmin_bp, self.lmax_bp)
-    else:      
+    else:
       ci.init_binning_fourier(self.ncl, self.lmin, self.lmax)
 
     ci.init_cosmo_runmode(is_linear=False)
@@ -227,8 +232,8 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     # FOR ALLOWED OPTIONS FOR `which_baryonic_simulations`, SEE BARYONS_JX.C
     # FUNCTION `main()`. SIMS INCLUDE
     # TNG100, HzAGN, mb2, illustris, eagle, owls_AGN_T80 (owls_AGN-1),
-    # owls_AGN_T85 (owls_AGN-2), owls_AGN_T87 (owls_AGN-3), 
-    # BAHAMAS_T78 (BAHAMAS-1), BAHAMAS_T76 (BAHAMAS-2), 
+    # owls_AGN_T85 (owls_AGN-2), owls_AGN_T87 (owls_AGN-3),
+    # BAHAMAS_T78 (BAHAMAS-1), BAHAMAS_T76 (BAHAMAS-2),
     # BAHAMAS_T80 (BAHAMAS-3), antilles-1 (to 400)
     # Also see interface.cpp:cpp_init_baryons_contamination()
     ci.init_baryons_contamination(
@@ -369,15 +374,15 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
         # lnPL/lnPNL: (k,z)
         # t1/t2: (z,k)
         lnPL[i::self.len_z_interp_2D]  = t2[i*self.len_k_interp_2D:(i+1)*self.len_k_interp_2D]
-      lnPL += np.log((h**3))  
-      
+      lnPL += np.log((h**3))
+
       params = {
         'Omm'  : self.provider.get_param(self.omega_m_str),
         'As'   : self.provider.get_param("As"),
         'Omb'  : self.provider.get_param(self.omega_b_str),
         'ns'   : self.provider.get_param("ns"),
         'h'    : h,
-        'mnu'  : self.provider.get_param(self.mnu_str), 
+        'mnu'  : self.provider.get_param(self.mnu_str),
         'w'    : self.provider.get_param(self.w0_str),
         'wa'   : self.provider.get_param(self.wa_str)
       }
@@ -387,29 +392,29 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
       logkbt = np.log10(kbt)
 
       ### Euclid Emulator can only handle redshift < 10
-      for i in range(self.len_z_interp_2D_EE2):    
-        interp = interp1d(logkbt, 
-            np.log(tmp_bt[i]), 
-            kind = 'linear', 
-            fill_value = 'extrapolate', 
+      for i in range(self.len_z_interp_2D_EE2):
+        interp = interp1d(logkbt,
+            np.log(tmp_bt[i]),
+            kind = 'linear',
+            fill_value = 'extrapolate',
             assume_sorted = True
           )
 
         lnbt = interp(log10k_interp_2D)
         lnbt[np.power(10,log10k_interp_2D) < 8.73e-3] = 0.0
-    
+
         lnPNL[i::self.len_z_interp_2D] = lnPL[i::self.len_z_interp_2D] + lnbt
       ### We'll append the z>=10 nonlinear power spectrum using CAMB/CLASS
       for i in range(self.len_z_interp_2D_EE2, self.len_z_interp_2D):
         lnPNL[i::self.len_z_interp_2D] = t1[i*self.len_k_interp_2D:(i+1)*self.len_k_interp_2D] + np.log((h**3))
 
-    elif self.non_linear_emul == 2: 
-      
+    elif self.non_linear_emul == 2:
+
       for i in range(self.len_z_interp_2D):
         lnPL[i::self.len_z_interp_2D]  = t2[i*self.len_k_interp_2D:(i+1)*self.len_k_interp_2D]
-        lnPNL[i::self.len_z_interp_2D] = t1[i*self.len_k_interp_2D:(i+1)*self.len_k_interp_2D]  
-      lnPL  += np.log((h**3))  
-      lnPNL += np.log((h**3)) 
+        lnPNL[i::self.len_z_interp_2D] = t1[i*self.len_k_interp_2D:(i+1)*self.len_k_interp_2D]
+      lnPL  += np.log((h**3))
+      lnPNL += np.log((h**3))
 
     # Compute chi(z) - convert to Mpc/h
     chi = self.provider.get_comoving_radial_distance(self.z_interp_1D) * h
@@ -539,10 +544,10 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     self.baryon_pcs_qs[1] = params_values.get("DES_BARYON_Q2", 0.0)
     self.baryon_pcs_qs[2] = params_values.get("DES_BARYON_Q3", 0.0)
     self.baryon_pcs_qs[3] = params_values.get("DES_BARYON_Q4", 0.0)
-    
+
   def add_baryon_pcs_to_datavector(self, datavector):
     if self.subtract_mean:
-      datavector[:] += self.mean_baryon_diff 
+      datavector[:] += self.mean_baryon_diff
     return datavector[:] + self.baryon_pcs_qs[0]*self.baryon_pcs[:,0] \
       + self.baryon_pcs_qs[1]*self.baryon_pcs[:,1] \
       + self.baryon_pcs_qs[2]*self.baryon_pcs[:,2] \
@@ -629,7 +634,7 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
     if self.subtract_mean:
         mean_baryon_diff = np.average(baryon_diff, axis=1, weights=weights)
         baryon_diff = baryon_diff - mean_baryon_diff[:,np.newaxis]
-        np.savetxt(self.filename_baryon_pca+"_mean", 
+        np.savetxt(self.filename_baryon_pca+"_mean",
           ci.get_expand_dim_from_masked_reduced_dim(mean_baryon_diff))
 
     # Apply weighting both in data vector space and feedback scenario space
@@ -676,11 +681,11 @@ class _cosmolike_prototype_base(_DataSetLikelihood):
 
     if self.save_Qs:
       # Calculate the PCs' amplitude of each scenario, NPCs x Nsims
-      Qs = np.dot(U[:,:PC_ncols].T, 
+      Qs = np.dot(U[:,:PC_ncols].T,
             np.dot(inv_cov_L_cholesky, baryon_diff))/Sdig[:PC_ncols,np.newaxis]
       print(f'Qs shape = {Qs.shape}/barydiff shape = {baryon_weighted_diff.shape}')
       scenarios = [ci.get_baryon_pca_scenario_name(i) for i in range(nbaryons_scenario)]
-      np.savetxt(self.filename_baryon_pca+"_Qs", Qs, 
+      np.savetxt(self.filename_baryon_pca+"_Qs", Qs,
         header=' '.join(scenarios))
       np.savetxt(self.filename_baryon_pca+"_Sdig", Sdig)
 
