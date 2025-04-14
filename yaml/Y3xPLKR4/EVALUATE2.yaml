@@ -1,0 +1,382 @@
+### Science Evaluation 2
+### Motivation:
+###     Generate fiducial model vectors (Maglim)
+### -----------------------------------------------------------------
+### cosmology: baseline (omegam, As, ns, omegab, H0)
+### systematics: 
+###     - baryon effects: the first PC
+###     - shear calibration bias: multiplicative 
+###     - photo-z uncertainty: gaussian + stretch
+###     - galaxy bias: linear bias
+###     - intrinsic alignment: NLA (IA=4)
+### analysis choice: 
+###     - DES Y3 5x2pt scale-cut (no scale-cut on shear-shear)
+###     - Extended footprint
+###     - with cross-cov between Ckk bandpower and 5x2pt
+###     - using Planck PR4 map
+### external probes: None
+### data vector: dont care here
+
+timing: True
+debug: False
+stop_at_error: True
+
+likelihood:
+  desy1xplanck.desy3xplanck_6x2pt:
+    path: ./external_modules/data/desy1xplanck
+    #data_file: datasets/Y3xPlanckPR4_emu_DMO.dataset
+    #data_file: datasets/Y3xPlanckPR4_mask34_real.dataset
+    #data_file: datasets/Y3xPlanckPR4_emu_DMO_mask19_v2_HF.dataset
+    data_file: datasets/Y3xPlanckPR4_emu_dmo_mask18_v2_HF.dataset
+    non_linear_emul: 2
+    integration_accuracy: 0
+    pm_integrate_exact: 0
+    accuracyboost: 2
+    samplingboost: 1
+    print_datavector: False
+    print_datavector_file: "./projects/desy1xplanck/data/data_vectors/xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_dmo_EE2.simudata"
+    ### NOTE: By setting create_baryon_pca = True,
+    # the likelihood module will bypass baryon PCs
+    # So, if you want to add PCs to your data vector 
+    # in an evaluation run, run 2 times: 1 for create PCS,
+    # 1 for generating baryon PCs contaminated dv.
+    use_baryonic_simulations_for_dv_contamination: False
+    # antilles-N: weak=379, mean=100, strong=1
+    which_baryonic_simulations_for_dv_contamination: eagle
+
+params:
+  As_1e9:
+    prior:
+      min: 0.5
+      max: 5
+    ref:
+      dist: norm
+      loc: 2.1
+      scale: 0.65
+    proposal: 0.4
+    latex: 10^9 A_\mathrm{s}
+    drop: true
+    renames: A
+  As:
+    value: 'lambda As_1e9: 1e-9 * As_1e9'
+    latex: A_\mathrm{s}
+  sigma8:
+    latex: \sigma_8
+  ns:
+    prior:
+      min: 0.87
+      max: 1.07
+    ref:
+      dist: norm
+      loc: 0.96605
+      scale: 0.01
+    proposal: 0.01
+    latex: n_\mathrm{s}
+  H0:
+    prior:
+      min: 55
+      max: 91
+    ref:
+      dist: norm
+      loc: 67.32
+      scale: 5
+    proposal: 3
+    latex: H_0
+  omegab:
+    prior:
+      min: 0.03
+      max: 0.07
+    ref:
+      dist: norm
+      loc: 0.0455
+      scale: 0.01
+    proposal: 0.01
+    latex: \Omega_\mathrm{b}
+    drop: true
+  omegam:
+    prior:
+      min: 0.1
+      max: 0.9
+    ref:
+      dist: norm
+      loc: 0.211
+      scale: 0.02
+    proposal: 0.02
+    latex: \Omega_\mathrm{m}
+    drop: true
+  mnu:
+    prior:
+      min: 0.0558
+      max: 0.6
+    ref:
+      dist: norm
+      loc: 0.06
+      scale: 0.01
+    proposal: 0.01
+    latex: m_{\nu}
+  w:
+    value: -1.0
+    latex: w_{0,\mathrm{DE}}
+  wa:
+    value: 0.0
+    latex: w_{a,\mathrm{DE}}
+  tau:
+    value: 0.0697186
+    latex: \tau_\mathrm{reio}
+  # ------------------------------------------------------------------------
+  # ------------------------------------------------------------------------
+  # ------------------------------------------------------------------------
+  omegabh2:
+    value: 'lambda omegab, H0: omegab*(H0/100)**2'
+    latex: \Omega_\mathrm{b} h^2
+  omegach2:
+    value: 'lambda omegam, omegab, mnu, H0: (omegam-omegab)*(H0/100)**2-(mnu*(3.046/3)**0.75)/94.0708'
+    latex: \Omega_\mathrm{c} h^2
+  omegal:
+    latex: \Omega_\Lambda
+  omegamh2:
+    derived: 'lambda omegam, H0: omegam*(H0/100)**2'
+    derived: 'lambda omegam, H0: omegam*(H0/100)**2'
+    latex: \Omega_\mathrm{m} h^2
+  s8h5:
+    derived: 'lambda sigma8, H0: sigma8*(H0*1e-2)**(-0.5)'
+    latex: \sigma_8/h^{0.5}
+  s8omegamp5:
+    derived: 'lambda sigma8, omegam: sigma8*omegam**0.5'
+    latex: \sigma_8 \Omega_\mathrm{m}^{0.5}
+  s8omegamp25:
+    derived: 'lambda sigma8, omegam: sigma8*omegam**0.25'
+    latex: \sigma_8 \Omega_\mathrm{m}^{0.25}
+  s8:
+    derived: 'lambda sigma8, omegam: sigma8*(omegam/0.3)**0.5'
+    latex: S_8
+  age:
+    latex: '{\rm{Age}}/\mathrm{Gyr}'
+  rdrag:
+    latex: r_\mathrm{drag}
+  yheused:
+    latex: Y_P^\mathrm{BBN}
+  omegan2:
+    latex: \Omega_\mathrm{\nu} h^2
+  omegan:
+    derived: 'lambda omegan2, H0: omegan2/((H0/100)**2)'
+    latex: \Omega_\mathrm{\nu}
+
+  ########## DES Systematics Parameters ##########
+  DES_A2_1:
+    prior:
+      min: -5.0
+      max: 5.0
+    ref:
+      dist: norm
+      loc: -1.36
+      scale: 0.2
+    proposal: 0.2
+    latex: A_\mathrm{2-IA,DES}^1
+  DES_A2_2:
+    prior:
+      min: -5.0
+      max: 5.0
+    ref:
+      dist: norm
+      loc: -2.5
+      scale: 0.2
+    proposal: 0.2
+    latex: A_\mathrm{2-IA,DES}^2
+  DES_BTA_1:
+    prior:
+      min: 0.0
+      max: 2.0
+    ref:
+      dist: norm
+      loc: 1.0
+      scale: 0.1
+    proposal: 0.1
+    latex: A_\mathrm{BTA-IA,DES}^1
+  DES_BARYON_Q1:
+    prior:
+      min: -6.0
+      max: 20.0
+    ref:
+      dist: norm
+      loc: 4.5
+      scale: 0.1
+    proposal: 0.1 
+    latex: Q_\mathrm{DES}^1
+  DES_BARYON_Q2:
+    prior:
+      min: -10.0
+      max: 10.0
+    ref:
+      dist: norm
+      loc: 4.5
+      scale: 0.1
+    proposal: 0.1 
+    latex: Q_\mathrm{DES}^2
+  DES_PM1:
+    prior:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    ref:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    proposal: 5000
+    latex: PM_\mathrm{DES}^1
+  DES_PM2:
+    prior:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    ref:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    proposal: 5000
+    latex: PM_\mathrm{DES}^2
+  DES_PM3:
+    prior:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    ref:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    proposal: 5000
+    latex: PM_\mathrm{DES}^3
+  DES_PM4:
+    prior:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    ref:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    proposal: 5000
+    latex: PM_\mathrm{DES}^4
+  DES_PM5:
+    prior:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    ref:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    proposal: 5000
+    latex: PM_\mathrm{DES}^5
+  DES_PM6:
+    prior:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    ref:
+      dist: norm
+      loc: 0.0
+      scale: 10000
+    proposal: 5000
+    latex: PM_\mathrm{DES}^6
+
+
+theory:
+  camb:
+    path: ./external_modules/code/CAMB
+    stop_at_error: True
+    use_renames: True
+    extra_args:
+      halofit_version: takahashi
+      AccuracyBoost: 1.1
+      lens_potential_accuracy: 1.1
+      neutrino_hierarchy: degenerate
+      num_massive_neutrinos: 3
+      nnu: 3.046
+      dark_energy_model: ppf
+      accurate_massive_neutrino_transfers: false
+      k_per_logint: 20
+
+###  classy:
+###    path: ./external_modules/code/class_public
+###    use_renames: True
+###    extra_args:
+###      non linear: Halofit
+###      l_max_scalars: 2800
+###      N_ncdm: 3
+###      N_ur: 0.00641
+
+sampler:
+  evaluate:
+    N: 1
+    override:
+      As_1e9: 2.1
+      #sigma8: 0.827706 # 0.777191
+      ns: 0.96605
+      H0: 67.32
+      omegab: 0.04 # 0.05
+      omegam: 0.3
+#      omegam: 0.372
+      mnu: 0.06
+      DES_DZ_S1: 0.0
+      DES_DZ_S2: 0.0
+      DES_DZ_S3: 0.0
+      DES_DZ_S4: 0.0
+      DES_M1: -0.0063
+      DES_M2: -0.0198
+      DES_M3: -0.0241
+      DES_M4: -0.0369
+      DES_A1_1: -0.7
+      DES_A1_2: -1.7
+#      DES_A2_1: -1.36
+#      DES_A2_2: -2.5
+#      DES_BTA_1: 1.0
+#      DES_A1_1: 0.0
+#      DES_A1_2: 0.0
+      DES_A2_1: 0.0
+      DES_A2_2: 0.0
+      DES_BTA_1: 0.0
+      DES_DZ_L1: -0.009
+      DES_DZ_L2: -0.035
+      DES_DZ_L3: -0.005
+      DES_DZ_L4: -0.007
+      DES_DZ_L5: 0.002
+      DES_DZ_L6: 0.002
+#      DES_DZ_L1: 0.0
+#      DES_DZ_L2: 0.0
+#      DES_DZ_L3: 0.0
+#      DES_DZ_L4: 0.0
+#      DES_DZ_L5: 0.0
+#      DES_DZ_L6: 0.0
+      DES_B1_1: 1.5
+      DES_B1_2: 1.8
+      DES_B1_3: 1.8
+      DES_B1_4: 1.9
+#      DES_B1_1: 1.49
+#      DES_B1_2: 1.69
+#      DES_B1_3: 1.91
+#      DES_B1_4: 1.79
+      DES_B1_5: 2.3
+      DES_B1_6: 2.3
+      DES_STRETCH_L1: 0.975
+      DES_STRETCH_L2: 1.306
+      DES_STRETCH_L3: 0.870
+      DES_STRETCH_L4: 0.918
+      DES_STRETCH_L5: 1.080
+      DES_STRETCH_L6: 0.845
+#      DES_STRETCH_L1: 1.0
+#      DES_STRETCH_L2: 1.0
+#      DES_STRETCH_L3: 1.0
+#      DES_STRETCH_L4: 1.0
+#      DES_STRETCH_L5: 1.0
+#      DES_STRETCH_L6: 1.0
+      DES_PM1: 0.0
+      DES_PM2: 0.0
+      DES_PM3: 0.0
+      DES_PM4: 0.0
+      DES_PM5: 0.0
+      DES_PM6: 0.0
+      DES_BARYON_Q1: 0.0
+      DES_BARYON_Q2: 0.0
+
+output: ./projects/desy1xplanck/chains/validation/EVALUATE2
