@@ -32,8 +32,7 @@ echo Directory is `pwd`
 echo Slurm job NAME is $SLURM_JOB_NAME
 echo Slurm job ID is $SLURM_JOBID
 
-###SAMPLEEMU=./projects/desy1xplanck/emulator/sample_emulator.py
-YAML_EMU="./projects/desy1xplanck/yaml/Y3xPLKR4_EMU/EmuMCMC_scalecut_v8_${SLURM_ARRAY_TASK_ID}.yaml"
+YAML_EMU="./projects/desy1xplanck/yaml/Y3xPLKR4_EMU/EmuMCMC_scalecut_v11_${SLURM_ARRAY_TASK_ID}.yaml"
 cd $SLURM_SUBMIT_DIR
 conda activate cocoatorch
 source start_cocoa
@@ -49,5 +48,5 @@ echo Slurm job ntask is $SLURM_NTASKS
 echo Slurm job nthread is $OMP_NUM_THREADS
 echo Running job ${YAML_EMU}
 
-mpirun -n ${SLURM_NTASKS} --mca btl tcp,self cobaya-run ${YAML_EMU} -r
+mpirun -n ${SLURM_NTASKS} --mca btl tcp,self --mca pml ob1 cobaya-run ${YAML_EMU} -r
 
