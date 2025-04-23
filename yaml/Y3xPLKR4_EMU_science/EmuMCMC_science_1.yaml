@@ -29,7 +29,7 @@ stop_at_error: False
 likelihood:
   desy1xplanck.desy3xplanck_cosmic_shear_emu:
     path: ./external_modules/data/desy1xplanck
-    data_file: datasets/Y3xPlanckPR4_mask34_real.dataset
+    data_file: datasets/Y3xPlanckPR4_mask10_v2_real.dataset
     train_config: ./projects/desy1xplanck/emulator_deprecated/train_emu_full_resnet.yaml
 
 params:
@@ -107,8 +107,8 @@ params:
   # =================================
   DES_BARYON_Q1:
     prior:
-      min: -0.0
-      max: 0.1
+      min: -20.0
+      max: 20.0
     ref:
       dist: norm
       loc: 0.05
