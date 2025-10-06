@@ -134,6 +134,7 @@ class _cosmolike_prototype_base(DataSetLikelihood):
     if self.use_baryon_pca:
       baryon_pca_file = ini.relativeFileName('baryon_pca_file')
       self.baryon_pcs = np.loadtxt(baryon_pca_file)
+      self.npcs = 4
       ci.set_baryon_pcs(eigenvectors=self.baryon_pcs)
       self.log.info('use_baryon_pca = True')
       self.log.info('baryon_pca_file = %s loaded', baryon_pca_file)
