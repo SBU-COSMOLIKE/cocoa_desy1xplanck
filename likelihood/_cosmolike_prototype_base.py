@@ -119,7 +119,7 @@ class _cosmolike_prototype_base(DataSetLikelihood):
       ci.init_IA(ia_model = int(self.IA_model), 
                  ia_redshift_evolution = int(self.IA_redshift_evolution))
       
-      if self.probe != "xi":
+      if self.probe not in ("xi", "3x2pt_ss_sk_sk"):
         # (b1, b2, bs2, b3, bmag). 0 = one amplitude per bin
         ci.init_bias(bias_model=self.bias_model)
 

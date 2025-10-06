@@ -16,9 +16,6 @@ IA_model: 0
 external_nz_modeling: 0
 use_emulator: False
 
-# BIAS REDSHIFT EVOLUTION [b1,b2,bs2,b3,bmag] (see bias.c)
-bias_model: [0,0,0,1,0]
-
 print_intermediate_products: False
 
 add_baryons_on_dv: False
@@ -36,4 +33,4 @@ filename_baryon_pca: "./projects/desy1xplanck/data/PCs/desy1xplanck.pca"
 print_datavector: False
 print_datavector_file: "./projects/desy1xplanck/chains/example_evaluate1_desy1xplanck.modelvector"
 
-params: !defaults [params_lens_maglim, params_source]
+params: !defaults [params_source]
