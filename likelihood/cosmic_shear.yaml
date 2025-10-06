@@ -1,9 +1,9 @@
 path: null
-data_file: Y1xplanck.dataset
+data_file: Y3xPlanckPR4.dataset
 accuracyboost: 1.0
 integration_accuracy: 0 # integer 0, 1 or 2
-lmax: 50000 
-kmax_boltzmann: 5.0
+lmax: 75000 
+kmax_boltzmann: 7.5
 speed: 1
 non_linear_emul: 2
 # IA REDSHIFT EVOLUTION: 0 = NO_IA (AMPLITUDES SET TO ZERO), 
@@ -18,8 +18,8 @@ use_emulator: False
 
 print_intermediate_products: False
 
-use_baryonic_simulations_for_dv_contamination: False
-which_baryonic_simulations_for_dv_contamination: TNG100
+add_baryons_on_dv: False
+which_bsims_add_on_dv: TNG100
 
 create_baryon_pca: False
 use_baryon_pca: False

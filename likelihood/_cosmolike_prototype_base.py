@@ -35,41 +35,6 @@ class _cosmolike_prototype_base(DataSetLikelihood):
     self.ntheta = ini.int("n_theta")
     self.theta_min_arcmin = ini.float("theta_min_arcmin")
     self.theta_max_arcmin = ini.float("theta_max_arcmin")
-    # CMB beam cut-off ------------------------------------------------
-    self.lmax_kappa_cmb = ini.float("lmax_kappa_cmb")
-    self.lmin_kappa_cmb = ini.float("lmin_kappa_cmb")
-    self.fwhm  = ini.float("fwhm")
-    self.pathHealpixWinFunc = ini.relativeFileName('pathHealpixWinFunc')
-    self.is_cmb_bandpower = ini.int("is_cmb_bandpower", default = -1)
-    if (1 == self.is_cmb_bandpower):
-      self.binmat_file = ini.relativeFileName('binmat_file')
-      self.offset_file = ini.relativeFileName('offset_file')
-      self.nbp = ini.int("n_bp")
-      self.lmin_bp = ini.float("lmin_bp")
-      self.lmax_bp = ini.float("lmax_bp")
-      self.ncl = 0
-      self.lmin = 0
-      self.lmax = 0
-      self.is_cmb_kkkk_cov_from_sim = ini.int("is_cmb_kkkk_cov_from_sim",default = -1)
-      if(self.is_cmb_kkkk_cov_from_sim == 1):
-        Nvar = ini.float("Hartlap_Nvar")
-        self.alpha_Hartlap = (Nvar - self.nbp -2.0)/(Nvar - 1.0) # < 1
-      elif(self.is_cmb_kkkk_cov_from_sim == -1 or self.is_cmb_kkkk_cov_from_sim > 1):
-        raise LoggedError(self.log,
-            "MUST SPECIFY is_cmb_kkkk_cov_from_sim (0 or 1) IN THE DATA FILE!")
-      else:
-        self.is_cmb_kkkk_cov_from_sim = 0
-        self.alpha_Hartlap = 1.0
-    else:
-      self.is_cmb_bandpower = 0
-      self.ncl = ini.int("n_cl")
-      self.lmin = ini.float("lmin")
-      self.lmax = ini.float("lmax")
-      self.binmat_file = 'none'
-      self.offset_file = 'none'
-      self.nbp = 0
-      self.lmin_bp = 0
-      self.lmax_bp = 0
 
     # ------------------------------------------------------------------------   
     tmp=int(1000 + 250*self.accuracyboost)
@@ -87,19 +52,29 @@ class _cosmolike_prototype_base(DataSetLikelihood):
     # ------------------------------------------------------------------------
 
     ci.initial_setup()
+    
     ci.init_probes(possible_probes=self.probe)
+    
     ci.init_binning(self.ntheta, self.theta_min_arcmin, self.theta_max_arcmin)
-    ci.init_cmb_bandpower(self.is_cmb_bandpower, 
-                          self.is_cmb_kkkk_cov_from_sim, 
-                          self.alpha_Hartlap)
-    ci.init_cmb(self.lmin_kappa_cmb, 
-                self.lmax_kappa_cmb, 
-                self.fwhm, 
-                self.pathHealpixWinFunc)
-    if (1 == self.is_cmb_bandpower):
-      ci.init_binning_cmb_bandpower(self.nbp, self.lmin_bp, self.lmax_bp)
-    else:
-      ci.init_binning_fourier(self.ncl, self.lmin, self.lmax)
+
+    # Init CMB cross spectra ---------------------------------------------------   
+    ci.init_cmb_cross_correlation(
+        lmin = ini.int("lmin_kx"),
+        lmax = ini.int("lmax_kx"), 
+        fwhm = ini.float("fwhm_kx"), 
+        healpixwin_filename = ini.relativeFileName('healpix_win_func_kx_file')
+      )
+    # CMB auto spectra ---------------------------------------------------------   
+    nbins = ini.int("nbp_kk")
+    nvar = ini.float("hartlap_nvar_kk")
+    ci.init_cmb_auto_bandpower(
+        nbins  = nbins,
+        lmin = ini.int("lminbp_kk"),
+        lmax = ini.int("lmaxbp_kk"),
+        binning_matrix = ini.relativeFileName('binmat_kk_file'),
+        theory_offset = ini.relativeFileName('offset_kk_file'),
+        alpha = (nvar - nbins - 2.0)/(nvar - 1.0)
+      )
 
     if self.use_emulator:
       ci.init_redshift_distributions_from_files(
@@ -107,15 +82,17 @@ class _cosmolike_prototype_base(DataSetLikelihood):
           lens_ntomo=int(self.lens_ntomo), 
           source_multihisto_file=self.source_file,
           source_ntomo=int(self.source_ntomo))
-      ci.init_data(self.cov_file, self.mask_file, self.data_vector_file)  
-      if (1 == self.is_cmb_bandpower):
-        ci.init_cmb_bandpower_data(self.binmat_file, self.offset_file)
+      
+      ci.init_data_real(self.cov_file, self.mask_file, self.data_vector_file)  
+      
       ci.init_accuracy_boost(accuracy_boost=0.35, 
                              integration_accuracy=-1) # seems enough to compute PM
     else:
       ci.init_ntable_lmax(lmax=int(self.lmax))
+      
       ci.init_accuracy_boost(accuracy_boost=self.accuracyboost, 
                              integration_accuracy=int(self.integration_accuracy))
+      
       ci.init_cosmo_runmode(is_linear=False)
 
       if self.external_nz_modeling: 
@@ -124,8 +101,11 @@ class _cosmolike_prototype_base(DataSetLikelihood):
             lens_ntomo=int(self.lens_ntomo), 
             source_multihisto_file=self.source_file,
             source_ntomo=int(self.source_ntomo)) 
+        
         ci.init_lens_sample_size(int(self.lens_ntomo))
+        
         ci.init_source_sample_size(int(self.source_ntomo))
+        
         ci.init_ntomo_powerspectra() # must be called after set_source/lens_size  
       else:
         ci.init_redshift_distributions_from_files(
@@ -133,12 +113,12 @@ class _cosmolike_prototype_base(DataSetLikelihood):
           lens_ntomo=int(self.lens_ntomo), 
           source_multihisto_file=self.source_file,
           source_ntomo=int(self.source_ntomo))
-
-      ci.init_data(self.cov_file, self.mask_file, self.data_vector_file)
-      if (1 == self.is_cmb_bandpower):
-        ci.init_cmb_bandpower_data(self.binmat_file, self.offset_file)
+      
+      ci.init_data_real(self.cov_file, self.mask_file, self.data_vector_file)
+      
       ci.init_IA(ia_model = int(self.IA_model), 
                  ia_redshift_evolution = int(self.IA_redshift_evolution))
+      
       if self.probe != "xi":
         # (b1, b2, bs2, b3, bmag). 0 = one amplitude per bin
         ci.init_bias(bias_model=self.bias_model)
@@ -147,25 +127,9 @@ class _cosmolike_prototype_base(DataSetLikelihood):
         self.use_baryon_pca = False
       if self.non_linear_emul == 1:
         self.emulator = ee2.PyEuclidEmulator()
-      ci.init_baryons_contamination(
-        self.use_baryonic_simulations_for_dv_contamination,
-        self.which_baryonic_simulations_for_dv_contamination)
-
-      # set up parameterization (CAMB v.s. CLASS)
-      if self.boltzmann_code.lower() == "class":
-        self.omega_m_str = "Omega_m"
-        self.omega_b_str = "Omega_b"
-        self.mnu_str = "m_ncdm_in_eV"
-        self.w0_str = "w0_fld"
-        self.wa_str = "wa_fld"
-      elif self.boltzmann_code.lower() == "camb":
-        self.omega_m_str = "omegam"
-        self.omega_b_str = "omegab"
-        self.mnu_str = "mnu"
-        self.w0_str = "w"
-        self.wa_str = "wa"
-      else:
-        raise ValueError(f'Can not recognize Boltzmann code {self.boltzmann_code}!')
+      
+      if self.add_baryons_on_dv:
+        ci.init_baryons_contamination(self.which_bsims_add_on_dv)
 
     if self.use_baryon_pca:
       baryon_pca_file = ini.relativeFileName('baryon_pca_file')
@@ -387,12 +351,12 @@ class _cosmolike_prototype_base(DataSetLikelihood):
         # user may choose to still add photo-z bias or not (here we ad)
         ci.set_nuisance_clustering_photoz(
           bias=[params.get(p,0) for p in [survey+"_DZ_L"+str(i+1) for i in range(ntomo)]],
-          stretch=[params_values.get(p,0) for p in [survey+"_STRETCH_L"+str(i+1) for i in range(ntomo)]]
+          stretch=[params.get(p,0) for p in [survey+"_DZ2_L"+str(i+1) for i in range(ntomo)]]
         )
       else:
         ci.set_nuisance_clustering_photoz(
           bias=[params.get(p,0) for p in [survey+"_DZ_L"+str(i+1) for i in range(ntomo)]],
-          stretch=[params_values.get(p,0) for p in [survey+"_STRETCH_L"+str(i+1) for i in range(ntomo)]]
+          stretch=[params.get(p,0) for p in [survey+"_DZ2_L"+str(i+1) for i in range(ntomo)]]
         )
   
   # ------------------------------------------------------------------------
@@ -406,8 +370,8 @@ class _cosmolike_prototype_base(DataSetLikelihood):
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
 
-  def logp(self, **params_values):
-    datavector = self.internal_get_datavector(**params_values)
+  def logp(self, **params):
+    datavector = self.internal_get_datavector(**params)
     return self.compute_logp(datavector)
 
   # ------------------------------------------------------------------------

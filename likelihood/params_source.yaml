@@ -5,46 +5,46 @@
   DES_DZ_S1:
     prior:
       dist: norm
-      loc: -0.001
-      scale: 0.016
+      loc: 0.0
+      scale: 0.018
     ref:
       dist: norm
-      loc: -0.001
-      scale: 0.016
-    proposal: 0.016
+      loc: 0.0
+      scale: 0.018
+    proposal: 0.009
     latex: \Delta z_\mathrm{s,DES}^1
   DES_DZ_S2:
     prior:
       dist: norm
-      loc: -0.019
-      scale: 0.013
+      loc: 0.0
+      scale: 0.015
     ref:
       dist: norm
-      loc: -0.019
+      loc: 0.0
       scale: 0.015
-    proposal: 0.013
+    proposal: 0.0075
     latex: \Delta z_\mathrm{s,DES}^2
   DES_DZ_S3:
     prior:
       dist: norm
-      loc: 0.009
+      loc: 0.0
       scale: 0.011
     ref:
       dist: norm
-      loc: 0.009
+      loc: 0.0
       scale: 0.011
-    proposal: 0.011
+    proposal: 0.0055
     latex: \Delta z_\mathrm{s,DES}^3
   DES_DZ_S4:
     prior:
       dist: norm
-      loc: -0.018
-      scale: 0.022
+      loc: 0.0
+      scale: 0.017
     ref:
       dist: norm
-      loc: -0.018
-      scale: 0.022
-    proposal: 0.022
+      loc: 0.0
+      scale: 0.017
+    proposal: 0.0085
     latex: \Delta z_\mathrm{s,DES}^4
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
@@ -80,10 +80,24 @@
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
   DES_A2_1:
-    value: 0.0
+    prior:
+      min: -5.0
+      max: 5.0
+    ref:
+      dist: norm
+      loc: -1.36
+      scale: 0.2
+    proposal: 0.2
     latex: A_\mathrm{2-IA,DES}^1
   DES_A2_2:
-    value: 0.0
+    prior:
+      min: -5.0
+      max: 5.0
+    ref:
+      dist: norm
+      loc: -2.5
+      scale: 0.2
+    proposal: 0.2
     latex: A_\mathrm{2-IA,DES}^2
   DES_A2_3:
     value: 0.0
@@ -95,7 +109,14 @@
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
   DES_BTA_1:
-    value: 0
+    prior:
+      min: 0.0
+      max: 2.0
+    ref:
+      dist: norm
+      loc: 1.0
+      scale: 0.1
+    proposal: 0.1
     latex: A_\mathrm{BTA-IA,DES}^1
   DES_BTA_2:
     value: 0
@@ -113,46 +134,46 @@
   DES_M1:
     prior:
       dist: norm
-      loc: 0.012
-      scale: 0.023
+      loc: -0.0063
+      scale: 0.0091
     ref:
       dist: norm
-      loc: 0.012
-      scale: 0.05
-    proposal: 0.03
+      loc: -0.0063
+      scale: 0.0091
+    proposal: 0.0045
     latex: m_\mathrm{DES}^1
   DES_M2:
     prior:
       dist: norm
-      loc: 0.012
-      scale: 0.023
+      loc: -0.0198
+      scale: 0.0078
     ref:
       dist: norm
-      loc: 0.012
-      scale: 0.05
-    proposal: 0.03
+      loc: -0.0198
+      scale: 0.0078
+    proposal: 0.004
     latex: m_\mathrm{DES}^2
   DES_M3:
     prior:
       dist: norm
-      loc: 0.012
-      scale: 0.023
+      loc: -0.0241
+      scale: 0.0076
     ref:
       dist: norm
-      loc: 0.012
-      scale: 0.05
-    proposal: 0.03
+      loc: -0.0241
+      scale: 0.0076
+    proposal: 0.004
     latex: m_\mathrm{DES}^3
   DES_M4:
     prior:
       dist: norm
-      loc: 0.012
-      scale: 0.023
+      loc: -0.0369
+      scale: 0.0076
     ref:
       dist: norm
-      loc: 0.012
-      scale: 0.05
-    proposal: 0.03
+      loc: -0.0369
+      scale: 0.0076
+    proposal: 0.004
     latex: m_\mathrm{DES}^4 
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------

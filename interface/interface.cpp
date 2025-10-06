@@ -109,10 +109,40 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       py::arg("theta_max_arcmin").none(false)
     );
 
+  m.def("init_binning_fourier",
+      [](int nells, int lmin, int lmax) {
+        cosmolike_interface::init_binning_fourier(nells, lmin, lmax, -1);
+      },
+      "Init Bining related variables",
+      py::arg("nells").none(false).noconvert(),
+      py::arg("lmin").none(false),
+      py::arg("lmax_shear").none(false)
+    );
+
   m.def("init_cosmo_runmode",
       &cosmolike_interface::init_cosmo_runmode,
       "Init Run Mode (should we force the matter power spectrum to be linear)",
       py::arg("is_linear").none(false)
+    );
+
+  m.def("init_cmb_cross_correlation",
+      &cosmolike_interface::init_cmb_cross_correlation,
+      "Init scale cuts (fourier) and experiment binning for the CMB cross correlation",
+      py::arg("lmin").none(false).noconvert(),
+      py::arg("lmax").none(false).noconvert(),
+      py::arg("fwhm").none(false),
+      py::arg("healpixwin_filename").none(false)
+    );
+
+  m.def("init_cmb_auto_bandpower",
+      &cosmolike_interface::init_cmb_auto_bandpower,
+      "Init scale cuts (fourier & bandpower) and cov correctionfor the CMB kk",
+      py::arg("nbins").none(false).noconvert(),
+      py::arg("lmin").none(false).noconvert(),
+      py::arg("lmax").none(false).noconvert(),
+      py::arg("binning_matrix").none(false),
+      py::arg("theory_offset").none(false),
+      py::arg("alpha").none(false)
     );
 
   m.def("init_data_real",
@@ -284,7 +314,7 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
   m.def("set_nuisance_clustering_photoz",
       [](arma::Col<double> CP, arma::Col<double> CPS) {
         using namespace cosmolike_interface;
-        set_nuisance_shear_photoz(CP);
+        set_nuisance_clustering_photoz(CP);
         set_nuisance_clustering_photoz_stretch(CPS);
       },
       "Set nuisance clustering shear photo-z bias & stretch amplitudes",
