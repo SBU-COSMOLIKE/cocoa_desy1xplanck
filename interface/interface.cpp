@@ -431,7 +431,7 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       []()->std::vector<double> {
         using namespace cosmolike_interface;
         using stlvec = std::vector<double>;
-        return arma::conv_to<stlvec>::from(compute_Mx2pt_N_masked<0,3>({0,1,2}));
+        return arma::conv_to<stlvec>::from(compute_Mx2pt_N_masked<0,6>({0,1,2,3,4,5}));
       },
       "Compute theoretical data vector. Masked dimensions are filled w/ zeros",
       py::return_value_policy::move
