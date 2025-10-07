@@ -1,0 +1,23 @@
+data_file = xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_v4.realdata
+cov_file  = cov_DESY3xPLKR4_mix6x2pt_baseline_8-2048_Ntheta30_withAnnulus_llllY3_kkkkPR4
+mask_file = xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_emucons.mask
+nz_lens_file = nz_maglim_Y3_unblinded_02_26_21.txt
+nz_source_file = nz_source_Y3_unblinded_02_26_21.txt
+baryon_pca_file = DESY3xPLKR4_cosmic_shear_9sim_Ntheta30_025.pca
+lens_ntomo = 6
+source_ntomo = 4
+n_theta = 30
+theta_min_arcmin = 0.25
+theta_max_arcmin = 250.0
+# CMB kx with x = s,g cross-correlatiions --------------------------------------
+fwhm_kx = 7
+lmin_kx = 8   
+lmax_kx = 2048
+healpix_win_func_kx_file = ./cmb_data/HPIX1024_pixwin.txt
+# CMB kk auto lensing ----------------------------------------------------------
+binmat_kk_file = ./cmb_data/dr4_consext8_CMBmarged/binning_matrix_with_correction_table.txt
+offset_kk_file = ./cmb_data/dr4_consext8_CMBmarged/Ckk_bandpower_offset.txt
+hartlap_nvar_kk = 480
+nbp_kk = 9
+lminbp_kk = 2
+lmaxbp_kk = 2500
