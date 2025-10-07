@@ -1,9 +1,9 @@
-data_file = xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_v4.realdata
-cov_file  = cov_DESY3xPLKR4_mix6x2pt_baseline_8-2048_Ntheta30_withAnnulus_llllY3_kkkkPR4
-mask_file = xi_DESY3xPLKR4_6x2pt_Maglim_baseline_Ntheta30_emucons.mask
+data_file = DESY3xPlanckPR4_6x2pt_Maglim_baseline_archive.realdata
+cov_file  = DESY3xPlanckPR4_6x2pt_baseline_archive.covmat
+mask_file = DESY3xPlanckR4_6x2pt_Maglim_baseline_archive.mask
 nz_lens_file = nz_maglim_Y3_unblinded_02_26_21.txt
 nz_source_file = nz_source_Y3_unblinded_02_26_21.txt
-baryon_pca_file = DESY3xPLKR4_cosmic_shear_9sim_Ntheta30_025.pca
+baryon_pca_file = DESY3xPLKR4_6x2pt_antilles_baseline_archive.pca
 lens_ntomo = 6
 source_ntomo = 4
 n_theta = 30
