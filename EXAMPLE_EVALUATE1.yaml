@@ -15,7 +15,7 @@ likelihood:
     non_linear_emul: 2
     IA_model: 1
     IA_redshift_evolution: 3
-    use_baryon_pca: False
+    use_baryon_pca: True
 params:
   As_1e9:
     prior:

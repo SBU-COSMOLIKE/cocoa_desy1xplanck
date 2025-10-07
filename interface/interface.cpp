@@ -441,7 +441,7 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       [](std::vector<double> Q)->std::vector<double> {
         using namespace cosmolike_interface;
         using stlvec = std::vector<double>;
-        arma::Col<double> res = compute_Mx2pt_N_masked<0,3>({0,1,2});
+        arma::Col<double> res = compute_Mx2pt_N_masked<0,6>({0,1,2,3,4,5});
         return arma::conv_to<stlvec>::from(compute_add_baryons_pcs(Q,res));
       },
       "Compute theoretical data vector, including contributions from baryonic"
@@ -647,7 +647,6 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       py::return_value_policy::move
     );
 }
-
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
