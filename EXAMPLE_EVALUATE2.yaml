@@ -5,9 +5,9 @@ stop_at_error: True
 likelihood:
   #desy1xplanck.combo_xi_ggl:
   #desy1xplanck.combo_2x2pt:
-  #desy1xplanck.combo_3x2pt:
+  desy1xplanck.combo_3x2pt:
   #desy1xplanck.combo_3x2pt_ks_gk_kk:
-  desy1xplanck.combo_6x2pt:
+  #desy1xplanck.combo_6x2pt:
     path: ./external_modules/data/desy1xplanck
     data_file: Y3xPlanckPR4.dataset
     accuracyboost: 1.0
@@ -19,6 +19,7 @@ likelihood:
     IA_model: 1
     IA_redshift_evolution: 3
     use_baryon_pca: True
+    debug: False
 params:
   As_1e9:
     prior:

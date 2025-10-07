@@ -3,8 +3,8 @@ debug: False
 stop_at_error: True
 
 likelihood:
-  #desy1xplanck.cosmic_shear:
-  desy1xplanck.combo_3x2pt_ss_sk_sk:
+  desy1xplanck.cosmic_shear:
+  #desy1xplanck.combo_3x2pt_ss_sk_sk:
     path: ./external_modules/data/desy1xplanck
     data_file: Y3xPlanckPR4.dataset
     accuracyboost: 1.0
@@ -16,6 +16,7 @@ likelihood:
     IA_model: 1
     IA_redshift_evolution: 3
     use_baryon_pca: True
+    debug: false
 params:
   As_1e9:
     prior:
