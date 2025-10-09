@@ -4,8 +4,8 @@ accuracyboost: 1.0
 integration_accuracy: 0 # integer 0, 1 or 2
 lmax: 75000 
 kmax_boltzmann: 7.5
-speed: 1
 non_linear_emul: 2
+speed: 3
 debug: False
 # IA REDSHIFT EVOLUTION: 0 = NO_IA (AMPLITUDES SET TO ZERO), 
 #                        1 = IA_NLA_LF
@@ -17,21 +17,17 @@ IA_model: 0
 external_nz_modeling: 0
 use_emulator: False
 
-print_intermediate_products: False
+# BIAS REDSHIFT EVOLUTION [b1,b2,bs2,b3,bmag] (see bias.c)
+#bias_model: [0,0,0,1,0]
 
 add_baryons_on_dv: False
-which_bsims_add_on_dv: TNG100
+which_bsims_add_on_dv: "antilles-2"
 
-create_baryon_pca: False
 use_baryon_pca: False
-save_Qs: False
-subtract_mean: False
-use_weights_for_scenarios: False
-scenario_weights: "./projects/desy1xplanck/data/PCs/antilles_weights_p"
-baryon_pca_select_simulations: TNG100/HzAGN/mb2/illustris/eagle/owls_AGN_T80/owls_AGN_T85/owls_AGN_T87/BAHAMAS_T76/BAHAMAS_T78/BAHAMAS_T80
+create_baryon_pca: False
+baryon_pca_select_sims: "antilles-2-99/antilles-101-378/antilles-380-400"
 filename_baryon_pca: "./projects/desy1xplanck/chains/pca.txt"
-
 print_datavector: False
-print_datavector_file: "./projects/desy1xplanck/chains/desy1xplanck_theory_cosmic_shear.modelvector"
+print_datavector_file: "./projects/desy1xplanck/chains/theory.modelvector"
 
 params: !defaults [params_source]

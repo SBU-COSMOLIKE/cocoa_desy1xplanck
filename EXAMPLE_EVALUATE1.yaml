@@ -4,6 +4,7 @@ stop_at_error: True
 
 likelihood:
   desy1xplanck.cosmic_shear:
+  #desy1xplanck.combo_2x2pt_ss_sk:
   #desy1xplanck.combo_3x2pt_ss_sk_sk:
     path: ./external_modules/data/desy1xplanck
     data_file: Y3xPlanckPR4.dataset
@@ -13,10 +14,12 @@ likelihood:
     kmax_boltzmann: 7.5
     # 1 EE2, 2 Halofit
     non_linear_emul: 2
-    IA_model: 1
+    IA_model: 0
     IA_redshift_evolution: 3
-    use_baryon_pca: True
+    use_baryon_pca: false
     debug: false
+    create_baryon_pca: false
+    baryon_pca_select_sims: "antilles-2-99/antilles-101-378/antilles-380-400"
 params:
   As_1e9:
     prior:

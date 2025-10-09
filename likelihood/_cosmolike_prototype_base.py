@@ -76,8 +76,7 @@ class _cosmolike_prototype_base(DataSetLikelihood):
         lmax = ini.int("lmaxbp_kk"),
         binning_matrix = ini.relativeFileName('binmat_kk_file'),
         theory_offset = ini.relativeFileName('offset_kk_file'),
-        alpha = (nvar - nbins - 2.0)/(nvar - 1.0)
-      )
+        alpha = (nvar - nbins - 2.0)/(nvar - 1.0))
 
     if self.use_emulator:
       ci.init_redshift_distributions_from_files(
@@ -122,31 +121,29 @@ class _cosmolike_prototype_base(DataSetLikelihood):
       ci.init_IA(ia_model = int(self.IA_model), 
                  ia_redshift_evolution = int(self.IA_redshift_evolution))
       
-      if self.probe not in ("xi", "3x2pt_ss_sk_sk"):
+      if self.probe not in ("xi", "3x2pt_ss_sk_sk", "2x2pt_ss_sk"):
         # (b1, b2, bs2, b3, bmag). 0 = one amplitude per bin
         ci.init_bias(bias_model=self.bias_model)
 
-      if self.create_baryon_pca:
-        self.use_baryon_pca = False
       if self.non_linear_emul == 1:
         self.emulator = ee2.PyEuclidEmulator()
       
-      if self.add_baryons_on_dv:
-        ci.init_baryons_contamination(self.which_bsims_add_on_dv)
+      if self.create_baryon_pca:
+        self.use_baryon_pca = False
+        self.allsims = ini.relativeFileName('all_sims_hdf5_file')
+      else:
+        if self.add_baryons_on_dv:
+          sim = self.which_bsims_add_on_dv
+          self.allsims = ini.relativeFileName('all_sims_hdf5_file')
+          ci.init_baryons_contamination(sim = sim, allsims=allsims)
 
     if self.use_baryon_pca:
       baryon_pca_file = ini.relativeFileName('baryon_pca_file')
-      self.baryon_pcs = np.loadtxt(baryon_pca_file)
       self.npcs = 4
-      ci.set_baryon_pcs(eigenvectors=self.baryon_pcs)
+      ci.set_baryon_pcs(eigenvectors = np.loadtxt(baryon_pca_file))
       self.log.info('use_baryon_pca = True')
       self.log.info('baryon_pca_file = %s loaded', baryon_pca_file)
       self.use_baryon_pca = True
-      if self.subtract_mean:
-        mean_baryon_diff_file = ini.relativeFileName('mean_baryon_diff_file')
-        self.mean_baryon_diff = np.loadtxt(mean_baryon_diff_file)
-        self.log.info('subtract_mean = True')
-        self.log.info('mean_baryon_diff_file = %s loaded', mean_baryon_diff_file)
     else:
       self.log.info('use_baryon_pca = False')
 
@@ -401,8 +398,9 @@ class _cosmolike_prototype_base(DataSetLikelihood):
     self.set_source_related(**params)
     
     if self.create_baryon_pca:
-      pcs = ci.compute_baryon_pcas(scenarios=self.baryon_pca_sims)
+      pcs = ci.compute_baryon_pcas(scenarios=self.baryon_pca_select_sims, allsims=self.allsims)
       np.savetxt(self.filename_baryon_pca, pcs)
+      datavector = ci.compute_data_vector_masked()
     elif self.use_baryon_pca: 
       Q = [params.get(p,0) for p in [survey+"_BARYON_Q"+str(i+1) for i in range(self.npcs)]]     
       datavector = ci.compute_data_vector_masked_with_baryon_pcs(Q=Q)

@@ -136,6 +136,7 @@ ifdef PYBIND
 endif
 
 ifdef HDF5
+	CXXFLAGS += -DHDF5LIB
 	CFLAGS += -DHDF5LIB
 	LDLIBS += -lhdf5 -lhdf5_cpp
 endif

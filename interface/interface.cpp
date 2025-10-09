@@ -89,9 +89,11 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
     );
   
   m.def("init_baryons_contamination",
-      &cosmolike_interface::init_baryons_contamination,
+      py::overload_cast<std::string, std::string>(
+         &cosmolike_interface::init_baryons_contamination),
       "Init data vector contamination (on the matter power spectrum) with baryons",
-      py::arg("sim").none(false)
+      py::arg("sim").none(false),
+      py::arg("allsims").none(false)
     );
 
   m.def("init_bias", 
@@ -148,7 +150,7 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
   m.def("init_data_real",
       [](std::string cov, std::string mask, std::string data) {
         using namespace cosmolike_interface;
-        init_data_Mx2pt_N<0,6>(cov, mask, data, {0, 1, 2, 3, 4, 5});
+        init_data_Mx2pt_N<0,6>(cov, mask, data, {0,1,2,3,4,5});
       },
       "Load covariance matrix, mask (vec of 0/1s) and data vector",
       py::arg("COV").none(false),
@@ -460,14 +462,15 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
     );
 
   m.def("compute_baryon_pcas",
-      [](std::string scenarios) {
+      [](std::string scenarios, std::string allsims) {
         using namespace cosmolike_interface;
-        BaryonScenario::get_instance().set_scenarios(scenarios);
-        return compute_baryon_pcas_Mx2pt_N<0,3>({0, 1, 2});
+        BaryonScenario::get_instance().set_scenarios(allsims, scenarios);
+        return compute_baryon_pcas_Mx2pt_N<0,6>({0,1,2,3,4,5});
       },
       "Compute baryonic principal components given a list of scenarios" 
       "that contaminate the matter power spectrum",
       py::arg("scenarios").none(false),
+      py::arg("allsims").none(false),
       py::return_value_policy::move
     );
 

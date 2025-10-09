@@ -3,11 +3,11 @@ debug: False
 stop_at_error: True
 
 likelihood:
-  #desy1xplanck.combo_xi_ggl:
+  #desy1xplanck.combo_2x2pt_ss_sg:
   #desy1xplanck.combo_2x2pt:
-  desy1xplanck.combo_3x2pt:
+  #desy1xplanck.combo_3x2pt:
   #desy1xplanck.combo_3x2pt_ks_gk_kk:
-  #desy1xplanck.combo_6x2pt:
+  desy1xplanck.combo_6x2pt:
     path: ./external_modules/data/desy1xplanck
     data_file: Y3xPlanckPR4.dataset
     accuracyboost: 1.0
@@ -16,9 +16,9 @@ likelihood:
     kmax_boltzmann: 7.5
     # 1 EE2, 2 Halofit
     non_linear_emul: 2
-    IA_model: 1
+    IA_model: 0
     IA_redshift_evolution: 3
-    use_baryon_pca: True
+    use_baryon_pca: False
     debug: False
 params:
   As_1e9:
