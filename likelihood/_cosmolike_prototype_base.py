@@ -83,18 +83,14 @@ class _cosmolike_prototype_base(DataSetLikelihood):
           lens_multihisto_file=self.lens_file,
           lens_ntomo=int(self.lens_ntomo), 
           source_multihisto_file=self.source_file,
-          source_ntomo=int(self.source_ntomo))
-      
+          source_ntomo=int(self.source_ntomo)) 
       ci.init_data_real(self.cov_file, self.mask_file, self.data_vector_file)  
-      
       ci.init_accuracy_boost(accuracy_boost=0.35, 
                              integration_accuracy=-1) # seems enough to compute PM
     else:
       ci.init_ntable_lmax(lmax=int(self.lmax))
-      
       ci.init_accuracy_boost(accuracy_boost=self.accuracyboost, 
                              integration_accuracy=int(self.integration_accuracy))
-      
       ci.init_cosmo_runmode(is_linear=False)
 
       if self.external_nz_modeling: 
@@ -103,11 +99,8 @@ class _cosmolike_prototype_base(DataSetLikelihood):
             lens_ntomo=int(self.lens_ntomo), 
             source_multihisto_file=self.source_file,
             source_ntomo=int(self.source_ntomo)) 
-        
         ci.init_lens_sample_size(int(self.lens_ntomo))
-        
         ci.init_source_sample_size(int(self.source_ntomo))
-        
         ci.init_ntomo_powerspectra() # must be called after set_source/lens_size  
       else:
         ci.init_redshift_distributions_from_files(
@@ -117,10 +110,8 @@ class _cosmolike_prototype_base(DataSetLikelihood):
           source_ntomo=int(self.source_ntomo))
       
       ci.init_data_real(self.cov_file, self.mask_file, self.data_vector_file)
-      
       ci.init_IA(ia_model = int(self.IA_model), 
                  ia_redshift_evolution = int(self.IA_redshift_evolution))
-      
       if self.probe not in ("xi", "3x2pt_ss_sk_sk", "2x2pt_ss_sk"):
         # (b1, b2, bs2, b3, bmag). 0 = one amplitude per bin
         ci.init_bias(bias_model=self.bias_model)
@@ -143,7 +134,6 @@ class _cosmolike_prototype_base(DataSetLikelihood):
       ci.set_baryon_pcs(eigenvectors = np.loadtxt(baryon_pca_file))
       self.log.info('use_baryon_pca = True')
       self.log.info('baryon_pca_file = %s loaded', baryon_pca_file)
-      self.use_baryon_pca = True
     else:
       self.log.info('use_baryon_pca = False')
 
