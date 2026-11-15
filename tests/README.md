@@ -28,6 +28,15 @@ writes and `manifest_sha256.json` protects, through the shared machinery
 that `cocoa_test_utils.py` binds. The covariance tests need the covariance
 build and read the live survey adapter in `covariance/`.
 
+The data-vector sector includes the setting-sequence tests
+(`data_vector/test_setting_sequences.py`): they change cosmolike
+settings in one process, as a notebook does between evaluations, and
+compare every result bit for bit with a separate process that saw only
+the final settings. A change the loaded data layout cannot follow must
+stop with a clear message instead of returning numbers computed from
+the earlier settings. The sequences here include the source-bin count
+changed under the CMB lensing cross-correlation.
+
 These steps assume Cocoa and this project are installed, the Cocoa Conda environment
 is active, the shell is Bash, and the current folder is `cocoa/Cocoa/`.
 
