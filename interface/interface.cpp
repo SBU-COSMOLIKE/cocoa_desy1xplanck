@@ -790,7 +790,9 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       py::overload_cast<const double, const double, const int, const int>(
         &cosmolike_interface::RF_C_ss_tomo_limber_cpp
       ),
-      "Compute int from -infty to k of |dlnC_ss_dlnk| (fourier - limber)",
+      "Cumulative response RF(k) = S(k)/S(k_hi) (fourier - limber): S(K) "
+      "integrates |dlnC_ss_dlnk| over ln k up to K on the tabulated k "
+      "range, whose upper end is k_hi, so RF rises from 0 to 1",
       py::arg("k").none(false).noconvert(),
       py::arg("l").none(false).noconvert(),
       py::arg("ni").none(false).noconvert(),
@@ -802,7 +804,9 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       py::overload_cast<const arma::Col<double>, const arma::Col<double>>(
         &cosmolike_interface::RF_C_ss_tomo_limber_cpp
       ),
-      "Compute int from -infty to k of |dlnC_ss_dlnk| (fourier - limber)",
+      "Cumulative response RF(k) = S(k)/S(k_hi) (fourier - limber): S(K) "
+      "integrates |dlnC_ss_dlnk| over ln k up to K on the tabulated k "
+      "range, whose upper end is k_hi, so RF rises from 0 to 1",
       py::arg("k").none(false),
       py::arg("l").none(false),
       py::return_value_policy::move
@@ -830,7 +834,9 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       py::overload_cast<const double, const int, const int, const int>(
         &cosmolike_interface::RF_xi_tomo_limber_cpp
       ),
-      "Compute int from -infty to k of |dlnxi_dlnk| (fourier - limber)",
+      "Cumulative response RF(k) = S(k)/S(k_hi) (real - limber): S(K) "
+      "integrates |dlnxi_dlnk| over ln k up to K on the tabulated k "
+      "range, whose upper end is k_hi, so RF rises from 0 to 1",
       py::arg("k").none(false),
       py::arg("nt").none(false).noconvert(),
       py::arg("ni").none(false).noconvert(),
@@ -842,7 +848,9 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       py::overload_cast<const arma::Col<double>>(
         &cosmolike_interface::RF_xi_tomo_limber_cpp
       ),
-      "Compute int from -infty to k of |dlnxi_dlnk| (fourier - limber)",
+      "Cumulative response RF(k) = S(k)/S(k_hi) (real - limber): S(K) "
+      "integrates |dlnxi_dlnk| over ln k up to K on the tabulated k "
+      "range, whose upper end is k_hi, so RF rises from 0 to 1",
       py::arg("k").none(false),
       py::return_value_policy::move
     );
@@ -872,7 +880,9 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       py::overload_cast<const double, const double, const int>(
         &cosmolike_interface::RF_C_ks_tomo_limber_cpp
       ),
-      "Compute int from -infty to k of |dlnC_ks_dlnk| (fourier - limber)",
+      "Cumulative response RF(k) = S(k)/S(k_hi) (fourier - limber): S(K) "
+      "integrates |dlnC_ks_dlnk| over ln k up to K on the tabulated k "
+      "range, whose upper end is k_hi, so RF rises from 0 to 1",
       py::arg("k").none(false).noconvert(),
       py::arg("l").none(false).noconvert(),
       py::arg("ni").none(false).noconvert(),
@@ -883,7 +893,9 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       py::overload_cast<const arma::Col<double>, const arma::Col<double>>(
         &cosmolike_interface::RF_C_ks_tomo_limber_cpp
       ),
-      "Compute int from -infty to k of |dlnC_ks_dlnk| (fourier - limber)",
+      "Cumulative response RF(k) = S(k)/S(k_hi) (fourier - limber): S(K) "
+      "integrates |dlnC_ks_dlnk| over ln k up to K on the tabulated k "
+      "range, whose upper end is k_hi, so RF rises from 0 to 1",
       py::arg("k").none(false),
       py::arg("l").none(false),
       py::return_value_policy::move
@@ -911,7 +923,9 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       py::overload_cast<const double, const int, const int>(
         &cosmolike_interface::RF_w_ks_tomo_cpp
       ),
-      "Compute int from -infty to k of |dlnw_ks_dlnk| (fourier - limber)",
+      "Cumulative response RF(k) = S(k)/S(k_hi) (real - limber): S(K) "
+      "integrates |dlnw_ks_dlnk| over ln k up to K on the tabulated k "
+      "range, whose upper end is k_hi, so RF rises from 0 to 1",
       py::arg("k").none(false),
       py::arg("nt").none(false).noconvert(),
       py::arg("ni").none(false).noconvert(),
@@ -922,7 +936,9 @@ PYBIND11_MODULE(cosmolike_desy1xplanck_interface, m)
       py::overload_cast<const arma::Col<double>>(
         &cosmolike_interface::RF_w_ks_tomo_cpp
       ),
-      "Compute int from -infty to k of |dlnw_ks_dlnk| (fourier - limber)",
+      "Cumulative response RF(k) = S(k)/S(k_hi) (real - limber): S(K) "
+      "integrates |dlnw_ks_dlnk| over ln k up to K on the tabulated k "
+      "range, whose upper end is k_hi, so RF rises from 0 to 1",
       py::arg("k").none(false),
       py::return_value_policy::move
     );
