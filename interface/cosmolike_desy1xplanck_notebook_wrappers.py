@@ -642,9 +642,10 @@ def get_chi2(omegam=omegam, omegab=omegab, H0=H0, ns=ns, As_1e9=As_1e9,
 # In the Limber approximation a multipole l reads P(k) at k = (l + 1/2)/chi
 # along the line of sight, so a spectrum is an integral over ln k. The
 # response d ln C/d ln k is the fraction of C(l) contributed per unit
-# ln k, and the cumulative response R(k_max) integrates its absolute
-# value over ln k up to ln k_max: they show which wavenumbers (h/Mpc) a
-# multipole or an angle probes.
+# ln k, and the cumulative response RF(k_max) = S(k_max)/S(k_hi), with
+# S(K) the integral of its absolute value over ln k up to K on the
+# tabulated k range (upper end k_hi), rises from 0 to 1: they show
+# which wavenumbers (h/Mpc) a multipole or an angle probes.
 def dlnC_dlss_tomo_limber(k, ell, omegam=omegam, omegab=omegab, H0=H0,
                           ns=ns, As_1e9=As_1e9, w=w, w0pwa=w0pwa,
                           A1=None, A2=None, BTA=None,
@@ -732,7 +733,7 @@ def rf_C_ss_tomo_limber(k, ell, omegam=omegam, omegab=omegab, H0=H0,
                         CAMBAccuracyBoost=1.0, CLAccuracyBoost=1.0,
                         CLIntegrationAccuracy=0,
                         non_linear_emul=None, allsims=None):
-    """Cumulative response R(k_max) of C_ss.
+    """Cumulative response RF(k_max) of C_ss.
 
     Shear state as in C_ss_tomo_limber, then ci.rf_C_ss_tomo_limber.
 
@@ -766,7 +767,7 @@ def rf_xi_tomo_limber(k, ntheta=None, theta_min_arcmin=None,
                       k_per_logint=10, CAMBAccuracyBoost=1.0,
                       CLAccuracyBoost=1.0, CLIntegrationAccuracy=0,
                       non_linear_emul=None, allsims=None):
-    """Cumulative response R(k_max) of xi_pm.
+    """Cumulative response RF(k_max) of xi_pm.
 
     Shear state plus a re-binning, then ci.rf_xi_tomo_limber.
 
@@ -921,7 +922,7 @@ def rf_C_ks_tomo_limber(k, ell, omegam=omegam, omegab=omegab, H0=H0,
                         CAMBAccuracyBoost=1.0, CLAccuracyBoost=1.0,
                         CLIntegrationAccuracy=0,
                         non_linear_emul=None, allsims=None):
-    """Cumulative response R(k_max) of C_ks.
+    """Cumulative response RF(k_max) of C_ks.
 
     Shear state as in C_ks_tomo_limber, then ci.rf_C_ks_tomo_limber.
 
@@ -994,7 +995,7 @@ def rf_w_ks_tomo(k, ntheta=None, theta_min_arcmin=None,
                  k_per_logint=10, CAMBAccuracyBoost=1.0,
                  CLAccuracyBoost=1.0, CLIntegrationAccuracy=0,
                  non_linear_emul=None, allsims=None):
-    """Cumulative response R(k_max) of w_ks.
+    """Cumulative response RF(k_max) of w_ks.
 
     Shear state plus a re-binning, then ci.rf_w_ks_tomo.
 
