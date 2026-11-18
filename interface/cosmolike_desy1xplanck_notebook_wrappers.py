@@ -1027,6 +1027,334 @@ def rf_w_ks_tomo(k, ntheta=None, theta_min_arcmin=None,
 
 
 # ----------------------------------------------------------------------
+# Fisher forecasting (cosmic shear)
+# ----------------------------------------------------------------------
+# DRAFT comments (Fable rewrites the final text).
+#
+# One flat parameter vector of 17 entries drives the Fisher machinery:
+# the five sampled cosmological parameters (indices 0-4), the
+# dark-energy pair w0, wa (5-6), the two NLA numbers (7-8), the four
+# source photo-z shifts (9-12) and the four shear calibrations (13-16),
+# in this order. The names, LaTeX labels and priors below index into
+# the same vector. A Fisher matrix F approximates the inverse parameter
+# covariance from the derivatives of the data vector:
+# F_ab = (d dv/d p_a)^T C^-1 (d dv/d p_b).
+#
+# The dark-energy equation of state is w(a) = w0 + wa (1 - a). The
+# likelihood samples w (= w0) and w0pwa = w0 + wa; the Fisher vector
+# holds w0 and wa instead, so the figure of merit of the pair (w0, wa)
+# reads two entries of F^-1. The fiducial wa = 0 makes cnu.get_ddv take
+# absolute steps for it (its |p0| <= 1e-12 rule), relative steps for
+# every other entry.
+FISHER_PARAM_FID = np.array(
+    [As_1e9, ns, H0, omegab, omegam, w, w0pwa - w, DES_A1_1, DES_A1_2,
+     DES_DZ_S1, DES_DZ_S2, DES_DZ_S3, DES_DZ_S4,
+     DES_M1, DES_M2, DES_M3, DES_M4], dtype="float64")
+
+FISHER_PARAM_NAMES = [
+    "As_1e9", "ns", "H0", "omegab", "omegam", "w0", "wa",
+    "DES_A1_1", "DES_A1_2",
+    "DES_DZ_S1", "DES_DZ_S2", "DES_DZ_S3", "DES_DZ_S4",
+    "DES_M1", "DES_M2", "DES_M3", "DES_M4",
+]
+
+FISHER_PARAM_LABELS = [
+    r"10^{9} A_s", r"n_s", r"H_0", r"\Omega_b", r"\Omega_m",
+    r"w_0", r"w_a",
+    r"A_\mathrm{1IA,DES}^1", r"A_\mathrm{1IA,DES}^2",
+    r"\Delta z_\mathrm{s,DES}^1", r"\Delta z_\mathrm{s,DES}^2",
+    r"\Delta z_\mathrm{s,DES}^3", r"\Delta z_\mathrm{s,DES}^4",
+    r"m_\mathrm{DES}^1", r"m_\mathrm{DES}^2", r"m_\mathrm{DES}^3",
+    r"m_\mathrm{DES}^4",
+]
+
+# Indices of the dark-energy pair inside the Fisher vector, the pair of
+# the dark-energy figure of merit FoM(w0, wa)
+FISHER_W0_INDEX = 5
+FISHER_WA_INDEX = 6
+
+# Flat priors {index: (min, max)} of the parameters without a Gaussian
+# prior, the ranges of EXAMPLE_EVALUATE1.yaml and params_source.yaml;
+# they clip the getdist sample clouds of the Fisher contours. The yaml
+# bounds w0 to [-3, -0.01] and w0 + wa to [-5, -0.01]; the box of wa,
+# (-5 + 0.01, -0.01 + 3) = (-4.99, 2.99), is the range wa spans inside
+# that region (the diagonal wall w0 + wa <= -0.01 itself is not drawn).
+FISHER_FLAT_PRIORS = {
+    0: (0.5, 5),
+    1: (0.87, 1.07),
+    2: (55.0, 91.0),
+    3: (0.03, 0.07),
+    4: (0.1, 0.9),
+    5: (-3.0, -0.01),
+    6: (-4.99, 2.99),
+    7: (-5.0, 5.0),
+    8: (-5.0, 5.0),
+}
+
+# Gaussian priors {index: (mean, sigma)} of params_source.yaml: the
+# source photo-z shifts (indices 9-12, centered on 0) and the shear
+# calibrations (indices 13-16, centered on the fiducial m_i). Only the
+# widths enter F, as 1/sigma^2 on the diagonal.
+FISHER_GAUSSIAN_PRIORS = {
+    9: (0.0, 0.018),
+    10: (0.0, 0.015),
+    11: (0.0, 0.011),
+    12: (0.0, 0.017),
+    13: (DES_M1, 0.0091),
+    14: (DES_M2, 0.0078),
+    15: (DES_M3, 0.0076),
+    16: (DES_M4, 0.0076),
+}
+
+# getdist samples for the Fisher contours come from this random
+# generator, seeded with 0 and created once, at import: repeated plot
+# calls draw successive samples from one reproducible stream, and
+# re-importing the module restarts it
+_FISHER_RNG = np.random.default_rng(0)
+
+
+def fisher_fiducial_point():
+    """Return a fresh copy of the Fisher fiducial vector.
+
+    Returns a copy so a notebook can shift entries for a forecast
+    without editing the module's fiducial in place.
+
+    Returns:
+      1D float64 array of 17 entries in the FISHER_PARAM_NAMES order.
+    """
+    return FISHER_PARAM_FID.copy()
+
+
+def get_dv(param=None, AccuracyBoost=1.0):
+    """Return the masked cosmic-shear data vector at a flat parameter vector.
+
+    The Fisher derivatives evaluate this at shifted copies of the
+    fiducial vector, in the layout FISHER_PARAM_NAMES documents. The
+    probes in the vector are the ones init_cosmolike selected (the
+    cosmic-shear notebook selects "xi"); the clustering state is not set
+    here, so a probe set with clustering blocks reads whatever the
+    interface holds.
+
+    The CAMB settings are those of get_chi2: kmax = 7.5 (1/Mpc) and
+    k_per_logint = 10. AccuracyBoost reaches _set_state twice, as
+    AccuracyBoost and as CLAccuracyBoost, as in the roman_real and
+    lsst_y1 wrappers: CAMB receives 1 + (AccuracyBoost - 1)/3 and the
+    cosmolike boost is AccuracyBoost squared.
+
+    Arguments:
+      param = 1D float array in the FISHER_PARAM_NAMES layout, or None
+              for the fiducial vector; param[5] is w0 and param[6] is
+              wa, passed to CAMB as w = w0 and w0pwa = w0 + wa.
+      AccuracyBoost = the overall boost (see above).
+
+    Returns:
+      1D float64 array: the masked data vector (1,809 entries, zero
+      where the mask or the probe selection removes an entry).
+    """
+    if param is None:
+        param = FISHER_PARAM_FID
+    # IA_redshift_evolution = 3 reads the first two slots only (the
+    # amplitude and its redshift power-law index)
+    A1 = [param[7], param[8], 0, 0]
+    shear_photoz_bias = [param[9], param[10], param[11], param[12]]
+    M = [param[13], param[14], param[15], param[16]]
+    w0 = param[5]
+    w0pwa_value = param[5] + param[6]
+    # positional arguments of _set_state: omegam, omegab, H0, ns, As_1e9
+    # (param[4] down to param[0]), w and w0pwa, AccuracyBoost,
+    # kmax = 7.5 [1/Mpc], k_per_logint = 10, CAMBAccuracyBoost = 1,
+    # CLAccuracyBoost = AccuracyBoost, CLIntegrationAccuracy = 0 and the
+    # configured non_linear_emul
+    _set_state(param[4], param[3], param[2], param[1], param[0],
+               w0, w0pwa_value,
+               AccuracyBoost, 7.5, 10, 1.0,
+               AccuracyBoost, 0, _CONFIG["non_linear_emul"],
+               M=M, shear_photoz_bias=shear_photoz_bias,
+               A1=A1, A2=A2_FID, BTA=BTA_FID)
+    return np.array(ci.compute_data_vector_masked(), dtype=np.float64)
+
+
+def get_ddv(index=0, h=0.02, CV=None, AccuracyBoost=1.0):
+    """Return the derivative of get_dv along one parameter (cnu.get_ddv).
+
+    Five-point finite-difference stencil: four get_dv evaluations at
+    relative steps +-h and +-2h around CV (absolute steps for a
+    fiducial of zero, such as wa).
+
+    Arguments:
+      index = position of the parameter in the FISHER_PARAM_NAMES order.
+      h     = relative step (0.02 = 2%; absolute when the fiducial is 0).
+      CV    = fiducial vector, or None for FISHER_PARAM_FID.
+      AccuracyBoost = forwarded to get_dv.
+
+    Returns:
+      1D array: d(data vector)/d(parameter), the data-vector length.
+    """
+    if CV is None:
+        CV = FISHER_PARAM_FID
+    return cnu.get_ddv(get_dv, index=index, h=h, CV=CV,
+                       AccuracyBoost=AccuracyBoost)
+
+
+def get_Fisher(CV=None, h=0.02, AccuracyBoost=3.1, ddv=None,
+               priors=None, invcov=None):
+    """Return the Fisher matrix from the 5-point-stencil derivatives.
+
+    Thin binding of cnu.get_Fisher to this project's data vector,
+    priors, and masked inverse covariance (fetched from the interface
+    when not passed, so init_cosmolike with data must have run).
+    F = D^T C^-1 D, with one derivative column of D per parameter, plus
+    the Gaussian priors on the diagonal.
+
+    Arguments:
+      CV    = fiducial vector, or None for FISHER_PARAM_FID.
+      h     = relative step of the derivatives.
+      AccuracyBoost = forwarded to every data-vector evaluation (see
+              get_dv: the cosmolike boost becomes its square).
+      ddv   = derivative function, or None for get_ddv.
+      priors = {index: (mean, sigma)}, or None for
+              FISHER_GAUSSIAN_PRIORS.
+      invcov = inverse covariance (n_data, n_data), or None for the
+              masked one loaded by init_cosmolike.
+
+    Returns:
+      2D array (len(CV), len(CV)): (17, 17), in the FISHER_PARAM_NAMES
+      order, for the default CV.
+    """
+    if CV is None:
+        CV = FISHER_PARAM_FID
+    if ddv is None:
+        ddv = get_ddv
+    if priors is None:
+        priors = FISHER_GAUSSIAN_PRIORS
+    if invcov is None:
+        invcov = ci.get_inv_cov_masked()
+    return cnu.get_Fisher(ddv, CV=CV, h=h, AccuracyBoost=AccuracyBoost,
+                          priors=priors, invcov=invcov)
+
+
+def get_stencil_noise(index=0, h=0.02, CV=None, AccuracyBoost=1.0,
+                      invcov=None):
+    """Measure the noise of one derivative column (cnu.get_stencil_noise).
+
+    Five get_dv evaluations at p0 + k eps, k = -2..2, with the step
+    convention of get_ddv. The fourth difference of the five vectors
+    removes the smooth model and leaves the point-to-point numerical
+    noise; whitened by the inverse covariance it gives the noise sigma
+    of one evaluation, and a = (130/144) (sigma/eps)^2 is the average
+    spurious addition that noise makes to F[index, index]
+    (cnu.get_stencil_noise explains the estimate).
+
+    Arguments:
+      index = position of the parameter in the FISHER_PARAM_NAMES order.
+      h     = relative step (absolute when the fiducial is 0).
+      CV    = fiducial vector, or None for FISHER_PARAM_FID.
+      AccuracyBoost = forwarded to get_dv.
+      invcov = inverse covariance (n_data, n_data), or None for the
+              masked one loaded by init_cosmolike.
+
+    Returns:
+      dict with "sigma", "eps", "a" (floats) and "ddv" (the five-point
+      derivative, 1D array), as cnu.get_stencil_noise documents.
+    """
+    if CV is None:
+        CV = FISHER_PARAM_FID
+    if invcov is None:
+        invcov = ci.get_inv_cov_masked()
+    return cnu.get_stencil_noise(get_dv, index=index, h=h, CV=CV,
+                                 AccuracyBoost=AccuracyBoost,
+                                 invcov=invcov)
+
+
+def get_ddv_dkit(index=0, CV=None, AccuracyBoost=1.0, min_samples=7,
+                 fallback_mode="poly_at_floor"):
+    """Return the derivative of get_dv via derivkit (cnu.get_ddv_dkit).
+
+    derivkit (an optional package) fits polynomials through adaptively
+    chosen get_dv evaluations and differentiates the fit, which is less
+    sensitive to numerical noise than a fixed-step stencil.
+
+    Arguments:
+      index = position of the parameter in the FISHER_PARAM_NAMES order.
+      CV    = fiducial vector, or None for FISHER_PARAM_FID.
+      AccuracyBoost = forwarded to get_dv.
+      min_samples, fallback_mode = derivkit settings (minimum number of
+              fitted points; the strategy when the fit is rejected).
+
+    Returns:
+      1D array: d(data vector)/d(parameter).
+    """
+    if CV is None:
+        CV = FISHER_PARAM_FID
+    return cnu.get_ddv_dkit(get_dv, index=index, CV=CV,
+                            AccuracyBoost=AccuracyBoost,
+                            min_samples=min_samples,
+                            fallback_mode=fallback_mode)
+
+
+def get_Fisher2(CV=None, AccuracyBoost=3.0, priors=None, invcov=None,
+                min_samples=7, fallback_mode="poly_at_floor"):
+    """Return the Fisher matrix from the derivkit derivatives (cnu.get_Fisher2).
+
+    Arguments:
+      as get_Fisher, with min_samples and fallback_mode forwarded to
+      get_ddv_dkit.
+
+    Returns:
+      2D array (len(CV), len(CV)): (17, 17), in the FISHER_PARAM_NAMES
+      order, for the default CV.
+    """
+    if CV is None:
+        CV = FISHER_PARAM_FID
+    if priors is None:
+        priors = FISHER_GAUSSIAN_PRIORS
+    if invcov is None:
+        invcov = ci.get_inv_cov_masked()
+    return cnu.get_Fisher2(get_dv, CV=CV, AccuracyBoost=AccuracyBoost,
+                           priors=priors, invcov=invcov,
+                           min_samples=min_samples,
+                           fallback_mode=fallback_mode)
+
+
+def plot_Fisher(F, mu, F2=None, root=None, select=None, labels=None,
+                names=None, filled=True, flat_priors=None,
+                chain_names=None):
+    """Draw the Fisher contour triangle via getdist (cnu.plot_Fisher).
+
+    Each Fisher matrix becomes a cloud of samples from the Gaussian with
+    mean mu and covariance F^-1 (drawn with _FISHER_RNG), cut to the
+    flat-prior boxes and plotted by getdist; an MCMC chain named by root
+    can be overlaid.
+
+    Arguments:
+      F, F2 = Fisher matrix, or a list of them (F2 drawn after F).
+      mu    = fiducial vector (the Gaussian mean), full length.
+      root  = getdist chain root to overlay, or None.
+      select = parameter indices to show, or None for all.
+      labels, names = LaTeX labels and getdist names, or None for
+              FISHER_PARAM_LABELS and FISHER_PARAM_NAMES.
+      filled = True fills the 2D contours.
+      flat_priors = {position in select: (min, max)}, or None for
+              FISHER_FLAT_PRIORS, whose keys match the full indices only
+              when select is None or keeps parameters 0 to 8 first.
+      chain_names = legend labels, one per drawn set, or None.
+
+    Returns:
+      the getdist subplot plotter holding the figure; nothing is saved.
+    """
+    if labels is None:
+        labels = FISHER_PARAM_LABELS
+    if names is None:
+        names = FISHER_PARAM_NAMES
+    if flat_priors is None:
+        flat_priors = FISHER_FLAT_PRIORS
+    return cnu.plot_Fisher(F, mu, F2=F2, root=root, select=select,
+                           labels=labels, names=names, filled=filled,
+                           flat_priors=flat_priors,
+                           chain_names=chain_names, rng=_FISHER_RNG)
+
+
+# ----------------------------------------------------------------------
 # Baryonic feedback via the bfmt theory block
 # ----------------------------------------------------------------------
 def get_baryon_suppression(theory_options, point, z_grid, log10k_grid):
