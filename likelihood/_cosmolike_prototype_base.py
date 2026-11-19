@@ -385,6 +385,11 @@ class _cosmolike_prototype_base(DataSetLikelihood):
     # init_nonlimber_accuracy_boost in cosmolike).
     ci.init_nonlimber_accuracy_boost(
         nonlimber_boost=float(getattr(self, "nonlimber_accuracyboost", 1.0)))
+    # The radial endpoint is independent of the node count. A missing
+    # option uses the core default, z = 4; the setter rejects smaller
+    # or non-finite values and invalidates projections after a change.
+    ci.init_nonlimber_zmax(
+        zmax=float(getattr(self, "nonlimber_zmax", 4.0)))
 
     # The Limber approximation evaluates P(k, z) only at k = (l + 1/2)/chi,
     # which fails at low multipoles for narrow redshift kernels. For
