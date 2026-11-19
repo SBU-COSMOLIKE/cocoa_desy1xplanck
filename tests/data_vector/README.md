@@ -353,11 +353,27 @@ in this project galaxy-galaxy lensing defaults to Limber
 evaluates the frozen 6x2pt fiducial with Limber, non-Limber, and
 Limber again, and prints the contribution of each lens-source pair.
 
-Measured on 2026-10-01:
+Measured on 2026-10-01 (the test pins $\Delta\chi^2 = 0.003865$
+to 5%):
 
 - $\Delta\chi^2 = 0.0039$ for the 6x2pt data vector, far below the
   survey's statistical precision; the largest pair, (3,2), contributes
   $\Delta\chi^2 = 0.0019$.
+
+Across the examples' prior box ($\Omega_m$ in $[0.2, 0.5]$,
+$w_0 + w_a$ in $[-3, -0.01]$; 25 drawn and 5 held models, seed base
+137) with the examples' amplitude cut, which keeps the ratio
+$(A_s/A_s^{\rm fid})(b_i/b_i^{\rm fid})^2 \le 8$ over the sampled
+lens bins, the Limber choice holds at every held model (maximum
+$\Delta\chi^2 = 0.0788$ at the production cap 150) but not at every
+drawn one: 4 of 25 drawn models are at or above 0.2, with a maximum of
+$\Delta\chi^2 = 6.75$ at $10^9 A_s = 3.81$ with the NLA amplitude
+`DES_A1_1` at 4.97 and the redshift power `DES_A1_2` at $-4.98$. These
+models sit at the edges of the $[-5, 5]$ IA priors and are accepted:
+the galaxy-shear intrinsic-alignment (GI) term carries a Limber error
+2 to 3 times the clustering one, because the intrinsic shear follows
+the tidal field, and it grows with the IA amplitudes while the
+covariance stays fiducial.
 
 ### The non-Limber galaxy clustering check (`test_nonlimber_gg.py`) <a name="nonlimber_gg"></a>
 
@@ -369,9 +385,9 @@ contribution of each lens bin.
 
 Measured on 2026-10-01:
 
-- $\Delta\chi^2 = 6.61$ for the 6x2pt data vector, against
-  $\Delta\chi^2 = 0.0039$ for the same comparison in galaxy-galaxy
-  lensing.
+- $\Delta\chi^2 = 6.58$ for the 6x2pt data vector (the test pins
+  6.578 to 5%), against $\Delta\chi^2 = 0.0039$ for the same
+  comparison in galaxy-galaxy lensing.
 - Lens bins 3, 2, 1, 0 contribute $\Delta\chi^2$ = 4.43, 2.02, 0.18,
   0.07 (each bin's block alone).
 
@@ -401,6 +417,20 @@ divides the tolerances in use by $1 + 2\,(\mathrm{boost} - 1)$. The
 Fourier data vectors (`C_gg_tomo_ells`, `C_gs_tomo_ells`) never take
 the exit.
 
+This project keeps the early exit at the core defaults in production:
+at the fiducial it moves the vector by $\delta^T C^{-1} \delta$ =
+1.91e-4, far below the 0.2 band. Fisher derivatives and stencil-noise
+measurements run with both tolerances at 0, because the switch
+multipole puts steps into finite-difference derivatives (the $w_0$
+column below drops from 1.58e-3 to 2.77e-4); the derivative helpers of
+`cosmolike_notebook_utils/fisher.py` switch the exit off for each
+evaluation and restore the yaml values afterwards.
+
+Production also keeps the core default cap `lmax_nonlimber: 150`:
+across the examples' prior box with the amplitude cut, cap 150 agrees
+with cap 200 at every drawn and held model (drawn maximum
+$\Delta\chi^2 = 0.132$, in $w(\theta)$; held maximum 0.0043).
+
 `test_nonlimber_tolerance.py` builds the `example2` (6x2pt, NLA) model
 once and runs the shared checks of `nonlimber_tolerance_suite`
 (`cosmolike_core/cocoa_testing_suites.py`): the frozen $\chi^2$, the
@@ -408,10 +438,11 @@ documented defaults and a bit-for-bit tolerance round trip (tests 1-2);
 tolerance 0 moves only $\gamma_t$ and $w(\theta)$, and by a bounded
 $\delta^T C^{-1} \delta$ (test 3); the stencil noise of the $w_0$, $w_a$
 and `DES_B1_6` derivative columns with and without the early exit (test
-4); the FKEM hand-off at the caps `lmax_nonlimber` = 150, 200 and 300
+4); the FKEM hand-off at the caps `lmax_nonlimber` = 150 and 200
 (test 5: a step at the hand-off would raise the noise at the lower cap,
 where the FKEM-Limber difference is largest); the low-rank (SVD) engine
-next to FKEM at caps 150 and 300 (test 6); that a negative or nonfinite
+next to FKEM at caps 150 and 200, with the galaxy-shear cap matched
+between the engines in each pair (test 6); that a negative or nonfinite
 tolerance is refused (test 7); the accuracy-boost scaling of the
 tolerances in use (test 8); and that the production state returns bit
 for bit (test 9). The noise is $\sigma$ of `get_stencil_noise`
@@ -423,22 +454,21 @@ Measured on 2026-11-18 (OMP 4), $\sigma$ in $\sqrt{\chi^2}$ units:
 
 | stencil noise $\sigma$ | $w_0$ | $w_a$ | `DES_B1_6` |
 |---|---|---|---|
-| default tolerances, cap 150 | 1.58e-3 | 8.5e-5 | 6e-14 |
+| default tolerances, cap 150 (production) | 1.58e-3 | 8.5e-5 | 6e-14 |
 | tolerance 0, cap 150 | 2.77e-4 | 8.55e-5 | 5e-14 |
 | tolerance 0, cap 200 | 2.81e-4 | 8.55e-5 | - |
-| tolerance 0, cap 300 | 2.89e-4 | 8.13e-5 | - |
 
 $\gamma_t$ is Limber here (`adopt_limber_gs: 1`), so only the
 clustering tolerance acts; test 3 also asserts that the CMB-cross
 blocks of the 6x2pt vector stay bitwise. Turning the exit off moves
 the fiducial vector by $\delta^T C^{-1} \delta$ = 1.91e-4
-($w(\theta)$ only; test 3 bound 5e-4), and the vector moves by
-3.8e-3 between the caps 150 and 300. The largest
+($w(\theta)$ only; test 3 bound 5e-4). The largest
 $|C_\ell^{\rm FKEM}/C_\ell^{\rm Limber} - 1|$ over the lens bins
-is 2.7e-3 / 1.1e-3 / 6.2e-4 at $\ell$ = 149 / 199 / 299. Test 4
-bounds every tolerance-0 column by 2e-3; test 5 allows cap 150 at
-most 1.15 times cap 300; the SVD/FKEM noise ratio is at most 1.19
-(margin 0.4).
+is 2.7e-3 / 1.1e-3 at $\ell$ = 149 / 199. Test 4 bounds every
+tolerance-0 column by 2e-3; test 5 allows cap 150 at most 1.1 times
+cap 200; test 6 allows the SVD noise at most 1.2 times FKEM with the
+galaxy-shear cap matched (measured in $w_0$: at most 1.03 times FKEM
+at cap 150 and 1.09 times at cap 200).
 
 Run it alone with
 
