@@ -1,0 +1,2339 @@
+{
+  "date": "2026-11-19",
+  "scope": "Update numerical references at the chosen project endpoint; also record cumulative drift since their previous generation.",
+  "previous_reference_project_commit": "89576ac84f52822fcf4625b496752f1cad04ab14",
+  "previous_reference_commit_description": "Refreeze after the growth factor on the dense z grid\n\ngenerate_frozen_reference.py --overwrite, then --baryons, on cosmolike_core\na880d36 (Vivian's go-ahead, 2026-09-30). The frozen state now carries:\n- the growth factor on the dense 1D z grid (the likelihood change of this\n  repository's previous growth commit), which moved the references by\n  <= 5.5e-4 in chi2 across the projects;\n- the likelihood yaml keys added since the last freeze (include_HOD_GX,\n  the halo-model IA key) in the expanded frozen configurations;\n- the core fixes since then (lensing efficiencies on the shifted n(z)\n  support, the HOD a grid) and the small drift of the old code against\n  the previous references, which is no longer visible in the tests (it\n  stays recoverable from this history).\n\nThe data folder equals the previous frozen copy; no data file changed.\n\nChecked after the refreeze: test_example2.py (4 passed). The\nfull suite was NOT re-run after this refreeze.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+  "project_commit_before_refreeze": "e6ed8b630dfb031038d669423ae2048e960a5af0",
+  "endpoint_feature_core_commit": "f8a80548d3a0e26caa861cb6dec51022d8be03fb",
+  "installed_binary_sha256": "035975f78095b760b6ca2e0fba4de09194d33ec1bee8f7947cbd60a95e3baef0",
+  "source_identity_note": "The feature commit identifies the endpoint implementation. The binary hash identifies the exact executable used in these tests; later unrelated source commits are not a claim of a newer compiled binary.",
+  "nonlimber_zmax": 4.0,
+  "omp_threads": 6,
+  "blas_threads": 1,
+  "configuration_changes": [
+    {
+      "example": "example1",
+      "changes": [
+        [
+          [
+            "likelihood",
+            "desy1xplanck.cosmic_shear",
+            "lmax_nonlimber"
+          ],
+          null,
+          150
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.cosmic_shear",
+            "nonlimber_accuracyboost"
+          ],
+          null,
+          1.0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.cosmic_shear",
+            "nonlimber_tolerance_gg"
+          ],
+          null,
+          0.002
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.cosmic_shear",
+            "nonlimber_tolerance_gs"
+          ],
+          null,
+          0.01
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.cosmic_shear",
+            "nonlimber_zmax"
+          ],
+          null,
+          4.0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.cosmic_shear",
+            "photoz_histogram_akima"
+          ],
+          null,
+          0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.cosmic_shear",
+            "photoz_histogram_akima_factor"
+          ],
+          null,
+          3
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.cosmic_shear",
+            "pk_z_refinement"
+          ],
+          null,
+          1
+        ]
+      ],
+      "errors": [],
+      "live_parameter_changes_not_adopted": [
+        [
+          [
+            "DES_BARYON_Q1",
+            "prior"
+          ],
+          {
+            "min": 0.0,
+            "max": 7.0
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "proposal"
+          ],
+          0.5,
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 2.0,
+            "scale": 0.5
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "value"
+          ],
+          null,
+          0.0
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "prior"
+          ],
+          {
+            "min": -4.0,
+            "max": 4.0
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "proposal"
+          ],
+          0.5,
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 2.0,
+            "scale": 0.5
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "value"
+          ],
+          null,
+          0.0
+        ],
+        [
+          [
+            "omegam",
+            "prior",
+            "max"
+          ],
+          0.9,
+          0.5
+        ],
+        [
+          [
+            "omegam",
+            "prior",
+            "min"
+          ],
+          0.1,
+          0.2
+        ],
+        [
+          [
+            "w0pwa",
+            "prior",
+            "min"
+          ],
+          -5,
+          -3
+        ]
+      ],
+      "live_prior_changes_not_adopted": [],
+      "live_fixed_params_changes_not_adopted": []
+    },
+    {
+      "example": "example2",
+      "changes": [
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "fixed_params"
+          ],
+          null,
+          null
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "lmax_nonlimber"
+          ],
+          null,
+          150
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "nonlimber_accuracyboost"
+          ],
+          null,
+          1.0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "nonlimber_lowrank_gg"
+          ],
+          null,
+          0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "nonlimber_lowrank_lmax"
+          ],
+          null,
+          150
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "nonlimber_lowrank_rank"
+          ],
+          null,
+          5
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "nonlimber_tolerance_gg"
+          ],
+          null,
+          0.002
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "nonlimber_tolerance_gs"
+          ],
+          null,
+          0.01
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "nonlimber_zmax"
+          ],
+          null,
+          4.0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "photoz_histogram_akima"
+          ],
+          null,
+          0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "photoz_histogram_akima_factor"
+          ],
+          null,
+          3
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_6x2pt",
+            "pk_z_refinement"
+          ],
+          null,
+          1
+        ]
+      ],
+      "errors": [],
+      "live_parameter_changes_not_adopted": [
+        [
+          [
+            "DES_B1_5",
+            "prior"
+          ],
+          {
+            "min": 0.8,
+            "max": 3
+          },
+          null
+        ],
+        [
+          [
+            "DES_B1_5",
+            "proposal"
+          ],
+          0.1,
+          null
+        ],
+        [
+          [
+            "DES_B1_5",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 2.0,
+            "scale": 0.1
+          },
+          null
+        ],
+        [
+          [
+            "DES_B1_5",
+            "value"
+          ],
+          null,
+          2.0
+        ],
+        [
+          [
+            "DES_B1_6",
+            "prior"
+          ],
+          {
+            "min": 0.8,
+            "max": 3
+          },
+          null
+        ],
+        [
+          [
+            "DES_B1_6",
+            "proposal"
+          ],
+          0.1,
+          null
+        ],
+        [
+          [
+            "DES_B1_6",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 2.2,
+            "scale": 0.1
+          },
+          null
+        ],
+        [
+          [
+            "DES_B1_6",
+            "value"
+          ],
+          null,
+          2.2
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "prior"
+          ],
+          {
+            "min": 0.0,
+            "max": 7.0
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "proposal"
+          ],
+          0.5,
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 2.0,
+            "scale": 0.5
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "value"
+          ],
+          null,
+          0.0
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "prior"
+          ],
+          {
+            "min": -4.0,
+            "max": 4.0
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "proposal"
+          ],
+          0.5,
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 2.0,
+            "scale": 0.5
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "value"
+          ],
+          null,
+          0.0
+        ],
+        [
+          [
+            "DES_DZ2_L5",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 1.08,
+            "scale": 0.067
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L5",
+            "proposal"
+          ],
+          0.0335,
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L5",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 1.08,
+            "scale": 0.067
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L5",
+            "value"
+          ],
+          null,
+          1.08
+        ],
+        [
+          [
+            "DES_DZ2_L6",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.845,
+            "scale": 0.073
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L6",
+            "proposal"
+          ],
+          0.0365,
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L6",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.845,
+            "scale": 0.073
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L6",
+            "value"
+          ],
+          null,
+          0.845
+        ],
+        [
+          [
+            "DES_DZ_L5",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.002,
+            "scale": 0.007
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ_L5",
+            "proposal"
+          ],
+          0.0035,
+          null
+        ],
+        [
+          [
+            "DES_DZ_L5",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.002,
+            "scale": 0.007
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ_L5",
+            "value"
+          ],
+          null,
+          0.002
+        ],
+        [
+          [
+            "DES_DZ_L6",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.002,
+            "scale": 0.008
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ_L6",
+            "proposal"
+          ],
+          0.004,
+          null
+        ],
+        [
+          [
+            "DES_DZ_L6",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.002,
+            "scale": 0.008
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ_L6",
+            "value"
+          ],
+          null,
+          0.002
+        ],
+        [
+          [
+            "DES_PM5",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.0,
+            "scale": 25
+          },
+          null
+        ],
+        [
+          [
+            "DES_PM5",
+            "proposal"
+          ],
+          5,
+          null
+        ],
+        [
+          [
+            "DES_PM5",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.0,
+            "scale": 25
+          },
+          null
+        ],
+        [
+          [
+            "DES_PM5",
+            "value"
+          ],
+          null,
+          0.0
+        ],
+        [
+          [
+            "DES_PM6",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.0,
+            "scale": 25
+          },
+          null
+        ],
+        [
+          [
+            "DES_PM6",
+            "proposal"
+          ],
+          5,
+          null
+        ],
+        [
+          [
+            "DES_PM6",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.0,
+            "scale": 25
+          },
+          null
+        ],
+        [
+          [
+            "DES_PM6",
+            "value"
+          ],
+          null,
+          0.0
+        ],
+        [
+          [
+            "omegam",
+            "prior",
+            "max"
+          ],
+          0.9,
+          0.5
+        ],
+        [
+          [
+            "omegam",
+            "prior",
+            "min"
+          ],
+          0.1,
+          0.2
+        ],
+        [
+          [
+            "w0pwa",
+            "prior",
+            "min"
+          ],
+          -5,
+          -3
+        ]
+      ],
+      "live_prior_changes_not_adopted": [
+        [
+          [],
+          null,
+          {
+            "amplitude_cut": "lambda As_1e9, DES_B1_1, DES_B1_2, DES_B1_3, DES_B1_4: 0.0 if (As_1e9/2.1)*max((DES_B1_1/1.5)**2, (DES_B1_2/1.8)**2, (DES_B1_3/1.8)**2, (DES_B1_4/1.9)**2) <= 8 else -np.inf"
+          }
+        ]
+      ],
+      "live_fixed_params_changes_not_adopted": [
+        [
+          [],
+          null,
+          {
+            "DES_DZ_L5": {
+              "value": 0.002
+            },
+            "DES_DZ_L6": {
+              "value": 0.002
+            },
+            "DES_B1_5": {
+              "value": 2.0
+            },
+            "DES_B1_6": {
+              "value": 2.2
+            },
+            "DES_DZ2_L5": {
+              "value": 1.08
+            },
+            "DES_DZ2_L6": {
+              "value": 0.845
+            },
+            "DES_PM5": {
+              "value": 0.0
+            },
+            "DES_PM6": {
+              "value": 0.0
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "example": "example2_2x2pt",
+      "changes": [
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "fixed_params"
+          ],
+          null,
+          null
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "lmax_nonlimber"
+          ],
+          null,
+          150
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "nonlimber_accuracyboost"
+          ],
+          null,
+          1.0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "nonlimber_lowrank_gg"
+          ],
+          null,
+          0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "nonlimber_lowrank_lmax"
+          ],
+          null,
+          150
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "nonlimber_lowrank_rank"
+          ],
+          null,
+          5
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "nonlimber_tolerance_gg"
+          ],
+          null,
+          0.002
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "nonlimber_tolerance_gs"
+          ],
+          null,
+          0.01
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "nonlimber_zmax"
+          ],
+          null,
+          4.0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "photoz_histogram_akima"
+          ],
+          null,
+          0
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "photoz_histogram_akima_factor"
+          ],
+          null,
+          3
+        ],
+        [
+          [
+            "likelihood",
+            "desy1xplanck.combo_2x2pt",
+            "pk_z_refinement"
+          ],
+          null,
+          1
+        ]
+      ],
+      "errors": [],
+      "live_parameter_changes_not_adopted": [
+        [
+          [
+            "DES_B1_5",
+            "prior"
+          ],
+          {
+            "min": 0.8,
+            "max": 3
+          },
+          null
+        ],
+        [
+          [
+            "DES_B1_5",
+            "proposal"
+          ],
+          0.1,
+          null
+        ],
+        [
+          [
+            "DES_B1_5",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 2.0,
+            "scale": 0.1
+          },
+          null
+        ],
+        [
+          [
+            "DES_B1_5",
+            "value"
+          ],
+          null,
+          2.0
+        ],
+        [
+          [
+            "DES_B1_6",
+            "prior"
+          ],
+          {
+            "min": 0.8,
+            "max": 3
+          },
+          null
+        ],
+        [
+          [
+            "DES_B1_6",
+            "proposal"
+          ],
+          0.1,
+          null
+        ],
+        [
+          [
+            "DES_B1_6",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 2.2,
+            "scale": 0.1
+          },
+          null
+        ],
+        [
+          [
+            "DES_B1_6",
+            "value"
+          ],
+          null,
+          2.2
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "prior"
+          ],
+          {
+            "min": 0.0,
+            "max": 7.0
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "proposal"
+          ],
+          0.5,
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 2.0,
+            "scale": 0.5
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q1",
+            "value"
+          ],
+          null,
+          0.0
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "prior"
+          ],
+          {
+            "min": -4.0,
+            "max": 4.0
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "proposal"
+          ],
+          0.5,
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 2.0,
+            "scale": 0.5
+          },
+          null
+        ],
+        [
+          [
+            "DES_BARYON_Q2",
+            "value"
+          ],
+          null,
+          0.0
+        ],
+        [
+          [
+            "DES_DZ2_L5",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 1.08,
+            "scale": 0.067
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L5",
+            "proposal"
+          ],
+          0.0335,
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L5",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 1.08,
+            "scale": 0.067
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L5",
+            "value"
+          ],
+          null,
+          1.08
+        ],
+        [
+          [
+            "DES_DZ2_L6",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.845,
+            "scale": 0.073
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L6",
+            "proposal"
+          ],
+          0.0365,
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L6",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.845,
+            "scale": 0.073
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ2_L6",
+            "value"
+          ],
+          null,
+          0.845
+        ],
+        [
+          [
+            "DES_DZ_L5",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.002,
+            "scale": 0.007
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ_L5",
+            "proposal"
+          ],
+          0.0035,
+          null
+        ],
+        [
+          [
+            "DES_DZ_L5",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.002,
+            "scale": 0.007
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ_L5",
+            "value"
+          ],
+          null,
+          0.002
+        ],
+        [
+          [
+            "DES_DZ_L6",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.002,
+            "scale": 0.008
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ_L6",
+            "proposal"
+          ],
+          0.004,
+          null
+        ],
+        [
+          [
+            "DES_DZ_L6",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.002,
+            "scale": 0.008
+          },
+          null
+        ],
+        [
+          [
+            "DES_DZ_L6",
+            "value"
+          ],
+          null,
+          0.002
+        ],
+        [
+          [
+            "DES_PM5",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.0,
+            "scale": 25
+          },
+          null
+        ],
+        [
+          [
+            "DES_PM5",
+            "proposal"
+          ],
+          5,
+          null
+        ],
+        [
+          [
+            "DES_PM5",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.0,
+            "scale": 25
+          },
+          null
+        ],
+        [
+          [
+            "DES_PM5",
+            "value"
+          ],
+          null,
+          0.0
+        ],
+        [
+          [
+            "DES_PM6",
+            "prior"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.0,
+            "scale": 25
+          },
+          null
+        ],
+        [
+          [
+            "DES_PM6",
+            "proposal"
+          ],
+          5,
+          null
+        ],
+        [
+          [
+            "DES_PM6",
+            "ref"
+          ],
+          {
+            "dist": "norm",
+            "loc": 0.0,
+            "scale": 25
+          },
+          null
+        ],
+        [
+          [
+            "DES_PM6",
+            "value"
+          ],
+          null,
+          0.0
+        ],
+        [
+          [
+            "omegam",
+            "prior",
+            "max"
+          ],
+          0.9,
+          0.5
+        ],
+        [
+          [
+            "omegam",
+            "prior",
+            "min"
+          ],
+          0.1,
+          0.2
+        ],
+        [
+          [
+            "w0pwa",
+            "prior",
+            "min"
+          ],
+          -5,
+          -3
+        ]
+      ],
+      "live_prior_changes_not_adopted": [
+        [
+          [],
+          null,
+          {
+            "amplitude_cut": "lambda As_1e9, DES_B1_1, DES_B1_2, DES_B1_3, DES_B1_4: 0.0 if (As_1e9/2.1)*max((DES_B1_1/1.5)**2, (DES_B1_2/1.8)**2, (DES_B1_3/1.8)**2, (DES_B1_4/1.9)**2) <= 8 else -np.inf"
+          }
+        ]
+      ],
+      "live_fixed_params_changes_not_adopted": [
+        [
+          [],
+          null,
+          {
+            "DES_DZ_L5": {
+              "value": 0.002
+            },
+            "DES_DZ_L6": {
+              "value": 0.002
+            },
+            "DES_B1_5": {
+              "value": 2.0
+            },
+            "DES_B1_6": {
+              "value": 2.2
+            },
+            "DES_DZ2_L5": {
+              "value": 1.08
+            },
+            "DES_DZ2_L6": {
+              "value": 0.845
+            },
+            "DES_PM5": {
+              "value": 0.0
+            },
+            "DES_PM6": {
+              "value": 0.0
+            }
+          }
+        ]
+      ]
+    }
+  ],
+  "endpoint_only_comparisons": [
+    {
+      "project": "desy1xplanck",
+      "example": "example1",
+      "tatt": false,
+      "all_limber": false,
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed": 0
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed": 0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed": 0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed": 0
+        }
+      ],
+      "endpoint": 4.0,
+      "difference_chi2": 0.0,
+      "binary_sha256": "035975f78095b760b6ca2e0fba4de09194d33ec1bee8f7947cbd60a95e3baef0",
+      "round_trip_exact": true
+    },
+    {
+      "project": "desy1xplanck",
+      "example": "example1",
+      "tatt": true,
+      "all_limber": false,
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed": 0
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed": 0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed": 0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed": 0
+        }
+      ],
+      "endpoint": 4.0,
+      "difference_chi2": 0.0,
+      "binary_sha256": "035975f78095b760b6ca2e0fba4de09194d33ec1bee8f7947cbd60a95e3baef0",
+      "round_trip_exact": true
+    },
+    {
+      "project": "desy1xplanck",
+      "example": "example2_2x2pt",
+      "tatt": false,
+      "all_limber": false,
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed": 0
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed": 0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed": 0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed": 0
+        }
+      ],
+      "endpoint": 4.0,
+      "difference_chi2": 0.0,
+      "binary_sha256": "035975f78095b760b6ca2e0fba4de09194d33ec1bee8f7947cbd60a95e3baef0",
+      "round_trip_exact": true
+    },
+    {
+      "project": "desy1xplanck",
+      "example": "example2_2x2pt",
+      "tatt": true,
+      "all_limber": false,
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed": 0
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed": 0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed": 0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed": 0
+        }
+      ],
+      "endpoint": 4.0,
+      "difference_chi2": 0.0,
+      "binary_sha256": "035975f78095b760b6ca2e0fba4de09194d33ec1bee8f7947cbd60a95e3baef0",
+      "round_trip_exact": true
+    },
+    {
+      "project": "desy1xplanck",
+      "example": "example2",
+      "tatt": false,
+      "all_limber": false,
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed": 0
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed": 0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed": 0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed": 0
+        }
+      ],
+      "endpoint": 4.0,
+      "difference_chi2": 0.0,
+      "binary_sha256": "035975f78095b760b6ca2e0fba4de09194d33ec1bee8f7947cbd60a95e3baef0",
+      "round_trip_exact": true
+    },
+    {
+      "project": "desy1xplanck",
+      "example": "example2",
+      "tatt": false,
+      "all_limber": true,
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed": 0
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed": 0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed": 0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed": 0
+        }
+      ],
+      "endpoint": 4.0,
+      "difference_chi2": 0.0,
+      "binary_sha256": "035975f78095b760b6ca2e0fba4de09194d33ec1bee8f7947cbd60a95e3baef0",
+      "round_trip_exact": true
+    },
+    {
+      "project": "desy1xplanck",
+      "example": "example2",
+      "tatt": true,
+      "all_limber": false,
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed": 0
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed": 0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed": 0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed": 0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed": 0
+        }
+      ],
+      "endpoint": 4.0,
+      "difference_chi2": 0.0,
+      "binary_sha256": "035975f78095b760b6ca2e0fba4de09194d33ec1bee8f7947cbd60a95e3baef0",
+      "round_trip_exact": true
+    }
+  ],
+  "cumulative_serialized_vector_comparison": [
+    {
+      "file": "baryon_baccoemu.modelvector",
+      "before_sha256": "772a4b225767c0a61f2f5460c3da72b5b888f09d24d9223ef1d86c627b8813e6",
+      "after_sha256": "d21c40023d697f21721c86cd3999fdd1a3986b0fad1494ac419ed835efa8b989",
+      "file_bytes_identical": false,
+      "old_shape": [
+        1809,
+        2
+      ],
+      "new_shape": [
+        1809,
+        2
+      ],
+      "changed_numeric_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_bit_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_serialized_tokens_per_column": [
+        0,
+        400
+      ],
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed_rows_any_numeric_column": 400,
+          "changed_rows_any_bit_column": 400,
+          "max_absolute_change": 2.929100000000534e-09
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        }
+      ],
+      "status": "classified"
+    },
+    {
+      "file": "baryon_bcemu.modelvector",
+      "before_sha256": "ea52da4560671f83301114576886a2f3136caf07d584886ecfb1ebdf8c48540c",
+      "after_sha256": "47b339e6e12bbfd0f02f12a8b2336f1e030d1c363b1b3cd51fac1a56f6e16b31",
+      "file_bytes_identical": false,
+      "old_shape": [
+        1809,
+        2
+      ],
+      "new_shape": [
+        1809,
+        2
+      ],
+      "changed_numeric_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_bit_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_serialized_tokens_per_column": [
+        0,
+        400
+      ],
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed_rows_any_numeric_column": 400,
+          "changed_rows_any_bit_column": 400,
+          "max_absolute_change": 1.9610800000002533e-08
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        }
+      ],
+      "status": "classified"
+    },
+    {
+      "file": "baryon_bcemu2025.modelvector",
+      "before_sha256": "19ba1c7366c6d74b774e32c7841305935f621397374dfef91ad663517c18a021",
+      "after_sha256": "b7ed107093f2ab5fd19bbe4e733024509b83505abd2c22626cd2adb09a116832",
+      "file_bytes_identical": false,
+      "old_shape": [
+        1809,
+        2
+      ],
+      "new_shape": [
+        1809,
+        2
+      ],
+      "changed_numeric_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_bit_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_serialized_tokens_per_column": [
+        0,
+        400
+      ],
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed_rows_any_numeric_column": 400,
+          "changed_rows_any_bit_column": 400,
+          "max_absolute_change": 2.0818600000003813e-08
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        }
+      ],
+      "status": "classified"
+    },
+    {
+      "file": "baryon_flamingo.modelvector",
+      "before_sha256": "8f1442b8dcb0e44bf93d0e66d50068bdc5103788eb44a8bd652c3d2ea7b79dc1",
+      "after_sha256": "cb8b59b963be5a384e082c275b5df497f4904084f6d870767c9c654ef9d2f091",
+      "file_bytes_identical": false,
+      "old_shape": [
+        1809,
+        2
+      ],
+      "new_shape": [
+        1809,
+        2
+      ],
+      "changed_numeric_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_bit_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_serialized_tokens_per_column": [
+        0,
+        400
+      ],
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed_rows_any_numeric_column": 400,
+          "changed_rows_any_bit_column": 400,
+          "max_absolute_change": 2.030859999999524e-08
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        }
+      ],
+      "status": "classified"
+    },
+    {
+      "file": "baryon_spk_akino.modelvector",
+      "before_sha256": "c9cb38b5f6a0946ad48de28a90851cc42b2d06a920f532919abdeb8a273aa94a",
+      "after_sha256": "fa63738bcf58723fc09ea7eec4e49d4e93b3f0cc0124c24ba8e237e2a932b53b",
+      "file_bytes_identical": false,
+      "old_shape": [
+        1809,
+        2
+      ],
+      "new_shape": [
+        1809,
+        2
+      ],
+      "changed_numeric_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_bit_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_serialized_tokens_per_column": [
+        0,
+        400
+      ],
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed_rows_any_numeric_column": 400,
+          "changed_rows_any_bit_column": 400,
+          "max_absolute_change": 1.963620000000404e-08
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        }
+      ],
+      "status": "classified"
+    },
+    {
+      "file": "baryon_spk_double_power_law.modelvector",
+      "before_sha256": "7258aaa9d032e2d98f0a658c4ee436c6d19f8b7fb830567e7e0799ea7f41efcb",
+      "after_sha256": "be95c3cecf91596f1ad7cb096897cafae06301999070096fb5fd3ac5f28b5f50",
+      "file_bytes_identical": false,
+      "old_shape": [
+        1809,
+        2
+      ],
+      "new_shape": [
+        1809,
+        2
+      ],
+      "changed_numeric_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_bit_entries_per_column": [
+        0,
+        400
+      ],
+      "changed_serialized_tokens_per_column": [
+        0,
+        400
+      ],
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed_rows_any_numeric_column": 400,
+          "changed_rows_any_bit_column": 400,
+          "max_absolute_change": 1.9637200000000043e-08
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        }
+      ],
+      "status": "classified"
+    },
+    {
+      "file": "baryon_spk_power_law.modelvector",
+      "before_sha256": "6385604c0f20ec2d3b3297ceeccbbaab4122a34a33217e12e79722ff7d8640b2",
+      "after_sha256": "b5d0cca853a8a60456bc997ca55d40ee2d980992c8b625f56a7f927f1f1d60a0",
+      "file_bytes_identical": false,
+      "old_shape": [
+        1809,
+        2
+      ],
+      "new_shape": [
+        1809,
+        2
+      ],
+      "changed_numeric_entries_per_column": [
+        0,
+        399
+      ],
+      "changed_bit_entries_per_column": [
+        0,
+        399
+      ],
+      "changed_serialized_tokens_per_column": [
+        0,
+        399
+      ],
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed_rows_any_numeric_column": 399,
+          "changed_rows_any_bit_column": 399,
+          "max_absolute_change": 1.9227000000001976e-08
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed_rows_any_numeric_column": 0,
+          "changed_rows_any_bit_column": 0,
+          "max_absolute_change": 0.0
+        }
+      ],
+      "status": "classified"
+    },
+    {
+      "file": "synthetic_desy1xplanck.modelvector",
+      "before_sha256": "eee97034c618d3f6d52d78afd8fc7f88ef8963b3453adf91aef421afd28062af",
+      "after_sha256": "cf47c5c5f91559ccc24b00350e87e8f57704ddb8da22168f30fa5dd0060d7e0f",
+      "file_bytes_identical": false,
+      "old_shape": [
+        1809,
+        2
+      ],
+      "new_shape": [
+        1809,
+        2
+      ],
+      "changed_numeric_entries_per_column": [
+        0,
+        738
+      ],
+      "changed_bit_entries_per_column": [
+        0,
+        738
+      ],
+      "changed_serialized_tokens_per_column": [
+        0,
+        738
+      ],
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed_rows_any_numeric_column": 400,
+          "changed_rows_any_bit_column": 400,
+          "max_absolute_change": 2.292000000000418e-08
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed_rows_any_numeric_column": 192,
+          "changed_rows_any_bit_column": 192,
+          "max_absolute_change": 4.504199999999861e-07
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 43,
+          "changed_rows_any_bit_column": 43,
+          "max_absolute_change": 5.811189999999772e-05
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 46,
+          "changed_rows_any_bit_column": 46,
+          "max_absolute_change": 1.4308899999998775e-06
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed_rows_any_numeric_column": 48,
+          "changed_rows_any_bit_column": 48,
+          "max_absolute_change": 5.534499999999566e-09
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed_rows_any_numeric_column": 9,
+          "changed_rows_any_bit_column": 9,
+          "max_absolute_change": 8.136999999897233e-13
+        }
+      ],
+      "status": "classified"
+    },
+    {
+      "file": "tatt_desy1xplanck.modelvector",
+      "before_sha256": "9da86da3a32a353db8f8c52e43decc94d1c1396b27ab1c10386144b3e226348b",
+      "after_sha256": "ff0007b7601998baf653d4eb68ffca5a3e602d5b2dfca0a2f5bc5243235b8658",
+      "file_bytes_identical": false,
+      "old_shape": [
+        1809,
+        2
+      ],
+      "new_shape": [
+        1809,
+        2
+      ],
+      "changed_numeric_entries_per_column": [
+        0,
+        738
+      ],
+      "changed_bit_entries_per_column": [
+        0,
+        738
+      ],
+      "changed_serialized_tokens_per_column": [
+        0,
+        738
+      ],
+      "blocks": [
+        {
+          "block": "ss",
+          "entries": 600,
+          "changed_rows_any_numeric_column": 400,
+          "changed_rows_any_bit_column": 400,
+          "max_absolute_change": 2.2903499999988794e-08
+        },
+        {
+          "block": "gs",
+          "entries": 720,
+          "changed_rows_any_numeric_column": 192,
+          "changed_rows_any_bit_column": 192,
+          "max_absolute_change": 4.485940000000183e-07
+        },
+        {
+          "block": "gg",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 43,
+          "changed_rows_any_bit_column": 43,
+          "max_absolute_change": 5.811189999999772e-05
+        },
+        {
+          "block": "gk",
+          "entries": 180,
+          "changed_rows_any_numeric_column": 46,
+          "changed_rows_any_bit_column": 46,
+          "max_absolute_change": 1.4308899999998775e-06
+        },
+        {
+          "block": "ks",
+          "entries": 120,
+          "changed_rows_any_numeric_column": 48,
+          "changed_rows_any_bit_column": 48,
+          "max_absolute_change": 5.534499999999566e-09
+        },
+        {
+          "block": "kk",
+          "entries": 9,
+          "changed_rows_any_numeric_column": 9,
+          "changed_rows_any_bit_column": 9,
+          "max_absolute_change": 8.136999999897233e-13
+        }
+      ],
+      "status": "classified"
+    }
+  ],
+  "interpretation": "The endpoint comparisons hold the binary, physical parameters and all other numerical controls fixed. Their cosmic shear and individually Limber blocks must be identical. Changes in those blocks in the separate old-reference comparison cannot be attributed to the endpoint. That comparison spans the older source history and any deliberately updated numerical settings.",
+  "attribution_limit": "This record measures each changed observable block. It does not assign cumulative historical differences to individual commits without an independent comparison.",
+  "validation": {
+    "full_run_xml_counts": {
+      "tests": 91,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "accepted_failures": [],
+    "retry_evidence": null,
+    "quick_tests_log_sha256": "01752820e538dfeb21b8e518bfdc1983537f34c8fa0409b5b4dfabc310215737",
+    "reference_manifest_sha256": "bf446ee809d9500f817b8ad9e6c2863bb2e22a87284682ddd317c6b2c8820534"
+  },
+  "reference_chi2_before": {
+    "_meta": {
+      "chi2_tolerance": 0.2,
+      "generated_utc": "2026-09-30T12:55:23Z",
+      "omp_num_threads": "4"
+    },
+    "example1_nla": 3.377480327949838e-14,
+    "example1_tatt": 3.932585580614051e-14,
+    "example2_2x2pt_nla": 8.768822694881237e-13,
+    "example2_2x2pt_tatt": 7.768218472737597e-13,
+    "example2_nla": 9.349050725307753e-13,
+    "example2_tatt": 8.3906886443275e-13
+  },
+  "reference_chi2_after": {
+    "_meta": {
+      "chi2_tolerance": 0.2,
+      "generated_utc": "2026-11-19T06:18:09Z",
+      "omp_num_threads": "6"
+    },
+    "example1_nla": 3.837425692051424e-14,
+    "example1_tatt": 3.7091551567509654e-14,
+    "example2_2x2pt_nla": 1.3449880509485803e-12,
+    "example2_2x2pt_tatt": 1.2559609294689886e-12,
+    "example2_nla": 1.4281615354593322e-12,
+    "example2_tatt": 1.3203411565133662e-12
+  }
+}

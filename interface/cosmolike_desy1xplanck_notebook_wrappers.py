@@ -64,6 +64,7 @@ from getdist import IniFile
 # stops with a KeyError.
 sys.path.insert(0, os.environ["ROOTDIR"] + "/external_modules/code/cosmolike_core")
 import cosmolike_notebook_utils as cnu
+from cosmolike_notebook_utils.fisher import nonlimber_derivative_mode
 import cosmolike_desy1xplanck_interface as ci
 
 
@@ -163,6 +164,20 @@ PM_FID = [DES_PM1, DES_PM2, DES_PM3, DES_PM4, DES_PM5, DES_PM6]
 # notebooks and sit here so a future notebook can change them the
 # same way.
 _CONFIG = {
+    # Galaxy projection choices of the likelihood YAML.
+    "nonlimber_accuracyboost": 1.0,
+    "adopt_limber_gs": 1,
+    "adopt_limber_gg": 0,
+    "include_HOD_GX": 0,
+    "include_halo_IA": 0,
+    "nonlimber_lowrank_gg": 0,
+    "nonlimber_lowrank_rank": 5,
+    "nonlimber_lowrank_lmax": 150,
+    # Base early-exit tolerances; Fisher reads temporarily use zero.
+    "nonlimber_tolerance_gg": 0.002,
+    "nonlimber_tolerance_gs": 0.01,
+    # FKEM multipole cap, separate from the low-rank engine cap.
+    "lmax_nonlimber": 150,
     # Upper redshift, independent of sampling; matches this project YAML.
     "nonlimber_zmax": 4.0,
     "lmax": 75000,              # base of the internal C_ell tables
@@ -280,6 +295,20 @@ def init_cosmolike(CLprobe=None, with_data=False, lmax=None):
     allsims = ini.relativeFileName('all_sims_hdf5_file')
     ci.initial_setup()
     ci.init_nonlimber_zmax(zmax=float(_CONFIG["nonlimber_zmax"]))
+    ci.init_nonlimber_tolerance(
+        gg_tol=float(_CONFIG["nonlimber_tolerance_gg"]),
+        gs_tol=float(_CONFIG["nonlimber_tolerance_gs"]))
+    ci.init_lmax_nonlimber(lmax=int(_CONFIG["lmax_nonlimber"]))
+    ci.init_nonlimber_accuracy_boost(
+        nonlimber_boost=float(_CONFIG["nonlimber_accuracyboost"]))
+    ci.init_lowrank_nonlimber_gg(
+        flag=int(_CONFIG["nonlimber_lowrank_gg"]),
+        nrank=int(_CONFIG["nonlimber_lowrank_rank"]),
+        lmax=int(_CONFIG["nonlimber_lowrank_lmax"]))
+    ci.init_adopt_limber_gs(adopt_limber_gs=int(_CONFIG["adopt_limber_gs"]))
+    ci.init_adopt_limber_gg(adopt_limber_gg=int(_CONFIG["adopt_limber_gg"]))
+    ci.init_include_HOD_GX(include_HOD_GX=int(_CONFIG["include_HOD_GX"]))
+    ci.init_include_halo_IA(include_halo_IA=int(_CONFIG["include_halo_IA"]))
     if CLprobe is not None:
         ci.init_probes(possible_probes=CLprobe)
     ci.init_binning(int(ini.int("n_theta")),
@@ -1189,7 +1218,13 @@ def get_dv(param=None, AccuracyBoost=1.0):
                AccuracyBoost, 0, _CONFIG["non_linear_emul"],
                M=M, shear_photoz_bias=shear_photoz_bias,
                A1=A1, A2=A2_FID, BTA=BTA_FID)
-    return np.array(ci.compute_data_vector_masked(), dtype=np.float64)
+    # A stencil must not change its stopping multipole between points.
+    # Restore configured bases, not the accuracy-scaled getter values.
+    with nonlimber_derivative_mode(
+            interface=ci,
+            production_gg=_CONFIG["nonlimber_tolerance_gg"],
+            production_gs=_CONFIG["nonlimber_tolerance_gs"]):
+        return np.array(ci.compute_data_vector_masked(), dtype=np.float64)
 
 
 def get_ddv(index=0, h=0.02, CV=None, AccuracyBoost=1.0):
