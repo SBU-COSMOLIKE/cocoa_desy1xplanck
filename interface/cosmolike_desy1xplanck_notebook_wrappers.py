@@ -1183,10 +1183,11 @@ def get_dv(param=None, AccuracyBoost=1.0):
     interface holds.
 
     The CAMB settings are those of get_chi2: kmax = 7.5 (1/Mpc) and
-    k_per_logint = 10. AccuracyBoost reaches _set_state twice, as
-    AccuracyBoost and as CLAccuracyBoost, as in the roman_real and
-    lsst_y1 wrappers: CAMB receives 1 + (AccuracyBoost - 1)/3 and the
-    cosmolike boost is AccuracyBoost squared.
+    k_per_logint = 10. CLAccuracyBoost stays 1.0, so AccuracyBoost
+    multiplies CosmoLike and its input-table sampling once. CAMB receives
+    1 + (AccuracyBoost - 1)/3. Native integration accuracy is
+    int(abs(3*(AccuracyBoost - 1))), and the multipole-table cap is
+    _CONFIG["lmax"] + 20000*(AccuracyBoost - 1).
 
     Arguments:
       param = 1D float array in the FISHER_PARAM_NAMES layout, or None
@@ -1210,12 +1211,12 @@ def get_dv(param=None, AccuracyBoost=1.0):
     # positional arguments of _set_state: omegam, omegab, H0, ns, As_1e9
     # (param[4] down to param[0]), w and w0pwa, AccuracyBoost,
     # kmax = 7.5 [1/Mpc], k_per_logint = 10, CAMBAccuracyBoost = 1,
-    # CLAccuracyBoost = AccuracyBoost, CLIntegrationAccuracy = 0 and the
+    # CLAccuracyBoost = 1, CLIntegrationAccuracy = 0 and the
     # configured non_linear_emul
     _set_state(param[4], param[3], param[2], param[1], param[0],
                w0, w0pwa_value,
                AccuracyBoost, 7.5, 10, 1.0,
-               AccuracyBoost, 0, _CONFIG["non_linear_emul"],
+               1.0, 0, _CONFIG["non_linear_emul"],
                M=M, shear_photoz_bias=shear_photoz_bias,
                A1=A1, A2=A2_FID, BTA=BTA_FID)
     # A stencil must not change its stopping multipole between points.
@@ -1263,7 +1264,7 @@ def get_Fisher(CV=None, h=0.02, AccuracyBoost=3.1, ddv=None,
       CV    = fiducial vector, or None for FISHER_PARAM_FID.
       h     = relative step of the derivatives.
       AccuracyBoost = forwarded to every data-vector evaluation (see
-              get_dv: the cosmolike boost becomes its square).
+              get_dv: the CosmoLike sampling multiplier is applied once).
       ddv   = derivative function, or None for get_ddv.
       priors = {index: (mean, sigma)}, or None for
               FISHER_GAUSSIAN_PRIORS.
