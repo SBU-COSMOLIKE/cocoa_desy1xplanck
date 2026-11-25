@@ -572,8 +572,7 @@ the same 50 broad points (open symbols) and 25 focused points (filled symbols).
 The solid and dashed curves show the saved 68% and 95%
 nuisance-marginalized Fisher regions.
 
-CAMB uses `AccuracyBoost: 1.0`, `k_per_logint: 12` and `kmax: 10`. The saved
-Fisher diagnostic found a maximum FoM shift of 0.73%.
+CAMB uses `AccuracyBoost: 1.0`, `k_per_logint: 12` and `kmax: 10`.
 
 ![DES Y3 × Planck PR4 shear hybrid-emulator error against CAMB](figures/emulator_precision.png)
 
@@ -610,13 +609,12 @@ OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
   projects/desy1xplanck/tests/compare_emulator_camb.py --mpi --advisory
 ```
 
-Saved Fisher contours show the bounded 68% and 95% regions of a centered
-CAMB forecast with nuisance parameters marginalized. The saved reference
-records the matrix, priors, fiducial, selection and numerical diagnostics.
-The accuracy run uses the available saved contour for display. Prediction
-errors remain valid when the saved contour is absent or marked unreliable. `--fisher-reference` selects a saved directory, and
-`--no-fisher` omits the display. Candidate networks can be changed using
-`EMULATOR_CODE_DIR` and `EMULATOR_DATA_DIR`.
+The shared plot uses saved 68% and 95% bounded Fisher contours with
+nuisance parameters marginalized. The reference records the matrix, priors,
+fiducial and data selection. Use `--fisher-reference` to select a saved
+reference directory or `--no-fisher` to show only the comparison points.
+Use `EMULATOR_CODE_DIR` and `EMULATOR_DATA_DIR` to select the candidate
+network installation.
 
 ```bash
 python projects/desy1xplanck/tests/compare_emulator_camb.py --plot-only /path/to/run
