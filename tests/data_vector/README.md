@@ -649,31 +649,48 @@ python projects/desy1xplanck/tests/compare_emulator_camb.py --plot-only /path/to
 
 ## FoM convergence
 
-This test estimates how numerical settings affect the Fisher figure of merit
-(FoM), which is proportional to the inverse area of the marginalized
-parameter ellipse. The pair is $w_0,w_a$ for CPL and $10^9 A_s,\Omega_m$
-for ΛCDM. The test builds one full CAMB Fisher matrix at the benchmark
-settings. Fourth differences of its model vectors rank contributions from
-numerical noise.
-The higher-accuracy calculation reevaluates only the selected derivative
-columns. The estimate uses the same baseline Fisher weights at both settings.
+This CAMB test uses the ordinary accuracy and physical prescription of each
+benchmark to build one full local Fisher matrix. The figure of merit is
+$1/\sqrt{\det C_{w_0,w_a}}$, with nuisance parameters marginalized in the
+Gaussian approximation. The sampled pair $w_0,w_0+w_a$ has the same ellipse
+area. Gaussian prior curvature enters the Fisher matrix, and prior bounds
+limit the stencil positions.
 
-Each nonzero fiducial uses `h = 0.025 * abs(fiducial)`, capped as needed
-to keep both `±2h` stencil points within its prior. Zero-centered
-coordinates use their configured absolute step or one tenth of their proposal
-width. The output records the actual steps, numerical settings, measured and
-omitted columns, and the estimated FoM shift. Contributions from omitted
-columns remain unbounded, so the estimate measures sensitivity to the tested
-refinement.
+The five-point stencil uses a fixed 2.5% relative step, shortened near prior
+bounds. A zero-centered parameter uses its specified absolute step or one
+tenth of its proposal width. The fourth differences rank the numerical
+sensitivity of the columns. Both higher settings reevaluate the same selected
+columns and use the same full ordinary Fisher weights. The reported values
+scale the ordinary FoM by each selected-column noise estimate. Contributions
+from omitted columns, smooth derivative shifts and correlated numerical
+errors remain unknown.
+
+| Case | Setting | CosmoLike boost / integration | CAMB boost / k_per_logint | Approx. FoM | Change from previous |
+| --- | --- | --- | --- | --- | --- |
+| Cosmic shear | Ordinary | 1.0 / 0 | 1.0 / 12 | 0.10161631 | — |
+| Cosmic shear | Refined | 2.0 / 1 | 2.0 / 50 | 0.10158147 | -0.0342818% |
+| Cosmic shear | Confirmation | 3.0 / 2 | 3.0 / 75 | 0.10158023 | -0.0012232% |
+
+Results are pending for Y3 × Planck optical 3×2pt, Y3 × Planck 6×2pt.
+
+**Selected columns in both higher settings**
+
+- Cosmic shear — `H0`, `DES_DZ_S4`, `omegam`, `DES_DZ_S1`, `DES_DZ_S3`, `w`, `w0pwa`.
 
 Run from activated Cocoa with two MPI ranks, four OpenMP threads per rank
-and one BLAS thread. Use `--probe 3x2pt` or `--probe 6x2pt` for those selections.
+and one BLAS thread.
+
+Choose `--probe shear` (default), `--probe 3x2pt` or `--probe 6x2pt`.
 
 ```bash
 OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
   VECLIB_MAXIMUM_THREADS=1 mpirun -n 2 --bind-to none python -m mpi4py \
   projects/desy1xplanck/tests/check_fom_convergence.py --mpi
 ```
+
+The run directory contains `fisher/fom_accuracy.tsv`, the effective
+settings for each tier, and the measured and omitted columns. The standalone
+screen applies its 1% tolerance to the estimated refined-to-confirmation change.
 
 ## Appendix <a name="appendix"></a>
 
