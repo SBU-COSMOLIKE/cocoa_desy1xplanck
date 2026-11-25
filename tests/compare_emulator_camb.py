@@ -1,9 +1,9 @@
-"""Compare the candidate matter emulator with CAMB at random desy1xplanck cosmologies.
+"""Compare the candidate matter emulator with CAMB on DES Y3 × Planck PR4.
 
 Run from activated Cocoa (one project at a time):
     python projects/desy1xplanck/tests/compare_emulator_camb.py
     mpirun -n 2 --bind-to none python -m mpi4py \
-      projects/desy1xplanck/tests/compare_emulator_camb.py --mpi
+      projects/desy1xplanck/tests/compare_emulator_camb.py --mpi --probe 6x2pt
 
 MPI assigns independent parameter points or Fisher columns to each rank;
 OpenMP accelerates each rank's model evaluations. Keep BLAS at one thread.
@@ -51,10 +51,19 @@ from cocoa_testing import (
     plot_matter_emulator_fisher,
 )
 
+AMPLITUDE_BIAS_CUTS = {
+    "amplitude_cut_DES_B1_1": ("As_1e9", "DES_B1_1", 2.1, 1.5, 8.),
+    "amplitude_cut_DES_B1_2": ("As_1e9", "DES_B1_2", 2.1, 1.8, 8.),
+    "amplitude_cut_DES_B1_3": ("As_1e9", "DES_B1_3", 2.1, 1.8, 8.),
+    "amplitude_cut_DES_B1_4": ("As_1e9", "DES_B1_4", 2.1, 1.9, 8.),
+}
+
 
 def main(*, fisher=False):
-    description = "Screen the CAMB Fisher FoM with one fixed stencil spacing." if fisher else __doc__
+    description = "Test CAMB Fisher FoM convergence with one fixed stencil spacing." if fisher else __doc__
     parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("--probe", choices=("shear", "3x2pt", "6x2pt"), default="shear",
+                        help="Select the matching fixed DES Y3 × Planck PR4 benchmark")
     parser.add_argument("--configuration", default=None)
     parser.add_argument("--models", type=int, default=50)
     parser.add_argument("--seed", type=int, default=137)
@@ -88,6 +97,8 @@ def main(*, fisher=False):
                         help="Distribute points and Fisher columns across MPI ranks")
     args = parser.parse_args()
     benchmark = project / "tests/fisher_reference"
+    if args.probe != "shear":
+        benchmark = benchmark / args.probe
     benchmark_yaml = benchmark / "benchmark.yaml"
     if args.configuration is None:
         args.configuration = str(benchmark_yaml)
@@ -121,12 +132,12 @@ def main(*, fisher=False):
     output_dir = args.output.resolve() if args.output is not None else None
     local_points = args.local_points.resolve() if args.local_points is not None else None
     # Use the saved cosmologies for the standard benchmark run.
-    official = (standard_configuration and args.models == 50
-                and args.seed == 137 and points_file is None)
+    fixed_points = (standard_configuration and args.models == 50
+                    and args.seed == 137 and points_file is None)
     fisher_reference = args.fisher_reference
     if fisher_reference is not None:
         fisher_reference = fisher_reference.resolve()
-    if official and (not fisher or args.save_fisher_contours):
+    if fixed_points and (not fisher or args.save_fisher_contours):
         points_file = benchmark / "prior_50.txt"
         if local_points is None:
             local_points = benchmark / "focused_25.txt"
@@ -136,9 +147,11 @@ def main(*, fisher=False):
     if standard_configuration and fisher_reference is None:
         fisher_reference = benchmark
     os.chdir(root)
-    first_example = (standard_configuration or
+    first_example = ((standard_configuration and args.probe == "shear") or
                      (project / args.configuration).resolve() == project / "EXAMPLE_EVALUATE1.yaml")
+    cuts = AMPLITUDE_BIAS_CUTS if fisher and standard_configuration and args.probe != "shear" else None
     failed = run_matter_emulator_prior_check(
+        amplitude_bias_cuts=cuts,
         project=project,
         mpi_comm=mpi_comm,
         configuration=args.configuration,
@@ -167,7 +180,7 @@ def main(*, fisher=False):
         validate_fisher_steps=args.validate_fisher_steps,
         save_fisher_contours=args.save_fisher_contours,
         fisher_reference=None if args.no_fisher else fisher_reference,
-        focused_models=25 if official or local_points is not None else 0,
+        focused_models=25 if fixed_points or local_points is not None else 0,
         output_dir=output_dir,
         fisher_sample_power=args.fisher_sample_power,
         points_file=points_file,
