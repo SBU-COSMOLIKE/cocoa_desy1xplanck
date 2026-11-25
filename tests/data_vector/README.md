@@ -572,6 +572,9 @@ replace the excluded rows deterministically. The focused replacements
 use the saved Fisher matrix integrated over the capped priors. The run reuses saved
 predictions where the point, inputs and settings match exactly.
 
+Other sampled coordinates retain the project priors. Some $n_s$ draws lie
+beyond the observed scaler extrema.
+
 The fixed tables intersect this range with the benchmark priors. CAMB uses
 one massive species with $\sum m_\nu=0.06$ eV. Both model routes evaluate
 the same 50 broad points (open symbols) and 25 focused points (filled symbols).
