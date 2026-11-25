@@ -584,6 +584,33 @@ Counts use the thresholds 0.2, 0.5, 1 and 4 in that order.
 
 <!-- end hybrid-emulator figure -->
 
+### Optical 3×2pt and full 6×2pt
+
+The [optical 3×2pt benchmark](../fisher_reference/3x2pt/) retains 635
+optical rows. The [full 6×2pt benchmark](../fisher_reference/6x2pt/)
+retains the same optical rows and adds 103 CMB-lensing rows. Each
+selection uses its corresponding mask, covariance, and nuisance-marginalized
+Fisher forecast for the 25 focused cosmologies. Both selections use the
+same 50 broad cosmologies as the shear benchmark.
+
+Both CAMB references use `AccuracyBoost: 1.0`, `k_per_logint: 12`
+and `kmax: 10`.
+
+![DES Y3 × Planck PR4 - 3×2pt](figures/emulator_precision_3x2pt.png)
+
+![DES Y3 × Planck PR4 - 6×2pt](figures/emulator_precision_6x2pt.png)
+
+Counts use the thresholds 0.2, 0.5, 1 and 4 in that order.
+
+| Probe | Retained rows | Broad below threshold (50) | Focused below threshold (25) | Nonfinite broad/focused |
+| --- | ---: | --- | --- | --- |
+| Optical 3×2pt | 635 | 24/31/32/38 | 24/24/24/25 | 0/0 |
+| Full 6×2pt | 738 | 24/31/32/38 | 24/24/24/25 | 0/0 |
+
+Add `--probe 3x2pt` or `--probe 6x2pt` to the standalone command below
+to run the corresponding fixed comparison.
+
+
 E5 reads the saved `benchmark.yaml` in [fisher_reference/](../fisher_reference/).
 The benchmark fixes the likelihood, data selection, sampled parameters,
 fiducial and normal numerical controls.
@@ -640,7 +667,7 @@ columns remain unbounded, so the estimate measures sensitivity to the tested
 refinement.
 
 Run from activated Cocoa with two MPI ranks, four OpenMP threads per rank
-and one BLAS thread.
+and one BLAS thread. Use `--probe 3x2pt` or `--probe 6x2pt` for those selections.
 
 ```bash
 OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
