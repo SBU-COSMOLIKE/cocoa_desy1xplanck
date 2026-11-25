@@ -121,6 +121,16 @@ if __name__ == "__main__":
         configuration=args.configuration,
         get_precision=ci.get_inv_cov_masked,
         n_models=args.models,
+        # The default half-steps of 0.000275–0.00045 in source redshift
+        # moved the marginalized FoM by 9.8% on this histogram grid.
+        # Use larger redshift offsets only for these four derivatives.
+        # The shared driver checks both h/2 and the finer numerical grid.
+        fisher_steps={
+            "DES_DZ_S1": 0.0036,
+            "DES_DZ_S2": 0.0030,
+            "DES_DZ_S3": 0.0022,
+            "DES_DZ_S4": 0.0034,
+        } if (project / args.configuration).resolve() == project / "EXAMPLE_EVALUATE1.yaml" else None,
         seed=args.seed,
         limit=args.limit,
         fisher=not args.no_fisher,
