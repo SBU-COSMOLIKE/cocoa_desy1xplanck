@@ -575,13 +575,13 @@ nuisance-marginalized Fisher regions.
 CAMB uses `AccuracyBoost: 1.0`, `k_per_logint: 12` and `kmax: 10`. The saved
 Fisher diagnostic found a maximum FoM shift of 0.73%.
 
-![DES Y1 × Planck hybrid-emulator error against CAMB](figures/emulator_precision.png)
+![DES Y3 × Planck PR4 shear hybrid-emulator error against CAMB](figures/emulator_precision.png)
 
 Counts use the thresholds 0.2, 0.5, 1 and 4 in that order.
 
 | Case | Broad below threshold (50) | Focused below threshold (25) | Nonfinite broad/focused |
 | --- | --- | --- | --- |
-| DES Y1 × Planck | 32/36/37/42 | 20/21/21/23 | 0/0 |
+| DES Y3 × Planck PR4 shear | 32/36/37/42 | 20/21/21/23 | 0/0 |
 
 <!-- end hybrid-emulator figure -->
 
