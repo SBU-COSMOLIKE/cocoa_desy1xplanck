@@ -115,6 +115,7 @@ if __name__ == "__main__":
     output_dir = args.output.resolve() if args.output is not None else None
     local_points = args.local_points.resolve() if args.local_points is not None else None
     os.chdir(root)
+    first_example = (project / args.configuration).resolve() == project / "EXAMPLE_EVALUATE1.yaml"
     failed = run_matter_emulator_prior_check(
         project=project,
         mpi_comm=mpi_comm,
@@ -130,7 +131,14 @@ if __name__ == "__main__":
             "DES_DZ_S2": 0.0030,
             "DES_DZ_S3": 0.0022,
             "DES_DZ_S4": 0.0034,
-        } if (project / args.configuration).resolve() == project / "EXAMPLE_EVALUATE1.yaml" else None,
+        } if first_example else None,
+        # The default and doubled grids differ by 2.03% at h/2 even
+        # with these wider redshift steps. Use the default Fisher for
+        # the cheap noise weights and check the two finer grids directly.
+        fisher_confirmation_settings=(
+            {"accuracyboost": 3.0, "integration_accuracy": 2},
+            {"AccuracyBoost": 3.0, "k_per_logint": 75},
+        ) if first_example else None,
         seed=args.seed,
         limit=args.limit,
         fisher=not args.no_fisher,
