@@ -556,9 +556,6 @@ on this slice. It is not a profile-likelihood or marginalized-posterior
 exclusion test, and the prior draws are not posterior samples.
 
 <!-- hybrid-emulator figure -->
-The figures below show the earlier benchmark. Runs with $w_0+w_a<-0.4$
-are pending.
-
 **Emulator training range**
 
 | Parameter | Range |
@@ -567,7 +564,13 @@ are pending.
 | Primordial amplitude | $1<10^9 A_s\le 3.5$ |
 | Hubble constant | $H_0<85$ km/s/Mpc |
 | Present dark-energy equation of state in CPL | $w_0>-2$ |
+| Early-time dark-energy equation of state | $w_0+w_a<-0.4$ |
 | Physical baryon density | $\Omega_b(H_0/100)^2<0.035$ |
+
+The revised tables retain cosmologies that already satisfy the cap and
+replace the excluded rows deterministically. The focused replacements
+use the saved Fisher matrix integrated over the capped priors. The run reuses saved
+predictions where the point, inputs and settings match exactly.
 
 The fixed tables intersect this range with the benchmark priors. CAMB uses
 one massive species with $\sum m_\nu=0.06$ eV. Both model routes evaluate
@@ -583,7 +586,7 @@ Counts use the thresholds 0.2, 0.5, 1 and 4 in that order.
 
 | Case | Broad below threshold (50) | Focused below threshold (25) | Nonfinite broad/focused |
 | --- | --- | --- | --- |
-| DES Y3 × Planck PR4 shear | 32/36/37/42 | 20/21/21/23 | 0/0 |
+| DES Y3 × Planck PR4 shear | 34/39/40/45 | 23/23/23/24 | 0/0 |
 
 <!-- end hybrid-emulator figure -->
 
@@ -607,8 +610,8 @@ Counts use the thresholds 0.2, 0.5, 1 and 4 in that order.
 
 | Probe | Retained rows | Broad below threshold (50) | Focused below threshold (25) | Nonfinite broad/focused |
 | --- | ---: | --- | --- | --- |
-| Optical 3×2pt | 635 | 24/31/32/38 | 24/24/24/25 | 0/0 |
-| Full 6×2pt | 738 | 24/31/32/38 | 24/24/24/25 | 0/0 |
+| Optical 3×2pt | 635 | 26/33/34/41 | 24/24/24/25 | 0/0 |
+| Full 6×2pt | 738 | 26/33/34/41 | 25/25/25/25 | 0/0 |
 
 Add `--probe 3x2pt` or `--probe 6x2pt` to the standalone command below
 to run the corresponding fixed comparison.
