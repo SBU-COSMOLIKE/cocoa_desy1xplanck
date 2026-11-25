@@ -1,0 +1,8 @@
+stage=refined_accuracy
+likelihood={'path': './external_modules/data/desy1xplanck', 'data_file': 'Y3xPlanckPR4.dataset', 'print_datavector': False, 'print_datavector_file': './projects/desy1xplanck/chains/theory.modelvector', 'accuracyboost': 2.0, 'integration_accuracy': 1, 'lmax': 75000, 'kmax_boltzmann': 7.5, 'non_linear_emul': 2, 'IA_model': 0, 'IA_code': 0, 'IA_redshift_evolution': 3, 'debug': False, 'use_baryon_pca': False, 'create_baryon_pca': False, 'baryon_pca_select_sims': 'antilles-2-99/antilles-101-378/antilles-380-400', 'filename_baryon_pca': './projects/desy1xplanck/chains/pca.txt', 'external_baryon_suppression': False, 'use_emulator': 0, 'nonlimber_tolerance_gg': 0.0, 'nonlimber_tolerance_gs': 0.0}
+CAMB={'halofit_version': 'takahashi', 'AccuracyBoost': 2.0, 'lens_potential_accuracy': 1.0, 'num_massive_neutrinos': 1, 'nnu': 3.046, 'dark_energy_model': 'ppf', 'accurate_massive_neutrino_transfers': False, 'k_per_logint': 50, 'kmax': 10}
+FoM relative tolerance=0.01
+Fisher uses the example's physical theory with mnu=0.06 eV.
+CAMB Fisher reference: logL=-374.19717471307843; -2logL=748.39434942615685
+This is the declared Fisher fiducial and theory; consult numerical_settings.txt for the runner's choices.
+It need not have zero residual against a synthetic vector made with another prescription.

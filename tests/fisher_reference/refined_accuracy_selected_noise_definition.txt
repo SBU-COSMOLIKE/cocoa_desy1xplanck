@@ -1,0 +1,9 @@
+Default full Fisher weights; refined selected stencils.
+Measured: w0pwa, w, H0, DES_DZ_S3, DES_DZ_S4
+Not yet measured: As_1e9, ns, omegab, omegam, DES_DZ_S1, DES_DZ_S2, DES_A1_1, DES_A1_2, DES_M1, DES_M2, DES_M3, DES_M4
+Zeros for unmeasured columns omit unknown contributions.
+h: predicted refined/default FoM ratio=0.99979403216821561; first-order delta log FoM=-0.00020609449781026012
+half_h: predicted refined/default FoM ratio=0.99918317565553794; first-order delta log FoM=-0.0008180117081469096
+These ratios use the same default full Fisher and selected columns.
+Compare with the measured full ratios in fom_convergence.txt; omitted noise is not bounded.
+The remaining columns run next for the full-Fisher gate.
