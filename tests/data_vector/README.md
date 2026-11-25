@@ -556,6 +556,9 @@ on this slice. It is not a profile-likelihood or marginalized-posterior
 exclusion test, and the prior draws are not posterior samples.
 
 <!-- hybrid-emulator figure -->
+The figures below show the earlier benchmark. Runs with $w_0+w_a<-0.4$
+are pending.
+
 **Emulator training range**
 
 | Parameter | Range |
@@ -670,12 +673,18 @@ errors remain unknown.
 | Cosmic shear | Ordinary | 1.0 / 0 | 1.0 / 12 | 0.10161631 | — |
 | Cosmic shear | Refined | 2.0 / 1 | 2.0 / 50 | 0.10158147 | -0.0342818% |
 | Cosmic shear | Confirmation | 3.0 / 2 | 3.0 / 75 | 0.10158023 | -0.0012232% |
-
-Results are pending for Y3 × Planck optical 3×2pt, Y3 × Planck 6×2pt.
+| Y3 × Planck optical 3×2pt | Ordinary | 1.0 / 0 | 1.0 / 12 | 0.92805741 | — |
+| Y3 × Planck optical 3×2pt | Refined | 2.0 / 1 | 2.0 / 50 | 0.92473041 | -0.35849% |
+| Y3 × Planck optical 3×2pt | Confirmation | 3.0 / 2 | 3.0 / 75 | 0.9246422 | -0.00953966% |
+| Y3 × Planck 6×2pt | Ordinary | 1.0 / 0 | 1.0 / 12 | 1.5957152 | — |
+| Y3 × Planck 6×2pt | Refined | 2.0 / 1 | 2.0 / 50 | 1.5914332 | -0.268347% |
+| Y3 × Planck 6×2pt | Confirmation | 3.0 / 2 | 3.0 / 75 | 1.5913748 | -0.00367017% |
 
 **Selected columns in both higher settings**
 
 - Cosmic shear — `H0`, `DES_DZ_S4`, `omegam`, `DES_DZ_S1`, `DES_DZ_S3`, `w`, `w0pwa`.
+- Y3 × Planck optical 3×2pt — `omegab`, `omegam`, `DES_DZ2_L3`, `DES_DZ2_L4`, `DES_DZ_S3`, `H0`, `w`, `w0pwa`.
+- Y3 × Planck 6×2pt — `omegab`, `omegam`, `DES_DZ2_L3`, `DES_DZ_S3`, `DES_DZ2_L4`, `H0`, `w`, `w0pwa`.
 
 Run from activated Cocoa with two MPI ranks, four OpenMP threads per rank
 and one BLAS thread.
