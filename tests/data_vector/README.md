@@ -341,6 +341,10 @@ ratio above. The dashed line marks Δχ² = 0.2, and the color scale
 saturates at Δχ² = 1.
 [Plotted values](figures/accuracy_nmodels_example2_seed137.txt)
 
+The upper-right panel shows the same points in Ωm–10⁹Aₛ. The solid and
+dashed lines show the saved approximate 68% and 95% Fisher contours,
+respectively. [Saved 6×2pt NLA contours](../fisher_reference/6x2pt/contours.json)
+
 Run from the activated `Cocoa/` directory with the thread settings in
 [Running the tests](#run_tests).
 

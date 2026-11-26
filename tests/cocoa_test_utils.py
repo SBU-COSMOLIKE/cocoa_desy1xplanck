@@ -181,6 +181,7 @@ EXAMPLES = {
     "example2": {
         "frozen_module": "frozen_config_example2.py",
         "provenance": "EXAMPLE_EVALUATE2.yaml",
+        "nmodels_fisher": "fisher_reference/6x2pt/contours.json",
         "likelihood": "desy1xplanck.combo_6x2pt",
         "tatt_dataset": "tatt_desy1xplanck.dataset",
     },
