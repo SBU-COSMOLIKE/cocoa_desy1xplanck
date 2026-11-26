@@ -157,11 +157,16 @@ ACCURACY_KNOBS = [
     ("camb k_per_logint -> 50", {}, {"k_per_logint": 50}),
 ]
 
+# The random-model test uses this current NLA analysis and its joint prior.
+NMODELS_CURRENT_PRIOR = True
+NMODELS_EXAMPLES = (("example2", "DES Y3 × Planck - 6×2pt"),)
+
+
 # The three stored configurations: cosmic shear (example1), 6x2pt
 # (example2) and 2x2pt (example2_2x2pt: example2's configuration with
 # the likelihood renamed). "frozen_module" is the configuration's file
-# in frozen/; "provenance" names the example yaml it was made from (kept
-# in frozen/ for a human to compare, never loaded); "likelihood" is the
+# in frozen/; "provenance" names the current example YAML used by the
+# random-model test. frozen/ retains a snapshot. "likelihood" is the
 # cobaya component name, needed to reach that block inside the loaded
 # info dictionary; "source_likelihood" is the name in the provenance
 # yaml when it differs; "tatt_dataset" is the data set of the TATT

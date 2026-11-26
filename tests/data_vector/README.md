@@ -17,7 +17,7 @@ is documented once in
 of the CosmoLike core. This file records what desy1xplanck runs and
 what it measured.
 
-The reference, race, accuracy, baryonic-feedback and comparison checks
+The reference, race, fiducial accuracy, baryonic-feedback and comparison checks
 build each model in a worker subprocess of its own; the photo-z,
 non-Limber and cache-ladder tests build their models in the pytest
 process. Both examples of this project share one data set, so the
@@ -33,13 +33,14 @@ cosmolike, and every project keeps one architecture.
     2. [The Halofit vs EE2 checks](#halofit_ee2)
     3. [The EE2 race test](#ee2_race)
     4. [Accuracy checks](#accuracy_checks)
-    5. [Baryonic feedback accuracy checks](#baryon_accuracy_checks)
-    6. [Baryonic feedback drift tests](#baryon_drift_tests)
-    7. [The photo-z convention checks](#photoz_conventions)
-    8. [The non-Limber galaxy-galaxy lensing check](#nonlimber_ggl)
-    9. [The non-Limber galaxy clustering check](#nonlimber_gg)
-    10. [The sector-ladder cache check](#cache_ladder)
-    11. [The non-Limber early-exit tolerance checks](#nonlimber_tolerance)
+    5. [N-random-models accuracy check](#nmodels_check)
+    6. [Baryonic feedback accuracy checks](#baryon_accuracy_checks)
+    7. [Baryonic feedback drift tests](#baryon_drift_tests)
+    8. [The photo-z convention checks](#photoz_conventions)
+    9. [The non-Limber galaxy-galaxy lensing check](#nonlimber_ggl)
+    10. [The non-Limber galaxy clustering check](#nonlimber_gg)
+    11. [The sector-ladder cache check](#cache_ladder)
+    12. [The non-Limber early-exit tolerance checks](#nonlimber_tolerance)
 3. [Hybrid-emulator accuracy test](#hybrid-emulator-accuracy-test)
 4. [FoM convergence](#fom-convergence)
 5. [Appendix](#appendix)
@@ -279,11 +280,86 @@ integration tables: the cosmolike core compiled here scales the FFTLog
 zero-padding with the chi grid
 (`external_modules/code/cosmolike/cosmo2D.c`).
 
-Run them on their own, or skip them (high-accuracy evaluations take
-minutes):
+Use the activated `Cocoa/` directory and setup in
+[Running the tests](#run_tests).
 
-    python -m pytest ./projects/desy1xplanck/tests/data_vector/test_accuracy.py
-    python -m pytest ./projects/desy1xplanck/tests/data_vector --ignore ./projects/desy1xplanck/tests/data_vector/test_accuracy.py
+**Step :one:** Choose which tests to run.
+
+**Accuracy checks only**
+
+```bash
+python -m pytest -s projects/desy1xplanck/tests/data_vector/test_accuracy.py
+```
+
+**Other data-vector tests**
+
+```bash
+python -m pytest -s projects/desy1xplanck/tests/data_vector \
+  --ignore projects/desy1xplanck/tests/data_vector/test_accuracy.py
+```
+
+### N-random-models accuracy check <a name="nmodels_check"></a>
+
+[**Mechanism**](https://github.com/CosmoLike/cocoa-cosmolike-core/blob/main/README.md#dv_nmodels).
+Use NLA for DES Y3 × Planck 6×2pt with the priors in
+`EXAMPLE_EVALUATE2.yaml`.
+Draw 50 points over the 36 sampled cosmological and nuisance parameters.
+Model $`m`$ uses seed $`137+m`$, with $`m=0`$ for the first model.
+A draw that fails a joint prior cut is replaced
+using the same seed's random stream. The priors enforce
+$`w_0+w_a<-0.4`$ and $`\Omega_b h^2<0.035`$.
+The joint `amplitude_cut` also requires
+$`\max_i[A_s b_i^2/(A_s b_i^2)_{\rm fid}]\leq 8`$, with each lens bin
+normalized by its fiducial amplitude in the evaluation YAML.
+
+Compare each ordinary prediction with the saved prediction at the same
+point using the [combined refinements](#accuracy_checks). The predictions
+use the same 738 retained rows and survey covariance. The advisory
+accuracy target is Δχ² < 0.2.
+
+| Ordinary CAMB control | Value |
+| --- | ---: |
+| `AccuracyBoost` | 1.05 |
+| `k_per_logint` | 10 |
+| Requested `kmax` (Mpc⁻¹) | 10 |
+
+The effective ordinary cutoff is 10 Mpc⁻¹.
+The pushed model requests `kmax: 50` Mpc⁻¹ in CAMB and reaches 120 Mpc⁻¹
+because CosmoLike requests power to `kmax_boltzmann × accuracyboost`.
+
+`tests/frozen/nmodels_example2.npz` stores the accepted points, the
+pushed predictions and the masked precision. Each test run evaluates
+the ordinary predictions and reads that saved file.
+
+Of the 50 predictions, 18 met the target. The median Δχ² was 0.32 and
+the largest was 4.0×10² at seed 148.
+
+![DES Y3 × Planck NLA 6×2pt prediction distance at 50 prior draws](figures/accuracy_nmodels_example2_seed137.png)
+
+The plot relates Δχ² to the matter density and the clustering-amplitude
+ratio above. The dashed line marks Δχ² = 0.2, and the color scale
+saturates at Δχ² = 1.
+[Plotted values](figures/accuracy_nmodels_example2_seed137.txt)
+
+Run from the activated `Cocoa/` directory with the thread settings in
+[Running the tests](#run_tests).
+
+**Step :one:** Compare the ordinary predictions with the saved vectors.
+
+```bash
+python -m pytest -s projects/desy1xplanck/tests/data_vector/test_accuracy.py -k nmodels
+```
+
+The run prints where it wrote the figure and its plotted values.
+`COCOA_ACCURACY_NMODELS_FIGURES` can set that directory.
+
+To refresh the pushed reference, use the same environment.
+
+**Step :one:** Recompute and save the 50 pushed predictions.
+
+```bash
+python projects/desy1xplanck/tests/generate_frozen_reference.py --nmodels
+```
 
 ### Baryonic feedback accuracy checks (`test_accuracy_baryons.py`, BF1-BF7) <a name="baryon_accuracy_checks"></a>
 

@@ -69,6 +69,7 @@
     "frozen/frozen_config_example1.py": "8274dc837b96af038a4581f255da6832cdb2cd288ccd01a8ea808555bdf67f42",
     "frozen/frozen_config_example2.py": "f0b5e6c81387f1e7ab29dc82391a3549a0ef5ee563174b140f39aa684b97a484",
     "frozen/frozen_config_example2_2x2pt.py": "f176b70334164685fdb5bddc83d503cf6d203a85f8b7fd889b812fb446289dc5",
+    "frozen/nmodels_example2.npz": "87a7a42eaf6de485117b727a3207815cba5ca1390988994eace7692ec1523539",
     "frozen/reference_chi2.json": "0e63b90501744fbdf5ba525e96378f72d9ade770600c2c1856dfe960aed68a36"
   }
 }
