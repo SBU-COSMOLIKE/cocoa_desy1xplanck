@@ -480,8 +480,17 @@ class _cosmolike_prototype_base(DataSetLikelihood):
           source_multihisto_file=self.source_file,
           source_ntomo=int(self.source_ntomo))
       ci.init_data_real(self.cov_file, self.mask_file, self.data_vector_file)  
-      ci.init_accuracy_boost(accuracy_boost=0.35, 
-                             integration_accuracy=-1) # seems enough to compute PM
+      # seems enough to compute PM
+      ci.init_accuracy_boost(
+          accuracy_boost=0.35,
+          integration_accuracy=-1,
+          integration_accuracy_ss=getattr(self, "integration_accuracy_ss", 1.0),
+          integration_accuracy_gs=getattr(self, "integration_accuracy_gs", 1.0),
+          integration_accuracy_gg=getattr(self, "integration_accuracy_gg", 1.0),
+          integration_accuracy_gk=getattr(self, "integration_accuracy_gk", 1.0),
+          integration_accuracy_ks=getattr(self, "integration_accuracy_ks", 1.0),
+          integration_accuracy_kk=getattr(self, "integration_accuracy_kk", 1.0),
+      )
     else:
       # CAMB (use_emulator = 0) or the power-spectrum emulators (2):
       # cosmolike computes every block. lmax is the highest multipole of
@@ -489,8 +498,16 @@ class _cosmolike_prototype_base(DataSetLikelihood):
       # (arcminute angles need l of order 10^4 to 10^5); is_linear=False
       # makes cosmolike use the nonlinear P(k) of set_cosmology.
       ci.init_ntable_lmax(lmax=int(self.lmax))
-      ci.init_accuracy_boost(accuracy_boost=self.accuracyboost, 
-                             integration_accuracy=int(self.integration_accuracy))
+      ci.init_accuracy_boost(
+          accuracy_boost=self.accuracyboost,
+          integration_accuracy=int(self.integration_accuracy),
+          integration_accuracy_ss=getattr(self, "integration_accuracy_ss", 1.0),
+          integration_accuracy_gs=getattr(self, "integration_accuracy_gs", 1.0),
+          integration_accuracy_gg=getattr(self, "integration_accuracy_gg", 1.0),
+          integration_accuracy_gk=getattr(self, "integration_accuracy_gk", 1.0),
+          integration_accuracy_ks=getattr(self, "integration_accuracy_ks", 1.0),
+          integration_accuracy_kk=getattr(self, "integration_accuracy_kk", 1.0),
+      )
       ci.init_cosmo_runmode(is_linear=False)
       # the FKEM non-Limber cap (limits.LMAX_NOLIMBER): C_gg and C_gs
       # are non-Limber below it and Limber above; set at every
