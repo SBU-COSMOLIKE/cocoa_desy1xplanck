@@ -279,7 +279,8 @@ The minimization, profile and Nautilus scripts read the corresponding
 YAML. They require `cocoa_hybrid_sampling.py` from the matching shared core
 revision. They do not maintain separate embedded cosmologies. `--check` evaluates
 the specified fiducial and prints the sampled parameter order without sampling.
-Use a new `--outroot` for each run; these scripts refuse to overwrite results.
+Use an unused `--outroot` for a new run. Nautilus can continue a matching
+unfinished checkpoint at the same prefix with `--resume`.
 
 ### Cobaya MCMC
 
@@ -410,12 +411,12 @@ python ./projects/desy1xplanck/EXAMPLE_EMUL2_MINIMIZE1.py --check
         --mca btl_tcp_if_exclude lo,docker0,virbr0,ib0,eno1,enp1s0f0np0 \
         --bind-to core:overload-allowed --report-bindings \
         --rank-by slot --map-by numa:pe=${OMP_NUM_THREADS} \
-        python ./projects/desy1xplanck/EXAMPLE_EMUL2_NAUTILUS1.py --nlive 1000 --neff 10000 --maxfeval 100000 --outroot hybrid_nautilus1
+        python ./projects/desy1xplanck/EXAMPLE_EMUL2_NAUTILUS1.py --nlive 1000 --neff 15000 --outroot hybrid_nautilus1
 
 - macOS (arm)
 
       mpirun -n 12 --oversubscribe \
-        python ./projects/desy1xplanck/EXAMPLE_EMUL2_NAUTILUS1.py --nlive 1000 --neff 10000 --maxfeval 100000 --outroot hybrid_nautilus1
+        python ./projects/desy1xplanck/EXAMPLE_EMUL2_NAUTILUS1.py --nlive 1000 --neff 15000 --outroot hybrid_nautilus1
 
 
 The annealed Emcee search follows the DES × Planck template. Its objective

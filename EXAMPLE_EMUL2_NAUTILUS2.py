@@ -10,10 +10,10 @@ nested sampling through cocoa_hybrid_sampling.py: a set of live points
 moves from the whole prior toward high likelihood, which estimates the
 Bayesian evidence and gives weighted posterior samples. That module, in
 external_modules/code/cosmolike_core, documents the method and every
-command-line option. The run writes chains/<outroot>.json (with a
+command-line option. The run writes chains/<outroot>.yaml (with a
 converged flag), a checkpoint file and, when posterior samples exist, a
-weighted chain; it refuses to overwrite an existing record. Reaching
---maxfeval likelihood calls is not convergence.
+weighted chain. Use a fresh --outroot for a new run or --resume at the
+same prefix to continue a matching unfinished checkpoint.
 
 From the Cocoa/ folder, with start_cocoa.sh sourced, check the setup
 (evaluate the fiducial point, print the order of the sampled parameters,
@@ -26,7 +26,7 @@ the model; the project README shows runs on several nodes):
 
     mpirun -n 2 --bind-to none python \\
         ./projects/desy1xplanck/EXAMPLE_EMUL2_NAUTILUS2.py \\
-        --nlive 1000 --neff 10000 --maxfeval 100000 \\
+        --nlive 1000 --neff 15000 \\
         --outroot hybrid_nautilus2
 """
 
