@@ -11,7 +11,8 @@ OpenMP accelerates each rank's model evaluations. Keep BLAS at one thread.
 The shared Cocoa test uses the numbered example's cosmological priors,
 restricted to 0.2 < Omega_m < 0.5 and Omega_b*(H0/100)^2 < 0.035, with
 mnu fixed at 0.06 eV. Nuisance parameters stay at the example point.
-Both calculations use plain mead2020 and CAMB background distances.
+Both calculations use plain mead2020. The EMUL2 candidate uses emulated
+distances and spectra.
 
 Use EMULATOR_CODE_DIR and EMULATOR_DATA_DIR to select candidate checkouts.
 COCOA_TEST_INTERFACE_DIR optionally selects an independently built native

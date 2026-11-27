@@ -565,15 +565,16 @@ Run it alone with
 the same saved cosmologies and nuisance values. Score the prediction
 differences using the benchmark mask and covariance.
 
+The command uses emulated distances and spectra for the EMUL2 candidate.
+The saved figures and results below used CAMB distances for both routes.
+
 [compare_emulator_camb.py](../compare_emulator_camb.py) compares the candidate
 matter-power emulator with CAMB through this project's existing likelihood.
 It reads the fixed [benchmark](../fisher_reference/) and its 50 broad and
 25 focused cosmologies,
 restricts $`0.2 < \Omega_m < 0.5`$, and fixes $`\sum m_\nu=0.06`$ eV.
 For the broad-prior sample, nuisance parameters stay at the example's
-declared evaluation point. Both
-calculations use plain `mead2020` and CAMB background distances. The original
-example and its production physics are not modified.
+declared evaluation point. Both routes use plain `mead2020`.
 
 The installed emulator code and trained models are used by default. For
 separate candidate checkouts, use the following commands from activated

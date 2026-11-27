@@ -11,6 +11,12 @@ description: >-
 
 Follow Cocoa's [emulator accuracy and cheap FoM guidance](../../../../../../.claude/skills/cocoa-maintenance/SKILL.md#emulator-accuracy-and-cheap-fom-tests-keep-their-purposes-separate).
 
+- EMUL2 must never calculate with CAMB, including distances, acoustic-scale
+  conversion or derived sigma8/S8. Use the existing emulators and verify
+  resolved providers and nested backends for MCMC, Nautilus, minimization,
+  profile and EMUL2 accuracy candidates. Plain CAMB references, evaluations
+  and postprocessing remain separate. A matter-only comparison that retains
+  CAMB elsewhere does not validate an EMUL2 pipeline.
 - Evaluate each candidate on the saved benchmark configuration, mask,
   covariance, nuisance values, and fixed 50 broad and 25 focused points.
   Reuse the saved approximate nuisance-marginalized Fisher reference.

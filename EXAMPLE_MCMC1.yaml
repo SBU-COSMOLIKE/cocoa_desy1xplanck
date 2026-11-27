@@ -4,7 +4,7 @@ stop_at_error: False
 
 likelihood:
   desy1xplanck.cosmic_shear:
-    use_emulator: 2
+    use_emulator: 0
     path: ./external_modules/data/desy1xplanck
     data_file: Y3xPlanckPR4.dataset
     # accuracyboost: the default 1.0 is the tested setting. Against a
